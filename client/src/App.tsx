@@ -2,79 +2,67 @@ import { useState, useEffect } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "sonner";
-import { GameContextProvider } from "./contexts/GameContext";
-import MainMenu from "./components/menus/MainMenu";
-import LevelSelect from "./components/menus/LevelSelect";
-import PlayerSetup from "./components/menus/PlayerSetup";
-import Board from "./components/game/Board";
-import LevelEditor from "./components/editor/LevelEditor";
-import Leaderboard from "./components/menus/Leaderboard";
-import { GamePhase, useGame } from "./lib/stores/useGame";
-import { useAudio } from "./lib/stores/useAudio";
+import { NewsTimeline } from "./components/NewsTimeline";
+import { Sidebar } from "./components/Sidebar";
+import { NewsHeader } from "./components/NewsHeader";
 import "@fontsource/inter";
 
-// Sound file paths
-const SOUND_PATHS = {
-  background: "/sounds/background.mp3",
-  hit: "/sounds/hit.mp3",
-  success: "/sounds/success.mp3"
-};
-
 function App() {
-  const { phase } = useGame();
-  const [appPhase, setAppPhase] = useState<GamePhase | "menu" | "level_select" | "player_setup" | "editor" | "leaderboard">("menu");
-  const { setBackgroundMusic, setHitSound, setSuccessSound } = useAudio();
-
-  // Set up audio elements when the app starts
+  const [selectedSource, setSelectedSource] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   useEffect(() => {
-    const bgMusic = new Audio(SOUND_PATHS.background);
-    bgMusic.loop = true;
-    bgMusic.volume = 0.3;
-    setBackgroundMusic(bgMusic);
-
-    const hitSfx = new Audio(SOUND_PATHS.hit);
-    setHitSound(hitSfx);
-
-    const successSfx = new Audio(SOUND_PATHS.success);
-    setSuccessSound(successSfx);
-  }, [setBackgroundMusic, setHitSound, setSuccessSound]);
-
-  // Listen for game phase changes
-  useEffect(() => {
-    if (phase !== "ready") {
-      setAppPhase(phase);
-    }
-  }, [phase]);
+    // ページ読み込み時に健全性チェック
+    fetch('/api/health')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('サーバー接続エラー');
+        }
+        return response.json();
+      })
+      .then(() => {
+        setIsLoading(false);
+      })
+      .catch(err => {
+        setError('サーバーに接続できませんでした。数分後に再試行してください。');
+        setIsLoading(false);
+        console.error('健全性チェックエラー:', err);
+      });
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <GameContextProvider>
-        <div className="min-h-screen bg-gradient-to-b from-background to-slate-900 flex flex-col">
-          <main className="flex-1 container mx-auto p-4 flex flex-col">
-            {appPhase === "menu" && <MainMenu onNavigate={setAppPhase} />}
-            {appPhase === "level_select" && <LevelSelect onBack={() => setAppPhase("menu")} />}
-            {appPhase === "player_setup" && <PlayerSetup onBack={() => setAppPhase("level_select")} />}
-            {appPhase === "playing" && <Board />}
-            {appPhase === "editor" && <LevelEditor onBack={() => setAppPhase("menu")} />}
-            {appPhase === "leaderboard" && <Leaderboard onBack={() => setAppPhase("menu")} />}
-            {appPhase === "ended" && (
-              <div className="text-center mt-10">
-                <h2 className="text-2xl font-bold mb-4">Game Over!</h2>
-                <button 
-                  onClick={() => setAppPhase("menu")}
-                  className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-                >
-                  Back to Menu
-                </button>
+      <div className="min-h-screen bg-slate-900 text-white flex flex-col">
+        <NewsHeader />
+        
+        <main className="flex-1 container mx-auto p-4 flex flex-col md:flex-row gap-4">
+          <Sidebar 
+            selectedSource={selectedSource} 
+            onSourceSelect={setSelectedSource} 
+          />
+          
+          <div className="flex-1 overflow-hidden">
+            {isLoading ? (
+              <div className="flex justify-center items-center h-full">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
               </div>
+            ) : error ? (
+              <div className="bg-red-900/30 border border-red-500/50 p-4 rounded-lg">
+                <h3 className="text-lg font-medium text-red-200">エラー</h3>
+                <p className="text-red-100">{error}</p>
+              </div>
+            ) : (
+              <NewsTimeline selectedSource={selectedSource} />
             )}
-          </main>
-          <footer className="bg-background/50 backdrop-blur-sm border-t border-border p-2 text-center text-sm text-muted-foreground">
-            LinguaPlay - Learning languages through play
-          </footer>
-        </div>
+          </div>
+        </main>
+        
+        <footer className="bg-slate-800 p-3 text-center text-sm text-slate-400">
+          AI News Reader - 最新のAI関連ニュースをシンプルに
+        </footer>
         <Toaster position="top-right" />
-      </GameContextProvider>
+      </div>
     </QueryClientProvider>
   );
 }
