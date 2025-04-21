@@ -35,7 +35,7 @@ export function NewsItem({ item }: NewsItemProps) {
   };
   
   return (
-    <div className="bg-slate-800 rounded-lg overflow-hidden hover:bg-slate-800/80 transition-colors">
+    <div className="bg-slate-800 rounded-lg overflow-hidden hover:bg-slate-800/80 transition-colors border border-slate-700/50 shadow-md">
       <div className="flex items-start p-4">
         <div className="flex-1">
           <div className="flex items-center text-sm text-slate-400 mb-1">
@@ -44,11 +44,11 @@ export function NewsItem({ item }: NewsItemProps) {
             <span>{formatDate(item.publishDate)}</span>
           </div>
           
-          <h3 className="text-lg font-bold mb-2">
+          <h3 className="text-lg font-bold mb-2 text-white">
             {showOriginal && item.originalTitle ? item.originalTitle : item.title}
           </h3>
           
-          <div className="prose prose-sm prose-invert max-w-none">
+          <div className="prose prose-sm prose-invert max-w-none bg-slate-800/50 p-3 rounded-md">
             {expanded ? (
               <p>{showOriginal && item.originalContent ? item.originalContent : item.content}</p>
             ) : (
@@ -61,7 +61,7 @@ export function NewsItem({ item }: NewsItemProps) {
               href={item.link} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-sm text-blue-400 hover:text-blue-300"
+              className="text-sm px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors"
             >
               続きを読む →
             </a>
@@ -69,7 +69,7 @@ export function NewsItem({ item }: NewsItemProps) {
             {item.sourceLanguage === 'en' && (
               <button 
                 onClick={() => setShowOriginal(!showOriginal)}
-                className="text-sm text-slate-400 hover:text-slate-300"
+                className="text-sm px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-full transition-colors"
               >
                 {showOriginal ? '翻訳を表示' : '原文を表示'}
               </button>
@@ -78,7 +78,7 @@ export function NewsItem({ item }: NewsItemProps) {
             {item.content && item.content.length > item.summary.length && (
               <button 
                 onClick={() => setExpanded(!expanded)}
-                className="text-sm text-slate-400 hover:text-slate-300"
+                className="text-sm px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-full transition-colors"
               >
                 {expanded ? '要約を表示' : 'もっと見る'}
               </button>
