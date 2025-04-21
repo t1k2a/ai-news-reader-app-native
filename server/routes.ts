@@ -1,43 +1,77 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { getAllAITweets, getUserTweets } from "./twitter-api";
+import { translateToJapanese, batchTranslateToJapanese } from "./translation-api";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // API route for user authentication
-  app.post('/api/auth/login', async (req, res) => {
-    const { username, password } = req.body;
-    
+  // API route for getting all AI-related tweets
+  app.get('/api/tweets', async (req: Request, res: Response) => {
     try {
-      const user = await storage.getUserByUsername(username);
+      const tweets = await getAllAITweets();
       
-      if (!user || user.password !== password) {
-        return res.status(401).json({ message: 'Invalid username or password' });
-      }
+      // テキストが英語の場合、翻訳する
+      const tweetTexts = tweets.map(tweet => tweet.text);
+      const translatedTexts = await batchTranslateToJapanese(tweetTexts);
       
-      res.json({ id: user.id, username: user.username });
+      // 翻訳したテキストで元のツイートを更新
+      const tweetsWithTranslation = tweets.map((tweet, index) => ({
+        ...tweet,
+        original_text: tweet.text,
+        text: translatedTexts[index] || tweet.text
+      }));
+      
+      res.json(tweetsWithTranslation);
     } catch (error) {
-      res.status(500).json({ message: 'Authentication failed' });
+      console.error('ツイート取得エラー:', error);
+      res.status(500).json({ message: 'ツイートの取得に失敗しました' });
     }
   });
   
-  // API route for user registration
-  app.post('/api/auth/register', async (req, res) => {
-    const { username, password } = req.body;
+  // 特定のアカウントのツイートを取得するルート
+  app.get('/api/tweets/:userId', async (req: Request, res: Response) => {
+    const { userId } = req.params;
     
     try {
-      // Check if user already exists
-      const existingUser = await storage.getUserByUsername(username);
+      const tweetData = await getUserTweets(userId);
       
-      if (existingUser) {
-        return res.status(400).json({ message: 'Username already taken' });
+      if (!tweetData || !tweetData.data) {
+        return res.status(404).json({ message: 'ツイートが見つかりませんでした' });
       }
       
-      // Create new user
-      const newUser = await storage.createUser({ username, password });
+      const tweets = tweetData.data;
       
-      res.status(201).json({ id: newUser.id, username: newUser.username });
+      // テキストが英語の場合、翻訳する
+      const tweetTexts = tweets.map(tweet => tweet.text);
+      const translatedTexts = await batchTranslateToJapanese(tweetTexts);
+      
+      // 翻訳したテキストで元のツイートを更新
+      const tweetsWithTranslation = tweets.map((tweet, index) => ({
+        ...tweet,
+        original_text: tweet.text,
+        text: translatedTexts[index] || tweet.text
+      }));
+      
+      res.json(tweetsWithTranslation);
     } catch (error) {
-      res.status(500).json({ message: 'Registration failed' });
+      console.error(`ユーザーID ${userId} のツイート取得エラー:`, error);
+      res.status(500).json({ message: 'ツイートの取得に失敗しました' });
+    }
+  });
+  
+  // 翻訳APIのテストルート
+  app.post('/api/translate', async (req: Request, res: Response) => {
+    const { text } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({ message: '翻訳するテキストが指定されていません' });
+    }
+    
+    try {
+      const translatedText = await translateToJapanese(text);
+      res.json({ original: text, translated: translatedText });
+    } catch (error) {
+      console.error('翻訳エラー:', error);
+      res.status(500).json({ message: '翻訳に失敗しました' });
     }
   });
 
