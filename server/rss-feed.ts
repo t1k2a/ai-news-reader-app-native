@@ -12,12 +12,12 @@ const parser = new Parser({
 const AI_RSS_FEEDS = [
   // 英語のRSSフィード
   { 
-    url: 'https://www.technologyreview.com/feed/topic/artificial-intelligence/',
+    url: 'https://www.technologyreview.com/technology/ai/feed',
     name: 'MIT Technology Review AI',
     language: 'en'
   },
   { 
-    url: 'https://ai.googleblog.com/atom.xml',
+    url: 'https://blog.google/technology/ai/rss/',
     name: 'Google AI Blog',
     language: 'en'
   },
@@ -27,25 +27,30 @@ const AI_RSS_FEEDS = [
     language: 'en'
   },
   { 
-    url: 'https://machinelearnings.co/feed',
-    name: 'Machine Learnings',
+    url: 'https://venturebeat.com/category/ai/feed/',
+    name: 'VentureBeat AI',
     language: 'en'
   },
   { 
-    url: 'https://openai.com/index.xml',
-    name: 'OpenAI',
+    url: 'https://openai.com/blog/rss.xml',
+    name: 'OpenAI Blog',
     language: 'en'
   },
   
   // 日本語のRSSフィード
   { 
-    url: 'https://ledge.ai/feed/',
+    url: 'https://ledge.ai/rss',
     name: 'Ledge.ai',
     language: 'ja'
   },
   { 
     url: 'https://ai-trend.jp/feed/',
     name: 'AI-TREND',
+    language: 'ja'
+  },
+  {
+    url: 'https://ainow.ai/feed/',
+    name: 'AINow',
     language: 'ja'
   }
 ];

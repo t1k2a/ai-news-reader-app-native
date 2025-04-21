@@ -5,10 +5,11 @@ const NEWS_SOURCES = [
   { name: 'MIT Technology Review AI', language: 'en' },
   { name: 'Google AI Blog', language: 'en' },
   { name: 'AI News', language: 'en' },
-  { name: 'Machine Learnings', language: 'en' },
-  { name: 'OpenAI', language: 'en' },
+  { name: 'VentureBeat AI', language: 'en' },
+  { name: 'OpenAI Blog', language: 'en' },
   { name: 'Ledge.ai', language: 'ja' },
-  { name: 'AI-TREND', language: 'ja' }
+  { name: 'AI-TREND', language: 'ja' },
+  { name: 'AINow', language: 'ja' }
 ];
 
 interface SidebarProps {
