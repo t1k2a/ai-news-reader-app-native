@@ -1,13 +1,9 @@
 import { useState, useEffect } from 'react';
 
-// RSSフィードのソース名一覧
+// RSSフィードのソース名一覧（サーバーに合わせたリスト）
 const NEWS_SOURCES = [
-  { name: 'MIT Technology Review AI', language: 'en' },
-  { name: 'Google AI Blog', language: 'en' },
-  { name: 'AI News', language: 'en' },
   { name: 'VentureBeat AI', language: 'en' },
-  { name: 'OpenAI Blog', language: 'en' },
-  { name: 'Ledge.ai', language: 'ja' },
+  { name: 'AI News', language: 'en' },
   { name: 'AI-TREND', language: 'ja' },
   { name: 'AINow', language: 'ja' }
 ];

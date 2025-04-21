@@ -12,13 +12,8 @@ const parser = new Parser({
 const AI_RSS_FEEDS = [
   // 英語のRSSフィード
   { 
-    url: 'https://www.technologyreview.com/technology/ai/feed',
-    name: 'MIT Technology Review AI',
-    language: 'en'
-  },
-  { 
-    url: 'https://blog.google/technology/ai/rss/',
-    name: 'Google AI Blog',
+    url: 'https://venturebeat.com/category/ai/feed/',
+    name: 'VentureBeat AI',
     language: 'en'
   },
   { 
@@ -26,23 +21,9 @@ const AI_RSS_FEEDS = [
     name: 'AI News',
     language: 'en'
   },
-  { 
-    url: 'https://venturebeat.com/category/ai/feed/',
-    name: 'VentureBeat AI',
-    language: 'en'
-  },
-  { 
-    url: 'https://openai.com/blog/rss.xml',
-    name: 'OpenAI Blog',
-    language: 'en'
-  },
+
   
   // 日本語のRSSフィード
-  { 
-    url: 'https://ledge.ai/rss',
-    name: 'Ledge.ai',
-    language: 'ja'
-  },
   { 
     url: 'https://ai-trend.jp/feed/',
     name: 'AI-TREND',
@@ -145,21 +126,36 @@ export async function fetchFeed(feedInfo: { url: string, name: string, language:
 
 /**
  * すべてのRSSフィードから記事を取得して結合する
+ * タイムアウト機能付き並列処理
  */
 export async function fetchAllFeeds(): Promise<AINewsItem[]> {
   const allNewsItems: AINewsItem[] = [];
   
-  for (const feedInfo of AI_RSS_FEEDS) {
+  // 並列でフィードを取得（各フィードに5秒のタイムアウトを設定）
+  const fetchPromises = AI_RSS_FEEDS.map(async (feedInfo) => {
     try {
-      const items = await fetchFeed(feedInfo);
-      allNewsItems.push(...items);
+      // タイムアウト付きでフィードを取得
+      const timeoutPromise = new Promise<AINewsItem[]>((_, reject) => {
+        setTimeout(() => reject(new Error(`Timeout fetching ${feedInfo.name}`)), 5000);
+      });
       
-      // API制限回避のため少し待機（異なるAPIのフィード間）
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const items = await Promise.race([
+        fetchFeed(feedInfo),
+        timeoutPromise
+      ]);
+      
+      return items;
     } catch (error) {
       console.error(`フィード処理エラー (${feedInfo.name}):`, error);
+      return [];
     }
-  }
+  });
+  
+  // すべての結果を待機して結合
+  const results = await Promise.all(fetchPromises);
+  results.forEach(items => {
+    allNewsItems.push(...items);
+  });
   
   // 公開日の新しい順にソート
   return allNewsItems.sort((a, b) => b.publishDate.getTime() - a.publishDate.getTime());
