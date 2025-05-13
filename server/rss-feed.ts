@@ -6,6 +6,13 @@ const parser = new Parser({
   headers: {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36',
   },
+  customFields: {
+    item: [
+      ['content:encoded', 'contentEncoded'],
+      ['description', 'description'],
+      ['media:content', 'media'],
+    ]
+  },
 });
 
 // AIカテゴリの定義
@@ -191,7 +198,19 @@ export async function fetchFeed(feedInfo: { url: string, name: string, language:
     const newsItems: AINewsItem[] = [];
     
     for (const item of feed.items.slice(0, 10)) { // 最新10件に制限
-      const content = item.content || item.contentSnippet || '';
+      // 記事の全文を取得（より多くのコンテンツソースを試す）
+      let content = '';
+      
+      // できるだけ多くの情報を持つコンテンツソースを優先して使用
+      if (item['contentEncoded'] && (item['contentEncoded'] as string).length > 200) {
+        content = item['contentEncoded'] as string;
+      } else if (item.content && item.content.length > 200) {
+        content = item.content;
+      } else if (item['description'] && (item['description'] as string).length > 100) {
+        content = item['description'] as string;
+      } else {
+        content = item.contentSnippet || '';
+      }
       
       // 要約作成（最大140文字）
       const summary = summarizeText(content);

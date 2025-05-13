@@ -2,6 +2,66 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 記事コンテンツのスタイル */
+.article-content {
+  font-size: 1.1rem;
+  line-height: 1.75;
+}
+
+.article-content p {
+  margin-bottom: 1.25em;
+}
+
+.article-content h1, 
+.article-content h2, 
+.article-content h3, 
+.article-content h4 {
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.article-content h1 {
+  font-size: 1.875rem;
+}
+
+.article-content h2 {
+  font-size: 1.5rem;
+}
+
+.article-content h3 {
+  font-size: 1.25rem;
+}
+
+.article-content ul, 
+.article-content ol {
+  margin-left: 1.5em;
+  margin-bottom: 1.25em;
+}
+
+.article-content li {
+  margin-bottom: 0.5em;
+}
+
+.article-content blockquote {
+  margin-left: 1em;
+  padding-left: 1em;
+  border-left: 3px solid rgb(96 165 250);
+  color: rgb(203 213 225);
+  font-style: italic;
+  margin-bottom: 1.25em;
+}
+
+.article-content a {
+  color: rgb(96 165 250);
+  text-decoration: underline;
+}
+
+.article-content a:hover {
+  color: rgb(147 197 253);
+}
+
 @layer base {
   * {
     @apply border-border;

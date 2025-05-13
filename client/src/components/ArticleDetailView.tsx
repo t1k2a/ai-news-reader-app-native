@@ -1,6 +1,31 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+/**
+ * HTML文字列を安全に処理し、よりよく表示するためのヘルパー関数
+ */
+function sanitizeHtml(html: string): string {
+  // 基本的な処理 - スクリプトタグを削除
+  let cleaned = html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/on\w+="[^"]*"/g, '') // onClick等のイベントハンドラを削除
+    
+    // 画像のレスポンシブ対応
+    .replace(/<img(.*?)>/gi, (match, attributes) => {
+      // width/heightの固定値を削除し、classを追加
+      const cleanedAttributes = attributes
+        .replace(/width=["'](\d+)["']/g, '')
+        .replace(/height=["'](\d+)["']/g, '');
+      
+      return `<img${cleanedAttributes} class="max-w-full h-auto rounded-md my-2" loading="lazy">`;
+    })
+    
+    // リンクを安全に開く
+    .replace(/<a(.*?)>/gi, '<a$1 target="_blank" rel="noopener noreferrer">');
+    
+  return cleaned;
+}
+
 interface AINewsItem {
   id: string;
   title: string;
@@ -141,11 +166,11 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
               {/* 記事コンテンツ */}
               <div className="prose prose-lg prose-invert max-w-none mb-8 bg-slate-800/30 p-5 rounded-lg">
                 <div 
-                  className="whitespace-pre-line leading-relaxed"
+                  className="leading-relaxed article-content"
                   dangerouslySetInnerHTML={{ 
                     __html: showOriginal && article.originalContent 
-                      ? article.originalContent 
-                      : article.content 
+                      ? sanitizeHtml(article.originalContent) 
+                      : sanitizeHtml(article.content) 
                   }}
                 />
                 
