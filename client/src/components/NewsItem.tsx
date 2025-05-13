@@ -66,9 +66,9 @@ export function NewsItem({ item }: NewsItemProps) {
           
           <div className="prose prose-sm prose-invert max-w-none bg-slate-800/50 p-3 rounded-md">
             {expanded ? (
-              <p>{showOriginal && item.originalContent ? item.originalContent : item.content}</p>
+              <p>{stripHtmlTags(showOriginal && item.originalContent ? item.originalContent : item.content)}</p>
             ) : (
-              <p>{showOriginal && item.originalSummary ? item.originalSummary : item.summary}</p>
+              <p>{stripHtmlTags(showOriginal && item.originalSummary ? item.originalSummary : item.summary)}</p>
             )}
           </div>
           
