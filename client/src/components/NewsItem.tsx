@@ -57,30 +57,21 @@ export function NewsItem({ item }: NewsItemProps) {
           </div>
           
           <div className="mt-3 flex flex-wrap gap-2">
-            <a 
-              href={item.link} 
-              target="_blank" 
-              rel="noopener noreferrer"
+            <button
               className="text-sm px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors"
             >
               続きを読む →
-            </a>
+            </button>
             
             {item.sourceLanguage === 'en' && (
               <button 
-                onClick={() => setShowOriginal(!showOriginal)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowOriginal(!showOriginal);
+                }}
                 className="text-sm px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-full transition-colors"
               >
                 {showOriginal ? '翻訳を表示' : '原文を表示'}
-              </button>
-            )}
-            
-            {item.content && item.content.length > item.summary.length && (
-              <button 
-                onClick={() => setExpanded(!expanded)}
-                className="text-sm px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-full transition-colors"
-              >
-                {expanded ? '要約を表示' : 'もっと見る'}
               </button>
             )}
           </div>

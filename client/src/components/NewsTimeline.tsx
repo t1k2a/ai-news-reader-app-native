@@ -152,10 +152,24 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
   
   // 現在のページ状態
   const [currentPage, setCurrentPage] = useState(1);
+  // 選択した記事
+  const [selectedArticle, setSelectedArticle] = useState<AINewsItem | null>(null);
+  
+  // 記事を選択する関数
+  const handleArticleSelect = (article: AINewsItem) => {
+    setSelectedArticle(article);
+  };
+  
+  // 記事の詳細ビューを閉じる関数
+  const handleCloseArticleView = () => {
+    setSelectedArticle(null);
+  };
   
   // ソースが変更されたら1ページ目に戻す
   useEffect(() => {
     setCurrentPage(1);
+    // ソースが変更されたらディテールビューも閉じる
+    setSelectedArticle(null);
   }, [selectedSource]);
   
   // React Queryを使用したキャッシュ対応データフェッチ
@@ -223,7 +237,9 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
       
       <div className="space-y-4 overflow-y-auto">
         {currentPageItems.map(item => (
-          <NewsItem key={item.id} item={item} />
+          <div key={item.id} onClick={() => handleArticleSelect(item)} className="cursor-pointer">
+            <NewsItem item={item} />
+          </div>
         ))}
       </div>
       
@@ -232,6 +248,12 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
         currentPage={currentPage} 
         totalPages={totalPages} 
         onPageChange={setCurrentPage} 
+      />
+      
+      {/* 記事詳細ビュー */}
+      <ArticleDetailView 
+        article={selectedArticle} 
+        onClose={handleCloseArticleView}
       />
     </div>
   );

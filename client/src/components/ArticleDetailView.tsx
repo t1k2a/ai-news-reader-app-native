@@ -83,7 +83,7 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="relative w-full max-w-2xl h-full bg-slate-900 shadow-xl overflow-y-auto"
+            className="relative w-full max-w-2xl h-full bg-slate-900 shadow-xl overflow-y-auto border-l border-slate-700"
           >
             <div className="p-6 md:p-8">
               {/* ヘッダー */}
@@ -124,21 +124,35 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
               </h1>
               
               {/* 記事コンテンツ */}
-              <div className="prose prose-lg prose-invert max-w-none mb-8">
-                <p className="whitespace-pre-line">
-                  {showOriginal && article.originalContent 
-                    ? article.originalContent 
-                    : article.content}
-                </p>
+              <div className="prose prose-lg prose-invert max-w-none mb-8 bg-slate-800/30 p-5 rounded-lg">
+                <div 
+                  className="whitespace-pre-line leading-relaxed"
+                  dangerouslySetInnerHTML={{ 
+                    __html: showOriginal && article.originalContent 
+                      ? article.originalContent 
+                      : article.content 
+                  }}
+                />
+                
+                {/* 記事のメタ情報 */}
+                <div className="mt-6 pt-4 border-t border-slate-700/50">
+                  <div className="text-sm text-slate-400 flex items-center">
+                    <span className="inline-block w-4 h-4 mr-2 bg-blue-500 rounded-full"></span>
+                    <span>{article.sourceName}</span>
+                    <span className="mx-2">•</span>
+                    <time dateTime={article.publishDate}>{formatDate(article.publishDate)}</time>
+                  </div>
+                </div>
               </div>
               
               {/* フッター */}
-              <div className="border-t border-slate-700 pt-6 mt-10">
+              <div className="border-t border-slate-700 pt-6 mt-8">
+                {/* アクションボタン */}
                 <div className="flex flex-wrap gap-3 mb-6">
                   {article.sourceLanguage === 'en' && (
                     <button 
                       onClick={() => setShowOriginal(!showOriginal)}
-                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-md transition-colors"
+                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-full transition-colors"
                     >
                       {showOriginal ? '日本語に切り替え' : '原文に切り替え (English)'}
                     </button>
@@ -148,7 +162,7 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
                     href={article.link} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors flex items-center"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors flex items-center"
                   >
                     元の記事を読む
                     <svg 
@@ -170,8 +184,46 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
                   </a>
                 </div>
                 
-                <div className="text-sm text-slate-400">
-                  出典: <span className="font-medium text-slate-300">{article.sourceName}</span>
+                {/* 共有ボタン */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <button className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full transition-colors">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                      </svg>
+                    </button>
+                    <button className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full transition-colors">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
+                      </svg>
+                    </button>
+                    <button className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full transition-colors">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="text-sm text-slate-400 flex items-center">
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2"
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    className="mr-2 text-blue-400"
+                  >
+                    <path d="m3 11 18-5v12L3 14v-3z"></path>
+                    <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
+                  </svg>
+                  出典: <span className="font-medium text-slate-300 ml-1">{article.sourceName}</span>
                 </div>
               </div>
             </div>
