@@ -51,7 +51,7 @@ export function NewsItem({ item }: NewsItemProps) {
               {item.categories.map(category => (
                 <span 
                   key={category} 
-                  className="inline-block px-2 py-0.5 bg-slate-700/80 text-xs text-slate-300 rounded-full"
+                  className="inline-block px-2 py-0.5 bg-slate-700/80 text-xs text-slate-300 rounded-full border border-slate-600/50"
                 >
                   {category}
                 </span>

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { NewsItem } from './NewsItem';
 import { ArticleDetailView } from './ArticleDetailView';
+import { AI_CATEGORIES } from '../lib/constants';
 
 interface AINewsItem {
   id: string;
@@ -21,18 +22,6 @@ interface AINewsItem {
 interface NewsTimelineProps {
   selectedSource: string | null;
 }
-
-// AIカテゴリの定義（サーバーと同期）
-export const AI_CATEGORIES = {
-  ML: '機械学習',
-  NLP: '自然言語処理',
-  CV: 'コンピュータビジョン',
-  ROBOTICS: 'ロボティクス',
-  ETHICS: 'AI倫理',
-  RESEARCH: 'AI研究',
-  BUSINESS: 'ビジネス活用',
-  GENERAL: '一般'
-};
 
 // ニュースを取得する関数
 const fetchNews = async (sourceName: string | null, category: string | null): Promise<AINewsItem[]> => {
@@ -272,13 +261,13 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
       </div>
       
       {/* カテゴリ選択UI */}
-      <div className="flex flex-wrap gap-2 pb-3 pt-1">
+      <div className="flex flex-wrap gap-2 pb-3 pt-1 overflow-x-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-800 pb-2 -mx-2 px-2">
         <button
           onClick={() => handleCategorySelect(null)}
-          className={`px-3 py-1 text-sm rounded-full transition-colors ${
+          className={`px-3 py-1 text-sm rounded-full transition-colors whitespace-nowrap border ${
             selectedCategory === null
-              ? 'bg-blue-600 text-white'
-              : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+              ? 'bg-blue-600 text-white border-blue-500'
+              : 'bg-slate-700 text-slate-200 hover:bg-slate-600 border-slate-600/50'
           }`}
         >
           すべて
@@ -288,10 +277,10 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
           <button
             key={category}
             onClick={() => handleCategorySelect(category)}
-            className={`px-3 py-1 text-sm rounded-full transition-colors ${
+            className={`px-3 py-1 text-sm rounded-full transition-colors whitespace-nowrap border ${
               selectedCategory === category
-                ? 'bg-blue-600 text-white'
-                : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+                ? 'bg-blue-600 text-white border-blue-500'
+                : 'bg-slate-700 text-slate-200 hover:bg-slate-600 border-slate-600/50'
             }`}
           >
             {category}

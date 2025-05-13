@@ -84,9 +84,9 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="relative w-full max-w-2xl h-full bg-slate-900 shadow-xl overflow-y-auto border-l border-slate-700"
+            className="relative w-full max-w-2xl h-full bg-slate-900 shadow-xl overflow-y-auto border-l border-slate-700 flex flex-col"
           >
-            <div className="p-6 md:p-8">
+            <div className="p-6 md:p-8 flex-1">
               {/* ヘッダー */}
               <div className="flex justify-between items-start mb-6">
                 <div>
@@ -120,9 +120,23 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
               </div>
               
               {/* 記事タイトル */}
-              <h1 className="text-2xl font-bold text-white mb-6">
+              <h1 className="text-2xl font-bold text-white mb-4">
                 {showOriginal && article.originalTitle ? article.originalTitle : article.title}
               </h1>
+              
+              {/* カテゴリタグ */}
+              {article.categories && article.categories.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {article.categories.map(category => (
+                    <span 
+                      key={category} 
+                      className="inline-block px-3 py-1 bg-slate-700/80 text-sm text-slate-300 rounded-full border border-slate-600/50 hover:bg-slate-600/80 transition-colors"
+                    >
+                      {category}
+                    </span>
+                  ))}
+                </div>
+              )}
               
               {/* 記事コンテンツ */}
               <div className="prose prose-lg prose-invert max-w-none mb-8 bg-slate-800/30 p-5 rounded-lg">
