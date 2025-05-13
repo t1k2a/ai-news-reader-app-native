@@ -34,6 +34,30 @@ export async function translateToJapanese(text: string): Promise<string> {
 }
 
 /**
+ * 長い記事のコンテンツを翻訳する
+ * 段落ごとに分割して翻訳し、より効率的に処理する
+ * @param content 翻訳する長いコンテンツ
+ * @returns 翻訳されたコンテンツ
+ */
+export async function translateLongContent(content: string): Promise<string> {
+  if (!content) return '';
+  
+  try {
+    // 段落で分割（改行や空行で区切る）
+    const paragraphs = content.split(/\n\s*\n|\r\n\s*\r\n/).filter(p => p.trim() !== '');
+    
+    // 段落ごとに翻訳
+    const translatedParagraphs = await batchTranslateToJapanese(paragraphs);
+    
+    // 翻訳された段落を元の形式で結合
+    return translatedParagraphs.join('\n\n');
+  } catch (error) {
+    console.error('コンテンツ翻訳エラー:', error);
+    return content; // エラーの場合は元のコンテンツを返す
+  }
+}
+
+/**
  * 複数のテキストを一括で翻訳する
  * 注意: APIの制限に引っかからないよう、一度に大量のテキストを送らないこと
  * @param texts 翻訳するテキストの配列

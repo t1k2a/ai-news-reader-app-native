@@ -1,5 +1,5 @@
 import Parser from 'rss-parser';
-import { translateToJapanese, summarizeText } from './translation-api';
+import { translateToJapanese, summarizeText, translateLongContent } from './translation-api';
 
 // RSSパーサーの初期化
 const parser = new Parser({
@@ -204,7 +204,9 @@ export async function fetchFeed(feedInfo: { url: string, name: string, language:
       if (feedInfo.language === 'en') {
         try {
           translatedTitle = await translateToJapanese(item.title || '');
-          // 要約した内容だけを翻訳（効率化のため）
+          // 記事の全文を段落ごとに翻訳する
+          translatedContent = await translateLongContent(content);
+          // 要約も翻訳
           translatedSummary = await translateToJapanese(summary);
           
           // 記事URLからユニークIDを生成
