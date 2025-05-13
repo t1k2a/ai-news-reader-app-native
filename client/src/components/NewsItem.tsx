@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { stripHtmlTags } from '../lib/utils';
 
 interface AINewsItem {
   id: string;

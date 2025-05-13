@@ -97,6 +97,31 @@ export async function batchTranslateToJapanese(texts: string[]): Promise<string[
 }
 
 /**
+ * HTMLタグを除去するヘルパー関数
+ * @param html HTMLを含む可能性のあるテキスト
+ * @returns HTMLタグを除去したプレーンテキスト
+ */
+export function stripHtmlTags(html: string): string {
+  if (!html) return '';
+  
+  // HTMLタグを除去
+  const plainText = html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // スクリプトタグを削除
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')   // スタイルタグを削除
+    .replace(/<[^>]*>/g, '')                                           // 残りのHTMLタグを削除
+    .replace(/&nbsp;/g, ' ')                                           // &nbsp;をスペースに置換
+    .replace(/&amp;/g, '&')                                            // &amp;を&に置換
+    .replace(/&lt;/g, '<')                                             // &lt;を<に置換
+    .replace(/&gt;/g, '>')                                             // &gt;を>に置換
+    .replace(/&quot;/g, '"')                                           // &quot;を"に置換
+    .replace(/&#039;/g, "'")                                           // &#039;を'に置換
+    .replace(/\s+/g, ' ')                                              // 連続する空白を1つに
+    .trim();                                                           // 前後の空白を削除
+  
+  return plainText;
+}
+
+/**
  * テキストを指定した長さ（約140文字）に要約する
  * @param text 要約するテキスト
  * @param maxLength 最大文字数（デフォルト140）
@@ -104,10 +129,14 @@ export async function batchTranslateToJapanese(texts: string[]): Promise<string[
  */
 export function summarizeText(text: string, maxLength: number = 140): string {
   if (!text) return '';
-  if (text.length <= maxLength) return text;
+  
+  // まずHTMLタグを除去
+  const plainText = stripHtmlTags(text);
+  
+  if (plainText.length <= maxLength) return plainText;
   
   // 文章を句点で分割
-  const sentences = text.split(/。|！|？|\.|!|\?/).filter(s => s.trim().length > 0);
+  const sentences = plainText.split(/。|！|？|\.|!|\?/).filter(s => s.trim().length > 0);
   
   let summary = '';
   let currentLength = 0;

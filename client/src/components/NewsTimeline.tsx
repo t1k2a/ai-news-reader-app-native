@@ -261,7 +261,7 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
       </div>
       
       {/* カテゴリ選択UI */}
-      <div className="flex flex-wrap gap-2 pb-3 pt-1 overflow-x-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-800 pb-2 -mx-2 px-2">
+      <div className="flex flex-wrap gap-2 pb-3 pt-1 overflow-x-auto overscroll-contain scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-800 pb-2 -mx-2 px-2">
         <button
           onClick={() => handleCategorySelect(null)}
           className={`px-3 py-1 text-sm rounded-full transition-colors whitespace-nowrap border ${
