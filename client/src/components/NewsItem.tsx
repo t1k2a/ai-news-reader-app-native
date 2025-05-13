@@ -9,6 +9,7 @@ interface AINewsItem {
   publishDate: string;
   sourceName: string;
   sourceLanguage: string;
+  categories: string[];
   originalTitle?: string;
   originalContent?: string;
   originalSummary?: string;
@@ -43,6 +44,20 @@ export function NewsItem({ item }: NewsItemProps) {
             <span className="mx-2">•</span>
             <span>{formatDate(item.publishDate)}</span>
           </div>
+          
+          {/* カテゴリタグ */}
+          {item.categories && item.categories.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-2">
+              {item.categories.map(category => (
+                <span 
+                  key={category} 
+                  className="inline-block px-2 py-0.5 bg-slate-700/80 text-xs text-slate-300 rounded-full"
+                >
+                  {category}
+                </span>
+              ))}
+            </div>
+          )}
           
           <h3 className="text-lg font-bold mb-2 text-white">
             {showOriginal && item.originalTitle ? item.originalTitle : item.title}

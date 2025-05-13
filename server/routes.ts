@@ -1,14 +1,23 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { translateToJapanese } from "./translation-api";
-import { fetchAllFeeds, fetchFeed, AINewsItem } from "./rss-feed";
+import { fetchAllFeeds, fetchFeed, AINewsItem, AI_CATEGORIES } from "./rss-feed";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API route for getting all AI-related news
   app.get('/api/news', async (req: Request, res: Response) => {
     try {
+      // クエリパラメータからカテゴリを取得
+      const category = req.query.category as string;
+      
       const newsItems = await fetchAllFeeds();
-      res.json(newsItems);
+      
+      // カテゴリでフィルタリング（カテゴリが指定されている場合）
+      const filteredNews = category 
+        ? newsItems.filter(item => item.categories.includes(category))
+        : newsItems;
+      
+      res.json(filteredNews);
     } catch (error) {
       console.error('ニュース取得エラー:', error);
       res.status(500).json({ message: 'ニュースの取得に失敗しました' });

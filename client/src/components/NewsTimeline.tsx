@@ -12,6 +12,7 @@ interface AINewsItem {
   publishDate: string;
   sourceName: string;
   sourceLanguage: string;
+  categories: string[];
   originalTitle?: string;
   originalContent?: string;
   originalSummary?: string;
@@ -21,11 +22,36 @@ interface NewsTimelineProps {
   selectedSource: string | null;
 }
 
+// AIカテゴリの定義（サーバーと同期）
+export const AI_CATEGORIES = {
+  ML: '機械学習',
+  NLP: '自然言語処理',
+  CV: 'コンピュータビジョン',
+  ROBOTICS: 'ロボティクス',
+  ETHICS: 'AI倫理',
+  RESEARCH: 'AI研究',
+  BUSINESS: 'ビジネス活用',
+  GENERAL: '一般'
+};
+
 // ニュースを取得する関数
-const fetchNews = async (sourceName: string | null): Promise<AINewsItem[]> => {
+const fetchNews = async (sourceName: string | null, category: string | null): Promise<AINewsItem[]> => {
   let url = '/api/news';
+  const params = new URLSearchParams();
+  
+  // カテゴリが選択されている場合はクエリパラメータに追加
+  if (category) {
+    params.append('category', category);
+  }
+  
+  // ソースが選択されている場合は別のエンドポイントを使用
   if (sourceName) {
     url = `/api/news/source/${encodeURIComponent(sourceName)}`;
+  }
+  
+  // クエリパラメータがある場合はURLに追加
+  if (params.toString()) {
+    url += `?${params.toString()}`;
   }
   
   const response = await fetch(url);
@@ -154,6 +180,8 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
   const [currentPage, setCurrentPage] = useState(1);
   // 選択した記事
   const [selectedArticle, setSelectedArticle] = useState<AINewsItem | null>(null);
+  // 選択したカテゴリ
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   
   // 記事を選択する関数
   const handleArticleSelect = (article: AINewsItem) => {
@@ -165,6 +193,13 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
     setSelectedArticle(null);
   };
   
+  // カテゴリを選択する関数
+  const handleCategorySelect = (category: string | null) => {
+    setSelectedCategory(category);
+    setCurrentPage(1); // カテゴリが変わったら1ページ目に戻す
+    setSelectedArticle(null); // カテゴリが変わったらディテールビューも閉じる
+  };
+  
   // ソースが変更されたら1ページ目に戻す
   useEffect(() => {
     setCurrentPage(1);
@@ -174,8 +209,8 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
   
   // React Queryを使用したキャッシュ対応データフェッチ
   const { data: news, isLoading, error } = useQuery<AINewsItem[], Error>({
-    queryKey: ['news', selectedSource],
-    queryFn: () => fetchNews(selectedSource),
+    queryKey: ['news', selectedSource, selectedCategory],
+    queryFn: () => fetchNews(selectedSource, selectedCategory),
     staleTime: 5 * 60 * 1000, // 5分間キャッシュを保持
     retry: 1, // エラー時に1回だけリトライ
   });
@@ -228,11 +263,40 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold pl-2 border-l-4 border-blue-500">
           {selectedSource ? `${selectedSource}のニュース` : '最新AI関連ニュース'}
+          {selectedCategory && ` - ${selectedCategory}`}
         </h2>
         
         <div className="text-sm text-slate-400">
           {news.length}件の記事 ({currentPage}/{totalPages}ページ)
         </div>
+      </div>
+      
+      {/* カテゴリ選択UI */}
+      <div className="flex flex-wrap gap-2 pb-3 pt-1">
+        <button
+          onClick={() => handleCategorySelect(null)}
+          className={`px-3 py-1 text-sm rounded-full transition-colors ${
+            selectedCategory === null
+              ? 'bg-blue-600 text-white'
+              : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+          }`}
+        >
+          すべて
+        </button>
+        
+        {Object.values(AI_CATEGORIES).map(category => (
+          <button
+            key={category}
+            onClick={() => handleCategorySelect(category)}
+            className={`px-3 py-1 text-sm rounded-full transition-colors ${
+              selectedCategory === category
+                ? 'bg-blue-600 text-white'
+                : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+            }`}
+          >
+            {category}
+          </button>
+        ))}
       </div>
       
       <div className="space-y-4 overflow-y-auto">

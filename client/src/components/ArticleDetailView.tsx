@@ -10,6 +10,7 @@ interface AINewsItem {
   publishDate: string;
   sourceName: string;
   sourceLanguage: string;
+  categories: string[];
   originalTitle?: string;
   originalContent?: string;
   originalSummary?: string;
