@@ -58,43 +58,21 @@ export function ArticleDetailView({
   // 現在表示する言語のコンテンツを取得
   const displayTitle = showOriginal && article.originalTitle ? article.originalTitle : article.title;
   
-  // 外部画像や危険なスクリプトを削除するクリーンアップ関数
-  const cleanupHtml = (html: string): string => {
-    if (!html) return '';
-    
-    // スクリプトタグと危険な属性を削除
-    let cleanHtml = html
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // スクリプトタグ削除
-      .replace(/on\w+="[^"]*"/g, '') // イベントハンドラ削除
-      .replace(/on\w+='[^']*'/g, ''); // イベントハンドラ削除（シングルクォート）
-    
-    // 画像の srcset 属性を削除（CORS問題を軽減）
-    cleanHtml = cleanHtml.replace(/srcset=["'][^"']*["']/g, '');
-    
-    return cleanHtml;
+  // 本文コンテンツの取得とフォールバック
+  const getContent = () => {
+    if (showOriginal && article.originalSummary) {
+      return article.originalSummary;
+    } else {
+      return article.summary;
+    }
   };
   
-  // 本文コンテンツの取得とフォールバック
-  let rawContent = '';
-  if (showOriginal && article.originalContent) {
-    rawContent = article.originalContent;
-  } else if (article.content) {
-    rawContent = article.content;
-  } else {
-    // コンテンツがない場合は要約を表示
-    rawContent = `<p>${article.summary}</p>`;
-  }
+  const content = getContent();
   
-  // コンテンツをクリーンアップ
-  const displayContent = cleanupHtml(rawContent);
-  
-  console.log('記事詳細 - コンテンツ:', {
-    hasContent: !!article.content,
-    hasOriginal: !!article.originalContent,
-    contentLength: article.content?.length || 0,
-    cleanedLength: displayContent.length,
-    // 短いサンプルを表示
-    preview: displayContent.substring(0, 50) + '...'
+  // 本文に使用するコンテンツは単にプレーンテキストにする
+  console.log('記事詳細 - コンテンツサイズ:', {
+    summaryLength: article.summary?.length || 0,
+    originalLength: article.originalSummary?.length || 0
   });
   
   return (
@@ -168,64 +146,53 @@ export function ArticleDetailView({
           
           {/* 本文 */}
           <div className="flex-1 overflow-y-auto">
-            <div className="prose prose-invert prose-sm sm:prose max-w-none px-2">
-              {/* 最適化されたコンテンツレンダリング */}
-              {displayContent ? (
-                <>
-                  <div className="article-content" dangerouslySetInnerHTML={{ __html: displayContent }} />
-                  
-                  {/* コンテンツが短い場合は要約も表示 */}
-                  {displayContent.length < 200 && (
-                    <div className="mt-6 p-4 bg-slate-700/30 rounded-md">
-                      <h3 className="text-lg font-semibold mb-2">記事の要約</h3>
-                      <blockquote className="px-4 py-2 border-l-4 border-slate-500 bg-slate-800/50">
-                        {article.summary}
-                      </blockquote>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="p-4 bg-slate-700/30 rounded-md">
-                  <p>記事の本文が見つかりませんでした。</p>
-                  <p className="mt-2">ここに記事の要約を表示します：</p>
-                  <blockquote className="mt-3 px-4 py-2 border-l-4 border-slate-500 bg-slate-800/50">
-                    {article.summary}
-                  </blockquote>
+            <div className="prose prose-invert prose-sm sm:prose max-w-none px-4 py-2">
+              {/* シンプルな記事コンテンツ表示 */}
+              <div className="mt-4">
+                <h3 className="text-lg font-semibold mb-4">記事の内容</h3>
+                <div className="leading-relaxed">
+                  {content.split('\n').map((paragraph, index) => (
+                    paragraph.trim() ? <p key={index} className="mb-4">{paragraph}</p> : null
+                  ))}
                 </div>
-              )}
+              </div>
+              
+              {/* 記事リンク */}
+              <div className="mt-6">
+                <a 
+                  href={article.link} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                >
+                  <span>続きを元の記事で読む</span>
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  >
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                </a>
+              </div>
             </div>
           </div>
           
           {/* フッター */}
-          <div className="border-t border-slate-700 mt-6 pt-4 flex justify-between items-center">
-            <div 
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(article.link, '_blank', 'noopener,noreferrer');
-              }}
-              className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
-            >
-              <span>元の記事を読む</span>
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                width="16" 
-                height="16" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-              >
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <line x1="10" y1="14" x2="21" y2="3"></line>
-              </svg>
+          <div className="border-t border-slate-700 mt-6 pt-4 flex justify-between items-center">            
+            <div className="text-sm text-slate-400">
+              AI News Reader © 2025
             </div>
             
-            <div className="text-sm text-slate-400">
-              AI News Reader
-            </div>
+            <BookmarkButton article={article} />
           </div>
         </div>
       </div>
