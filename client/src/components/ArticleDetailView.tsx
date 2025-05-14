@@ -58,21 +58,43 @@ export function ArticleDetailView({
   // 現在表示する言語のコンテンツを取得
   const displayTitle = showOriginal && article.originalTitle ? article.originalTitle : article.title;
   
+  // 外部画像や危険なスクリプトを削除するクリーンアップ関数
+  const cleanupHtml = (html: string): string => {
+    if (!html) return '';
+    
+    // スクリプトタグと危険な属性を削除
+    let cleanHtml = html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // スクリプトタグ削除
+      .replace(/on\w+="[^"]*"/g, '') // イベントハンドラ削除
+      .replace(/on\w+='[^']*'/g, ''); // イベントハンドラ削除（シングルクォート）
+    
+    // 画像の srcset 属性を削除（CORS問題を軽減）
+    cleanHtml = cleanHtml.replace(/srcset=["'][^"']*["']/g, '');
+    
+    return cleanHtml;
+  };
+  
   // 本文コンテンツの取得とフォールバック
-  let displayContent = '';
+  let rawContent = '';
   if (showOriginal && article.originalContent) {
-    displayContent = article.originalContent;
+    rawContent = article.originalContent;
   } else if (article.content) {
-    displayContent = article.content;
+    rawContent = article.content;
   } else {
     // コンテンツがない場合は要約を表示
-    displayContent = `<p>${article.summary}</p>`;
+    rawContent = `<p>${article.summary}</p>`;
   }
   
+  // コンテンツをクリーンアップ
+  const displayContent = cleanupHtml(rawContent);
+  
   console.log('記事詳細 - コンテンツ:', {
-    content: article.content?.substring(0, 100) + '...',
-    originalContent: article.originalContent?.substring(0, 100) + '...',
-    displaying: displayContent.substring(0, 100) + '...'
+    hasContent: !!article.content,
+    hasOriginal: !!article.originalContent,
+    contentLength: article.content?.length || 0,
+    cleanedLength: displayContent.length,
+    // 短いサンプルを表示
+    preview: displayContent.substring(0, 50) + '...'
   });
   
   return (
@@ -146,10 +168,22 @@ export function ArticleDetailView({
           
           {/* 本文 */}
           <div className="flex-1 overflow-y-auto">
-            <div className="prose prose-invert prose-sm sm:prose max-w-none">
-              {/* デバッグのための条件付きレンダリング */}
+            <div className="prose prose-invert prose-sm sm:prose max-w-none px-2">
+              {/* 最適化されたコンテンツレンダリング */}
               {displayContent ? (
-                <div dangerouslySetInnerHTML={{ __html: displayContent }} />
+                <>
+                  <div className="article-content" dangerouslySetInnerHTML={{ __html: displayContent }} />
+                  
+                  {/* コンテンツが短い場合は要約も表示 */}
+                  {displayContent.length < 200 && (
+                    <div className="mt-6 p-4 bg-slate-700/30 rounded-md">
+                      <h3 className="text-lg font-semibold mb-2">記事の要約</h3>
+                      <blockquote className="px-4 py-2 border-l-4 border-slate-500 bg-slate-800/50">
+                        {article.summary}
+                      </blockquote>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="p-4 bg-slate-700/30 rounded-md">
                   <p>記事の本文が見つかりませんでした。</p>
