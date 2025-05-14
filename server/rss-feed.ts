@@ -75,10 +75,10 @@ const AI_RSS_FEEDS = [
     defaultCategories: [AI_CATEGORIES.GENERAL]
   },
   {
-    url: 'https://www.jst.go.jp/ristex/hite/topics/feed',
-    name: 'JST HITE',
+    url: 'https://jpn.nec.com/press/rss/rss.xml',
+    name: 'NEC プレスリリース',
     language: 'ja',
-    defaultCategories: [AI_CATEGORIES.ETHICS, AI_CATEGORIES.RESEARCH]
+    defaultCategories: [AI_CATEGORIES.BUSINESS, AI_CATEGORIES.RESEARCH]
   }
 ];
 

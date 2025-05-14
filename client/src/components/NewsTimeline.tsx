@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { NewsItem } from './NewsItem';
 import { LoadingSpinner } from './LoadingSpinner';
+import { NewContentBanner } from './NewContentBanner';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { AI_CATEGORIES } from '../lib/constants';
 
@@ -59,6 +60,10 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   // 選択したカテゴリ
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  // 前回取得時のデータを保持
+  const [previousNewsCount, setPreviousNewsCount] = useState(0);
+  // 新着記事の数
+  const [newContentCount, setNewContentCount] = useState(0);
   
   // カテゴリを選択する関数
   const handleCategorySelect = (category: string | null) => {
@@ -71,8 +76,11 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
     setVisibleCount(PAGE_SIZE);
   }, [selectedSource]);
   
+  // 定期的な更新間隔（ミリ秒）
+  const AUTO_REFRESH_INTERVAL = 60000; // 1分
+  
   // React Queryを使用したキャッシュ対応データフェッチ
-  const { data: news, isLoading, error } = useQuery<AINewsItem[], Error>({
+  const { data: news, isLoading, error, refetch } = useQuery<AINewsItem[], Error>({
     queryKey: ['news', selectedSource, selectedCategory],
     queryFn: async () => {
       const url = selectedSource
@@ -106,6 +114,34 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
       setVisibleCount(prev => Math.min(prev + PAGE_SIZE, news.length));
     }
   }, [news, visibleCount]);
+  
+  // 新着コンテンツを確認
+  useEffect(() => {
+    if (news) {
+      // 前回のデータがある場合、新着記事数を計算
+      if (previousNewsCount > 0 && news.length > previousNewsCount) {
+        setNewContentCount(news.length - previousNewsCount);
+      }
+      // 現在のニュース数を保存
+      setPreviousNewsCount(news.length);
+    }
+  }, [news, previousNewsCount]);
+  
+  // 定期的な自動更新
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      refetch();
+    }, AUTO_REFRESH_INTERVAL);
+    
+    return () => clearInterval(intervalId);
+  }, [refetch]);
+  
+  // 新着通知をクリックした時の処理
+  const handleRefresh = useCallback(() => {
+    refetch();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setNewContentCount(0);
+  }, [refetch]);
   
   // 無限スクロールの設定
   const hasMore = news ? visibleCount < news.length : false;
@@ -141,6 +177,9 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
   
   return (
     <div className="space-y-4 pb-8">
+      {/* 新着通知バナー */}
+      <NewContentBanner newContentCount={newContentCount} onRefresh={handleRefresh} />
+      
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold pl-2 border-l-4 border-blue-500">
           {selectedSource ? `${selectedSource}のニュース` : '最新AI関連ニュース'}
