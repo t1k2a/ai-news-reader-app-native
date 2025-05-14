@@ -1,5 +1,5 @@
 import Parser from 'rss-parser';
-import { translateToJapanese, summarizeText, translateLongContent, stripHtmlTags, removeImageTags } from './translation-api';
+import { translateToJapanese, summarizeText, translateLongContent } from './translation-api';
 
 // RSSパーサーの初期化
 const parser = new Parser({
@@ -222,106 +222,11 @@ export async function fetchFeed(feedInfo: { url: string, name: string, language:
       // 英語の場合は翻訳する
       if (feedInfo.language === 'en') {
         try {
-          // タイトルと要約を翻訳
           translatedTitle = await translateToJapanese(item.title || '');
+          // 記事の全文を段落ごとに翻訳する
+          translatedContent = await translateLongContent(content);
+          // 要約も翻訳
           translatedSummary = await translateToJapanese(summary);
-          
-          // 記事の全文を翻訳（画像タグを保持し、より確実に翻訳）
-          try {
-            console.log(`長文翻訳処理開始 (${feedInfo.name}): ${item.title?.substring(0, 30)}...`);
-            
-            // 高品質な全文翻訳に挑戦（ただし元の内容も常に保持する）
-            try {
-              translatedContent = await translateLongContent(content, false);
-              console.log(`長文翻訳完了 (${feedInfo.name}): ${translatedContent.substring(0, 50)}...`);
-              
-              // 翻訳結果の品質チェック
-              if (translatedContent.length < content.length * 0.5) {
-                console.log(`警告: 翻訳後のコンテンツが元の${Math.round(translatedContent.length / content.length * 100)}%に減少`);
-                
-                // より確実な翻訳のためのバックアップ手法
-                console.log('バックアップ翻訳手法を試行...');
-                
-                // コンテンツを段落に分割
-                const paragraphs = content.split('</p>').filter(p => p.includes('<p'));
-                
-                if (paragraphs.length > 0) {
-                  // 各段落を個別に処理（最大10段落まで）
-                  const processedParagraphs = await Promise.all(
-                    paragraphs.slice(0, 10).map(async (p) => {
-                      try {
-                        // 段落を個別に翻訳
-                        const translatedP = await translateLongContent(p + '</p>', false);
-                        return translatedP;
-                      } catch (e) {
-                        console.error('段落翻訳エラー:', e);
-                        return p + '</p>'; // エラーが発生した場合は元の段落を使用
-                      }
-                    })
-                  );
-                  
-                  // 翻訳された段落を結合
-                  const combinedContent = processedParagraphs.join('\n');
-                  
-                  // 結合したコンテンツが十分な長さであれば採用
-                  if (combinedContent.length > translatedContent.length * 0.8) {
-                    translatedContent = combinedContent;
-                    console.log('バックアップ翻訳完了: より多くのコンテンツを翻訳しました');
-                  }
-                }
-              }
-            } catch (translationAttemptError) {
-              console.error('全文翻訳に失敗しました。翻訳されたタイトルと要約のみ利用します:', translationAttemptError);
-              
-              // 原文をそのまま使用（翻訳に失敗しても原文は保持）
-              translatedContent = '';
-            }
-          } catch (translationError) {
-            console.error(`コンテンツ翻訳エラー (${feedInfo.name}):`, translationError);
-            
-            // エラーの場合は単純なアプローチを試みる
-            try {
-              // 段落ごとに翻訳を試みる
-              const paragraphs = content.split('</p>').filter(p => p.includes('<p')).map(p => p + '</p>');
-              
-              if (paragraphs && paragraphs.length > 0) {
-                // 段落ごとに処理（最大全段落）
-                const translatedParagraphs = await Promise.all(
-                  paragraphs.map(async (p) => {
-                    try {
-                      // プレーンテキストを抽出して翻訳
-                      const text = stripHtmlTags(p);
-                      if (text.length > 10) {
-                        const translatedText = await translateToJapanese(text);
-                        // 元のHTMLタグを保持しながらテキストを置換
-                        return p.replace(/>([^<]+)</g, (match, textContent) => {
-                          if (textContent.trim().length > 0) {
-                            return `>${translatedText}<`;
-                          }
-                          return match;
-                        });
-                      }
-                      return p;
-                    } catch (e) {
-                      console.error('部分翻訳エラー:', e);
-                      return p; // エラーの場合は元の段落を使用
-                    }
-                  })
-                );
-                
-                // 翻訳された段落を結合
-                translatedContent = translatedParagraphs.join('\n');
-                console.log('フォールバック翻訳完了（全段落処理）');
-              } else {
-                // 段落が抽出できない場合は元のコンテンツを使用
-                translatedContent = content;
-                console.log('段落抽出失敗: 元のコンテンツを使用');
-              }
-            } catch (fallbackError) {
-              console.error('フォールバック翻訳にも失敗:', fallbackError);
-              translatedContent = content; // すべて失敗した場合は元のコンテンツを使用
-            }
-          }
           
           // 記事URLからユニークIDを生成
           const id = item.guid || item.link || `${feedInfo.name}-${Date.now()}-${Math.random()}`;
