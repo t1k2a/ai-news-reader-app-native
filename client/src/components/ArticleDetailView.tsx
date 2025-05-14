@@ -3,9 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { stripHtmlTags } from '../lib/utils';
 
 /**
- * HTML文字列を安全に処理し、HTMLの表示と非表示を切り替える
+ * HTML文字列を安全に処理し、HTMLタグを保持するか除去するかを選択
  */
 function processContent(html: string, keepHtml: boolean = true): string {
+  if (!html) return '';
+  
+  // HTMLタグを除去する場合
   if (!keepHtml) {
     return stripHtmlTags(html);
   }
@@ -13,6 +16,7 @@ function processContent(html: string, keepHtml: boolean = true): string {
   // HTMLを保持する場合は安全な処理を行う
   let cleaned = html
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
     .replace(/on\w+="[^"]*"/g, '') // onClick等のイベントハンドラを削除
     
     // 画像のレスポンシブ対応
@@ -203,6 +207,12 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
                       {showOriginal ? '日本語に切り替え' : '原文に切り替え (English)'}
                     </button>
                   )}
+                  <button 
+                    onClick={() => setShowHtml(!showHtml)}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-full transition-colors"
+                  >
+                    {showHtml ? 'プレーンテキストで表示' : 'HTML形式で表示'}
+                  </button>
                   
                   <a 
                     href={article.link} 
