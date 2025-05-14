@@ -147,7 +147,18 @@ export function ArticleDetailView({
           {/* 本文 */}
           <div className="flex-1 overflow-y-auto">
             <div className="prose prose-invert prose-sm sm:prose max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: displayContent }} />
+              {/* デバッグのための条件付きレンダリング */}
+              {displayContent ? (
+                <div dangerouslySetInnerHTML={{ __html: displayContent }} />
+              ) : (
+                <div className="p-4 bg-slate-700/30 rounded-md">
+                  <p>記事の本文が見つかりませんでした。</p>
+                  <p className="mt-2">ここに記事の要約を表示します：</p>
+                  <blockquote className="mt-3 px-4 py-2 border-l-4 border-slate-500 bg-slate-800/50">
+                    {article.summary}
+                  </blockquote>
+                </div>
+              )}
             </div>
           </div>
           
