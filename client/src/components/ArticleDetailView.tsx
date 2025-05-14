@@ -174,6 +174,20 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
                   }}
                 />
                 
+                {/* 日本語翻訳のデバッグ情報 */}
+                {!showOriginal && article.content && article.content.length < 200 && (
+                  <div className="mt-4 p-3 bg-blue-900/30 rounded border border-blue-800/50 text-sm">
+                    <p className="font-medium text-blue-300">翻訳情報:</p>
+                    <p className="text-blue-200">この記事は翻訳処理に問題があった可能性があります。</p>
+                    <button 
+                      onClick={() => setShowOriginal(true)}
+                      className="mt-2 px-3 py-1 bg-blue-700/50 text-blue-200 rounded hover:bg-blue-700 transition-colors"
+                    >
+                      原文を表示する
+                    </button>
+                  </div>
+                )}
+                
                 {/* 記事のメタ情報 */}
                 <div className="mt-6 pt-4 border-t border-slate-700/50">
                   <div className="text-sm text-slate-400 flex items-center">

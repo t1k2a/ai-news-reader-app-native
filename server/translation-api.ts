@@ -59,72 +59,104 @@ export function extractTextFromHtml(html: string): string {
  * @param removeImages 画像を削除するかどうか
  * @returns 翻訳されたコンテンツ
  */
-export async function translateLongContent(content: string, removeImages: boolean = true): Promise<string> {
+export async function translateLongContent(content: string, removeImages: boolean = false): Promise<string> {
   if (!content) return '';
   
   try {
-    // 画像タグを削除（必要な場合）
+    // コンテンツを処理（画像は保持）
     let processedContent = content;
-    if (removeImages) {
-      processedContent = removeImageTags(processedContent);
+    
+    // セクションに分割する（画像は保持）
+    const sections = [];
+    
+    // HTMLタグやセクションを認識して分割
+    // 画像タグを特別に処理する
+    const imageTagsMap = new Map();
+    let imageTagCounter = 0;
+    
+    // 画像タグをプレースホルダーに置き換える（翻訳から保護するため）
+    if (!removeImages) {
+      const imgRegex = /<img[^>]*>/gi;
+      processedContent = processedContent.replace(imgRegex, (match) => {
+        const placeholder = `__IMG_PLACEHOLDER_${imageTagCounter++}__`;
+        imageTagsMap.set(placeholder, match);
+        return placeholder;
+      });
     }
     
-    // シンプルな方法: HTML文字列を段落で分割して翻訳
-    const paragraphs = processedContent
-      .split(/(<\/p>|<\/h[1-6]>|<\/div>|<\/li>|<br\s*\/?>|\n\n)/)
-      .map(part => part.trim())
-      .filter(part => part.length > 0);
+    // コンテンツを段落やセクションに分割
+    // 複雑な正規表現ではなく、基本的な段落分割
+    const paragraphs = processedContent.split(/\n\n|\r\n\r\n|<\/p>|<\/div>|<\/h[1-6]>/).filter(p => p.trim().length > 0);
     
-    // 分割された各部分を処理
-    const translatedParts = [];
-    
-    for (let i = 0; i < paragraphs.length; i++) {
-      const part = paragraphs[i];
+    for (const paragraph of paragraphs) {
+      // 空の段落はスキップ
+      if (!paragraph.trim()) continue;
       
-      // HTMLタグか通常のテキストかを判断
-      if (part.startsWith('<') && part.endsWith('>')) {
-        // 閉じタグや単一タグはそのまま追加
-        translatedParts.push(part);
-      } else {
-        // タグを含む可能性があるコンテンツ部分
+      // HTMLタグを含むかどうかをチェック
+      if (/<[a-z][^>]*>/i.test(paragraph)) {
+        // HTMLタグを含む場合、テキスト部分を抽出して翻訳
+        const plainText = stripHtmlTags(paragraph);
         
-        if (part.includes('<img')) {
-          // 画像タグが含まれている場合は画像を削除または保持
-          translatedParts.push(removeImages ? removeImageTags(part) : part);
-        } else if (part.match(/<[a-z][\s\S]*>/i)) {
-          // その他のHTMLタグを含む場合
+        if (plainText.trim().length > 5) {
           try {
-            // テキスト部分のみを抽出して翻訳
-            const textOnly = extractTextFromHtml(part);
-            if (textOnly.trim().length > 0) {
-              const translated = await translateToJapanese(textOnly);
-              // 元のHTMLの構造を維持するため、テキスト部分のみを置換
-              translatedParts.push(part.replace(textOnly, translated));
-            } else {
-              translatedParts.push(part);
-            }
+            // テキスト部分だけを翻訳
+            const translatedText = await translateToJapanese(plainText);
+            
+            // 翻訳されたテキストで元のテキストを置換
+            // 単純な置換ではなく、テキストノードを特定して置換する
+            let translatedParagraph = paragraph;
+            
+            // テキストノードを特定して翻訳済みのテキストに置き換える
+            // この部分は実装が複雑なため、単純化した方法で対応
+            translatedParagraph = translatedParagraph.replace(/>([^<]+)</g, (match, p1) => {
+              if (p1.trim().length > 5) {
+                // 対応する翻訳済みテキストを見つける
+                const index = plainText.indexOf(p1);
+                if (index >= 0) {
+                  const endIndex = index + p1.length;
+                  const translatedPart = translatedText.substring(index, endIndex);
+                  return `>${translatedPart}<`;
+                }
+              }
+              return match;
+            });
+            
+            sections.push(translatedParagraph);
           } catch (e) {
-            console.error('部分翻訳エラー:', e);
-            translatedParts.push(part);
-          }
-        } else if (part.trim().length > 0) {
-          // 純粋なテキストの場合は直接翻訳
-          try {
-            const translated = await translateToJapanese(part);
-            translatedParts.push(translated);
-          } catch (e) {
-            console.error('テキスト翻訳エラー:', e);
-            translatedParts.push(part);
+            console.error('段落翻訳エラー:', e);
+            sections.push(paragraph); // 翻訳に失敗した場合は元の段落を使用
           }
         } else {
-          // 空の場合はそのまま追加
-          translatedParts.push(part);
+          // テキストがほとんどない場合はそのまま追加
+          sections.push(paragraph);
+        }
+      } else {
+        // HTMLタグを含まない純粋なテキストの場合は直接翻訳
+        if (paragraph.trim().length > 5) {
+          try {
+            const translated = await translateToJapanese(paragraph);
+            sections.push(translated);
+          } catch (e) {
+            console.error('テキスト翻訳エラー:', e);
+            sections.push(paragraph);
+          }
+        } else {
+          sections.push(paragraph);
         }
       }
     }
     
-    // 翻訳された部分を結合
-    return translatedParts.join(' ');
+    // 翻訳されたセクションを結合
+    let translatedContent = sections.join('\n');
+    
+    // 画像タグのプレースホルダーを元に戻す
+    if (!removeImages) {
+      imageTagsMap.forEach((imgTag, placeholder) => {
+        translatedContent = translatedContent.replace(placeholder, imgTag);
+      });
+    }
+    
+    return translatedContent;
   } catch (error) {
     console.error('コンテンツ翻訳エラー:', error);
     return content; // エラーの場合は元のコンテンツを返す
