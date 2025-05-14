@@ -220,150 +220,36 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
               
               {/* 記事コンテンツ */}
               <div className="prose prose-lg prose-invert max-w-none mb-8 bg-slate-800/30 p-5 rounded-lg">
-                {/* 並べて表示モード */}
-                {showSideBySide && article.originalContent ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="border-r border-slate-700/50 pr-4">
-                      <h3 className="text-lg text-blue-400 font-semibold mb-2">日本語</h3>
-                      <div 
-                        className="leading-relaxed article-content"
-                        dangerouslySetInnerHTML={{ 
-                          __html: sanitizeHtml(article.content)
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <h3 className="text-lg text-amber-400 font-semibold mb-2">原文</h3>
-                      <div 
-                        className="leading-relaxed article-content"
-                        dangerouslySetInnerHTML={{ 
-                          __html: sanitizeHtml(article.originalContent)
-                        }}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  // 通常の表示モード
-                  <div 
-                    className="leading-relaxed article-content"
-                    dangerouslySetInnerHTML={{ 
-                      __html: showOriginal && article.originalContent 
-                        ? sanitizeHtml(article.originalContent) 
-                        : sanitizeHtml(article.content) 
-                    }}
-                  />
-                )}
+                {/* 常に原文を表示するようにします（翻訳なし） */}
+                <div 
+                  className="leading-relaxed article-content"
+                  dangerouslySetInnerHTML={{ 
+                    __html: sanitizeHtml(article.originalContent || article.content)
+                  }}
+                />
                 
-                {/* 全文表示ボタン - 常に表示（デフォルトで両言語表示を優先） */}
-                {article.originalContent && !showSideBySide && (
-                  <div className="mt-6 p-3 bg-green-900/30 rounded border border-green-800/50 text-sm">
-                    <p className="font-medium text-green-300">表示オプション:</p>
-                    <p className="text-green-200">
-                      この記事は{article.sourceLanguage === 'en' ? '英語から日本語に翻訳' : '日本語'}の記事です。
-                      {!fullTranslationLoaded && article.sourceLanguage === 'en' && ' 記事の全文表示が必要な場合は以下のオプションをお試しください。'}
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button 
-                        onClick={() => {
-                          setShowSideBySide(true);
-                          setShowOriginal(false);
-                        }}
-                        className="px-3 py-1 bg-green-700/50 text-green-200 rounded hover:bg-green-700 transition-colors"
-                      >
-                        両言語を並べて表示
-                      </button>
-                      <button 
-                        onClick={() => {
-                          setShowOriginal(true);
-                          setShowSideBySide(false);
-                        }}
-                        className="px-3 py-1 bg-blue-700/50 text-blue-200 rounded hover:bg-blue-700 transition-colors"
-                      >
-                        {article.sourceLanguage === 'en' ? '原文のみ表示 (English)' : '元の表示に戻す'}
-                      </button>
-                      <a 
-                        href={article.link} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="px-3 py-1 bg-amber-700/50 text-amber-200 rounded hover:bg-amber-700 transition-colors"
-                      >
-                        元サイトで読む
-                      </a>
-                    </div>
+                {/* シンプルな外部リンクのみを表示 */}
+                <div className="mt-6 p-3 bg-slate-800/50 rounded border border-slate-700/50 text-sm">
+                  <p className="font-medium text-blue-400">元の記事ソース:</p>
+                  <p className="text-slate-300">
+                    {article.sourceName} - {new Date(article.publishDate).toLocaleDateString('ja-JP')}
+                  </p>
+                  <div className="mt-3">
+                    <a 
+                      href={article.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-4 py-2 bg-blue-700/80 hover:bg-blue-600 text-white rounded-md transition-colors"
+                    >
+                      元サイトで読む
+                      <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                      </svg>
+                    </a>
                   </div>
-                )}
+                </div>
                 
-                {/* オリジナルコンテンツがあり、翻訳コンテンツが不完全または短すぎる場合のメッセージ */}
-                {!showOriginal && !showSideBySide && 
-                  article.originalContent && 
-                  article.content && 
-                  (article.content.length < article.originalContent.length * 0.7 || 
-                   article.content.length < 300) && (
-                  <div className="mt-4 p-3 bg-blue-900/30 rounded border border-blue-800/50 text-sm">
-                    <p className="font-medium text-blue-300">翻訳情報:</p>
-                    <p className="text-blue-200">
-                      この記事は全文翻訳が不完全または一部しか翻訳されていない可能性があります。
-                      {article.content.length < 300 && ' 翻訳されたコンテンツが短すぎます。'}
-                    </p>
-                    <div className="mt-1 text-xs text-blue-200 opacity-75">
-                      翻訳テキスト長: {article.content.length} 文字
-                      {article.originalContent && ` / 元テキスト長: ${article.originalContent.length} 文字`}
-                      {article.originalContent && ` (${Math.round(article.content.length / article.originalContent.length * 100)}%)`}
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <button 
-                        onClick={() => {
-                          setShowOriginal(true);
-                          setShowSideBySide(false);
-                        }}
-                        className="px-3 py-1 bg-blue-700/50 text-blue-200 rounded hover:bg-blue-700 transition-colors"
-                      >
-                        原文を表示する
-                      </button>
-                      <button 
-                        onClick={() => {
-                          setShowSideBySide(true);
-                          setShowOriginal(false);
-                        }}
-                        className="px-3 py-1 bg-green-700/50 text-green-200 rounded hover:bg-green-700 transition-colors"
-                      >
-                        両言語を並べて表示
-                      </button>
-                    </div>
-                  </div>
-                )}
-                
-                {/* 記事のコンテンツがない場合のメッセージ */}
-                {article.content && 
-                 article.content.trim().length < 50 && (
-                  <div className="mt-6 p-4 bg-amber-900/30 rounded border border-amber-800/50 text-sm">
-                    <p className="font-medium text-amber-300">コンテンツ情報:</p>
-                    <p className="text-amber-200">
-                      この記事のコンテンツが取得できませんでした。原文を表示するか、元記事のリンクから直接閲覧してください。
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {article.originalContent && (
-                        <button 
-                          onClick={() => {
-                            setShowOriginal(true);
-                            setShowSideBySide(false);
-                          }}
-                          className="px-3 py-1 bg-blue-700/50 text-blue-200 rounded hover:bg-blue-700 transition-colors"
-                        >
-                          原文を表示する
-                        </button>
-                      )}
-                      <a 
-                        href={article.link} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="px-3 py-1 bg-amber-700/50 text-amber-200 rounded hover:bg-amber-700 transition-colors"
-                      >
-                        元の記事を読む
-                      </a>
-                    </div>
-                  </div>
-                )}
+                {/* 翻訳/情報表示部分を削除 */}
                 
                 {/* 記事のメタ情報 */}
                 <div className="mt-6 pt-4 border-t border-slate-700/50">
@@ -376,55 +262,35 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
                 </div>
               </div>
               
-              {/* フッター */}
+              {/* シンプルなフッター */}
               <div className="border-t border-slate-700 pt-6 mt-8">
-                {/* アクションボタン */}
-                <div className="flex flex-wrap gap-3 mb-6">
-                  {article.sourceLanguage === 'en' && (
-                    <>
-                      {showSideBySide ? (
-                        <button 
-                          onClick={() => {
-                            setShowSideBySide(false);
-                            setShowOriginal(false);
-                          }}
-                          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-full transition-colors"
-                        >
-                          日本語のみに切り替え
-                        </button>
-                      ) : (
-                        <>
-                          <button 
-                            onClick={() => {
-                              setShowOriginal(!showOriginal);
-                              setShowSideBySide(false);
-                            }}
-                            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-full transition-colors"
-                          >
-                            {showOriginal ? '日本語に切り替え' : '原文に切り替え (English)'}
-                          </button>
-                          
-                          <button 
-                            onClick={() => {
-                              setShowSideBySide(true);
-                              setShowOriginal(false);
-                            }}
-                            className="px-4 py-2 bg-green-800 hover:bg-green-700 text-slate-200 rounded-full transition-colors"
-                          >
-                            両言語を並べて表示
-                          </button>
-                        </>
-                      )}
-                    </>
-                  )}
+                <div className="flex justify-between items-center">
+                  <div className="text-sm text-slate-400 flex items-center">
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      width="16" 
+                      height="16" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2"
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                      className="mr-2 text-blue-400"
+                    >
+                      <path d="m3 11 18-5v12L3 14v-3z"></path>
+                      <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
+                    </svg>
+                    出典: <span className="font-medium text-slate-300 ml-1">{article.sourceName}</span>
+                  </div>
                   
                   <a 
                     href={article.link} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors flex items-center"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors flex items-center"
                   >
-                    元の記事を読む
+                    元サイトで読む
                     <svg 
                       xmlns="http://www.w3.org/2000/svg" 
                       width="16" 
@@ -442,48 +308,6 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
                       <line x1="10" y1="14" x2="21" y2="3" />
                     </svg>
                   </a>
-                </div>
-                
-                {/* 共有ボタン */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-2">
-                    <button className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full transition-colors">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-                      </svg>
-                    </button>
-                    <button className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full transition-colors">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
-                      </svg>
-                    </button>
-                    <button className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full transition-colors">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="2" y="2" width="20" height="20" rx="5"></rect>
-                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="text-sm text-slate-400 flex items-center">
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    width="16" 
-                    height="16" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2"
-                    strokeLinecap="round" 
-                    strokeLinejoin="round"
-                    className="mr-2 text-blue-400"
-                  >
-                    <path d="m3 11 18-5v12L3 14v-3z"></path>
-                    <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
-                  </svg>
-                  出典: <span className="font-medium text-slate-300 ml-1">{article.sourceName}</span>
                 </div>
               </div>
             </div>
