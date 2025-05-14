@@ -9,6 +9,7 @@ export function NewsHeader() {
       weekday: 'short',
       hour: '2-digit',
       minute: '2-digit',
+      timeZone: 'Asia/Tokyo'
     }).format(new Date());
   });
   
@@ -31,7 +32,7 @@ export function NewsHeader() {
         </div>
         
         <div className="text-sm text-slate-400">
-          最終更新: {currentTime}
+          最終更新: {currentTime} JST
           <button 
             onClick={() => {
               setCurrentTime(new Intl.DateTimeFormat('ja-JP', {
@@ -41,6 +42,7 @@ export function NewsHeader() {
                 weekday: 'short',
                 hour: '2-digit',
                 minute: '2-digit',
+                timeZone: 'Asia/Tokyo'
               }).format(new Date()));
               window.location.reload();
             }}
