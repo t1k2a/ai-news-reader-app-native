@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { stripHtmlTags } from '../lib/utils';
 
 /**
- * HTML文字列を安全に処理し、よりよく表示するためのヘルパー関数
+ * HTML文字列を安全に処理し、HTMLの表示と非表示を切り替える
  */
-function sanitizeHtml(html: string): string {
-  // 基本的な処理 - スクリプトタグを削除
+function processContent(html: string, keepHtml: boolean = true): string {
+  if (!keepHtml) {
+    return stripHtmlTags(html);
+  }
+  
+  // HTMLを保持する場合は安全な処理を行う
   let cleaned = html
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     .replace(/on\w+="[^"]*"/g, '') // onClick等のイベントハンドラを削除
@@ -48,6 +53,7 @@ interface ArticleDetailViewProps {
 
 export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) {
   const [showOriginal, setShowOriginal] = useState(false);
+  const [showHtml, setShowHtml] = useState(true);
   
   // ESCキーで閉じる
   useEffect(() => {
@@ -169,8 +175,8 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
                   className="leading-relaxed article-content"
                   dangerouslySetInnerHTML={{ 
                     __html: showOriginal && article.originalContent 
-                      ? sanitizeHtml(article.originalContent) 
-                      : sanitizeHtml(article.content) 
+                      ? processContent(article.originalContent, showHtml) 
+                      : processContent(article.content, showHtml) 
                   }}
                 />
                 
