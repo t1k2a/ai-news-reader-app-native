@@ -88,6 +88,40 @@
   background-color: rgba(148, 163, 184, 0.7);
 }
 
+/* 記事詳細スライドイン */
+.article-detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: flex-end;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.article-detail-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.article-detail-container {
+  background-color: #0f172a; /* slate-900 */
+  width: 100%;
+  max-width: 42rem;
+  height: 100%;
+  overflow-y: auto;
+  border-left: 1px solid rgba(51, 65, 85, 0.5); /* slate-700/50 */
+  transform: translateX(100%);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.article-detail-overlay.active .article-detail-container {
+  transform: translateX(0);
+}
+
 @layer base {
   * {
     @apply border-border;
