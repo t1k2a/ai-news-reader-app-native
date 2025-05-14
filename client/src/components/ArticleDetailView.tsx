@@ -218,12 +218,11 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
                 </div>
               )}
               
-              {/* 記事コンテンツ - "Read More"の自動追加を無効化 */}
-              <div className="prose prose-lg prose-invert max-w-none mb-8 bg-slate-800/30 p-5 rounded-lg prose-a:no-underline prose-blockquote:border-blue-500">
+              {/* 記事コンテンツ - proseクラスを使用せず、元のスタイルを適用 */}
+              <div className="mb-8 bg-slate-800/30 p-5 rounded-lg">
                 {/* 常に原文を表示するようにします（翻訳なし） */}
                 <div 
-                  className="leading-relaxed article-content prose-img:my-4"
-                  style={{ maxHeight: 'none', overflow: 'visible' }} // "Read More"防止用のスタイル
+                  className="article-content text-slate-100 text-lg"
                   dangerouslySetInnerHTML={{ 
                     __html: sanitizeHtml(article.originalContent || article.content)
                   }}

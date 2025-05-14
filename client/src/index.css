@@ -6,12 +6,18 @@
 .article-content {
   font-size: 1.1rem;
   line-height: 1.75;
+  max-height: none !important;
+  overflow: visible !important;
+  text-align: left;
 }
 
+/* 段落スタイル */
 .article-content p {
   margin-bottom: 1.25em;
+  margin-top: 0.75em;
 }
 
+/* 見出しスタイル */
 .article-content h1, 
 .article-content h2, 
 .article-content h3, 
@@ -20,6 +26,7 @@
   margin-bottom: 0.75em;
   font-weight: 600;
   line-height: 1.25;
+  color: white;
 }
 
 .article-content h1 {
@@ -34,16 +41,27 @@
   font-size: 1.25rem;
 }
 
+/* リストスタイル */
 .article-content ul, 
 .article-content ol {
   margin-left: 1.5em;
   margin-bottom: 1.25em;
+  list-style-position: outside;
+}
+
+.article-content ul {
+  list-style-type: disc;
+}
+
+.article-content ol {
+  list-style-type: decimal;
 }
 
 .article-content li {
   margin-bottom: 0.5em;
 }
 
+/* 引用スタイル */
 .article-content blockquote {
   margin-left: 1em;
   padding-left: 1em;
@@ -51,8 +69,10 @@
   color: rgb(203 213 225);
   font-style: italic;
   margin-bottom: 1.25em;
+  margin-top: 1.25em;
 }
 
+/* リンクスタイル */
 .article-content a {
   color: rgb(96 165 250);
   text-decoration: underline;
@@ -62,26 +82,56 @@
   color: rgb(147 197 253);
 }
 
-/* "Read More"表示を削除 */
-.article-content {
-  max-height: none !important;
-  overflow: visible !important;
+/* 画像スタイル */
+.article-content img {
+  max-width: 100%;
+  height: auto;
+  margin: 1.5em auto;
+  display: block;
+  border-radius: 6px;
 }
 
-.article-content::after {
-  display: none !important;
-  content: none !important;
+/* テーブルスタイル */
+.article-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5em;
+  margin-top: 1em;
 }
 
-.prose {
-  max-height: none !important;
-  overflow: visible !important;
+.article-content th,
+.article-content td {
+  padding: 0.5em;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  text-align: left;
 }
 
-.prose::before,
-.prose::after {
-  display: none !important;
-  content: none !important;
+.article-content th {
+  background-color: rgba(51, 65, 85, 0.5);
+}
+
+/* コードブロック */
+.article-content pre {
+  background-color: rgba(15, 23, 42, 0.6);
+  padding: 1em;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 1.5em 0;
+}
+
+.article-content code {
+  font-family: monospace;
+  background-color: rgba(15, 23, 42, 0.4);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+}
+
+/* 区切り線 */
+.article-content hr {
+  border: 0;
+  height: 1px;
+  background-color: rgba(148, 163, 184, 0.4);
+  margin: 2em 0;
 }
 
 /* スクロール挙動のカスタマイズ */
