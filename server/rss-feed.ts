@@ -75,8 +75,8 @@ const AI_RSS_FEEDS = [
     defaultCategories: [AI_CATEGORIES.GENERAL]
   },
   {
-    url: 'https://engineer.fabcross.jp/category/iot-ai/feed',
-    name: 'fabcross AI',
+    url: 'https://ledge.ai/feed/',
+    name: 'Ledge.ai',
     language: 'ja',
     defaultCategories: [AI_CATEGORIES.GENERAL, AI_CATEGORIES.BUSINESS]
   }

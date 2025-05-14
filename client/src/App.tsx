@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { NewsTimeline } from "./components/NewsTimeline";
 import { Sidebar } from "./components/Sidebar";
 import { NewsHeader } from "./components/NewsHeader";
+import { BookmarksPanel } from "./components/BookmarksPanel";
 import "@fontsource/inter";
 
 function App() {
@@ -61,6 +62,7 @@ function App() {
         <footer className="bg-slate-800 p-3 text-center text-sm text-slate-400">
           AI News Reader - 最新のAI関連ニュースをシンプルに
         </footer>
+        <BookmarksPanel />
         <Toaster position="top-right" />
       </div>
     </QueryClientProvider>
