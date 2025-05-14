@@ -23,7 +23,7 @@ interface NewsItemProps {
 export function NewsItem({ item }: NewsItemProps) {
   const [showOriginal, setShowOriginal] = useState(false);
   
-  // 日付のフォーマット
+  // 日付のフォーマット（JSTに調整）
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('ja-JP', {
@@ -31,7 +31,8 @@ export function NewsItem({ item }: NewsItemProps) {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      timeZone: 'Asia/Tokyo'
     }).format(date);
   };
   
@@ -42,7 +43,7 @@ export function NewsItem({ item }: NewsItemProps) {
           <div className="flex items-center text-sm text-slate-400 mb-1">
             <span className="font-medium text-blue-400">{item.sourceName}</span>
             <span className="mx-2">•</span>
-            <span>{formatDate(item.publishDate)}</span>
+            <span>{formatDate(item.publishDate)} JST</span>
           </div>
           
           {/* カテゴリタグ */}
