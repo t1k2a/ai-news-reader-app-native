@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { stripHtmlTags } from '../lib/utils';
+import { BookmarkButton } from './BookmarkButton';
 
 interface AINewsItem {
   id: string;
@@ -68,7 +69,7 @@ export function NewsItem({ item }: NewsItemProps) {
             <p>{stripHtmlTags(showOriginal && item.originalSummary ? item.originalSummary : item.summary)}</p>
           </div>
           
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             {item.sourceLanguage === 'en' && (
               <button 
                 onClick={(e) => {
@@ -80,6 +81,7 @@ export function NewsItem({ item }: NewsItemProps) {
                 {showOriginal ? '翻訳を表示' : '原文を表示'}
               </button>
             )}
+            <BookmarkButton article={item} />
           </div>
         </div>
       </div>

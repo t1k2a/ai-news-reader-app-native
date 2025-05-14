@@ -42,7 +42,24 @@ const AI_RSS_FEEDS = [
     language: 'en',
     defaultCategories: [AI_CATEGORIES.GENERAL]
   },
-
+  { 
+    url: 'https://blog.google/technology/ai/rss/',
+    name: 'Google AI Blog',
+    language: 'en',
+    defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.BUSINESS]
+  },
+  { 
+    url: 'https://techcrunch.com/tag/artificial-intelligence/feed/',
+    name: 'TechCrunch AI',
+    language: 'en',
+    defaultCategories: [AI_CATEGORIES.BUSINESS, AI_CATEGORIES.GENERAL]
+  },
+  { 
+    url: 'https://openai.com/blog/rss.xml',
+    name: 'OpenAI Blog',
+    language: 'en',
+    defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.ML]
+  },
   
   // 日本語のRSSフィード
   { 
@@ -56,6 +73,12 @@ const AI_RSS_FEEDS = [
     name: 'AINow',
     language: 'ja',
     defaultCategories: [AI_CATEGORIES.GENERAL]
+  },
+  {
+    url: 'https://engineer.fabcross.jp/category/iot-ai/feed',
+    name: 'fabcross AI',
+    language: 'ja',
+    defaultCategories: [AI_CATEGORIES.GENERAL, AI_CATEGORIES.BUSINESS]
   }
 ];
 
@@ -298,12 +321,12 @@ export async function fetchFeed(feedInfo: { url: string, name: string, language:
 export async function fetchAllFeeds(): Promise<AINewsItem[]> {
   const allNewsItems: AINewsItem[] = [];
   
-  // 並列でフィードを取得（各フィードに5秒のタイムアウトを設定）
+  // 並列でフィードを取得（各フィードに15秒のタイムアウトを設定）
   const fetchPromises = AI_RSS_FEEDS.map(async (feedInfo) => {
     try {
-      // タイムアウト付きでフィードを取得
+      // タイムアウト付きでフィードを取得（15秒に延長）
       const timeoutPromise = new Promise<AINewsItem[]>((_, reject) => {
-        setTimeout(() => reject(new Error(`Timeout fetching ${feedInfo.name}`)), 5000);
+        setTimeout(() => reject(new Error(`Timeout fetching ${feedInfo.name}`)), 15000);
       });
       
       const items = await Promise.race([
