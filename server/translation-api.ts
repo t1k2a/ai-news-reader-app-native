@@ -122,12 +122,12 @@ export function stripHtmlTags(html: string): string {
 }
 
 /**
- * テキストを指定した長さ（約140文字）に要約する
+ * テキストを指定した長さ（約500文字）に要約する
  * @param text 要約するテキスト
- * @param maxLength 最大文字数（デフォルト140）
+ * @param maxLength 最大文字数（デフォルト500）
  * @returns 要約されたテキスト
  */
-export function summarizeText(text: string, maxLength: number = 140): string {
+export function summarizeText(text: string, maxLength: number = 500): string {
   if (!text) return '';
   
   // まずHTMLタグを除去

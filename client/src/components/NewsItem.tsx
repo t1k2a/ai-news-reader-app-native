@@ -22,7 +22,6 @@ interface NewsItemProps {
 
 export function NewsItem({ item }: NewsItemProps) {
   const [showOriginal, setShowOriginal] = useState(false);
-  const [expanded, setExpanded] = useState(false);
   
   // 日付のフォーマット
   const formatDate = (dateString: string) => {
@@ -65,20 +64,10 @@ export function NewsItem({ item }: NewsItemProps) {
           </h3>
           
           <div className="prose prose-sm prose-invert max-w-none bg-slate-800/50 p-3 rounded-md">
-            {expanded ? (
-              <p>{stripHtmlTags(showOriginal && item.originalContent ? item.originalContent : item.content)}</p>
-            ) : (
-              <p>{stripHtmlTags(showOriginal && item.originalSummary ? item.originalSummary : item.summary)}</p>
-            )}
+            <p>{stripHtmlTags(showOriginal && item.originalSummary ? item.originalSummary : item.summary)}</p>
           </div>
           
           <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              className="text-sm px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors"
-            >
-              続きを読む →
-            </button>
-            
             {item.sourceLanguage === 'en' && (
               <button 
                 onClick={(e) => {

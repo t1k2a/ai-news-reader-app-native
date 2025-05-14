@@ -212,7 +212,7 @@ export async function fetchFeed(feedInfo: { url: string, name: string, language:
         content = item.contentSnippet || '';
       }
       
-      // 要約作成（最大140文字）
+      // 要約作成（最大500文字）
       const summary = summarizeText(content);
       
       let translatedTitle = item.title || '';
