@@ -218,13 +218,13 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
                 </div>
               )}
               
-              {/* 記事コンテンツ - proseクラスを使用せず、元のスタイルを適用 */}
+              {/* 記事コンテンツ - 完全無加工で原文をそのまま表示 */}
               <div className="mb-8 bg-slate-800/30 p-5 rounded-lg">
-                {/* 常に原文を表示するようにします（翻訳なし） */}
+                {/* 原文をそのまま表示（サニタイズなし） */}
                 <div 
-                  className="article-content text-slate-100 text-lg"
+                  className="article-raw-content text-slate-100"
                   dangerouslySetInnerHTML={{ 
-                    __html: sanitizeHtml(article.originalContent || article.content)
+                    __html: article.originalContent || article.content
                   }}
                 />
                 

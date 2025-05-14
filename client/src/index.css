@@ -134,6 +134,27 @@
   margin: 2em 0;
 }
 
+/* 未加工の記事コンテンツ表示用スタイル */
+.article-raw-content {
+  line-height: 1.6;
+  font-size: 1rem;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.article-raw-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.article-raw-content a {
+  color: rgb(96 165 250);
+}
+
+.article-raw-content a:hover {
+  color: rgb(147 197 253);
+}
+
 /* スクロール挙動のカスタマイズ */
 .overflow-y-auto {
   scrollbar-width: thin; /* Firefox */
