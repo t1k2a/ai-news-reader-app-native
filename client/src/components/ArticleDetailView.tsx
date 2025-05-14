@@ -5,10 +5,15 @@ import { motion, AnimatePresence } from 'framer-motion';
  * HTML文字列を安全に処理し、よりよく表示するためのヘルパー関数
  */
 function sanitizeHtml(html: string): string {
+  if (!html) return '';
+  
   // 基本的な処理 - スクリプトタグを削除
   let cleaned = html
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     .replace(/on\w+="[^"]*"/g, '') // onClick等のイベントハンドラを削除
+    
+    // <hr>タグをより見やすい区切りに置き換え
+    .replace(/<hr\s*\/?>|<hr\s+[^>]*>/gi, '<div class="border-t border-slate-600 my-6"></div>')
     
     // 画像のレスポンシブ対応
     .replace(/<img(.*?)>/gi, (match, attributes) => {
@@ -17,11 +22,25 @@ function sanitizeHtml(html: string): string {
         .replace(/width=["'](\d+)["']/g, '')
         .replace(/height=["'](\d+)["']/g, '');
       
-      return `<img${cleanedAttributes} class="max-w-full h-auto rounded-md my-2" loading="lazy">`;
+      return `<img${cleanedAttributes} class="max-w-full h-auto rounded-md my-4 mx-auto" loading="lazy">`;
     })
     
     // リンクを安全に開く
-    .replace(/<a(.*?)>/gi, '<a$1 target="_blank" rel="noopener noreferrer">');
+    .replace(/<a(.*?)>/gi, '<a$1 target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline">')
+    
+    // 不足している閉じタグを修正
+    .replace(/<p([^>]*)>([^<]*)/gi, (match, attributes, content) => {
+      // 段落内容と閉じタグの追加を確認
+      if (!match.includes('</p>')) {
+        return `<p${attributes}>${content}</p>`;
+      }
+      return match;
+    });
+
+  // HTML内容が不足している場合はタグを追加
+  if (!cleaned.includes('<p') && !cleaned.includes('<div') && !cleaned.includes('<h')) {
+    cleaned = `<p>${cleaned}</p>`;
+  }
     
   return cleaned;
 }
@@ -174,17 +193,48 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
                   }}
                 />
                 
-                {/* 日本語翻訳のデバッグ情報 */}
-                {!showOriginal && article.content && article.content.length < 200 && (
+                {/* オリジナルコンテンツがあり、翻訳コンテンツが不完全または短すぎる場合のメッセージ */}
+                {!showOriginal && 
+                  article.originalContent && 
+                  article.content && 
+                  (article.content.length < article.originalContent.length * 0.7 || 
+                   article.content.length < 300) && (
                   <div className="mt-4 p-3 bg-blue-900/30 rounded border border-blue-800/50 text-sm">
                     <p className="font-medium text-blue-300">翻訳情報:</p>
-                    <p className="text-blue-200">この記事は翻訳処理に問題があった可能性があります。</p>
+                    <p className="text-blue-200">
+                      この記事は全文翻訳が不完全または一部しか翻訳されていない可能性があります。
+                      {article.content.length < 300 && ' 翻訳されたコンテンツが短すぎます。'}
+                    </p>
+                    <div className="mt-1 text-xs text-blue-200 opacity-75">
+                      翻訳テキスト長: {article.content.length} 文字
+                      {article.originalContent && ` / 元テキスト長: ${article.originalContent.length} 文字`}
+                      {article.originalContent && ` (${Math.round(article.content.length / article.originalContent.length * 100)}%)`}
+                    </div>
                     <button 
                       onClick={() => setShowOriginal(true)}
                       className="mt-2 px-3 py-1 bg-blue-700/50 text-blue-200 rounded hover:bg-blue-700 transition-colors"
                     >
                       原文を表示する
                     </button>
+                  </div>
+                )}
+                
+                {/* 記事のコンテンツがない場合のメッセージ */}
+                {article.content && 
+                 article.content.trim().length < 50 && (
+                  <div className="mt-6 p-4 bg-amber-900/30 rounded border border-amber-800/50 text-sm">
+                    <p className="font-medium text-amber-300">コンテンツ情報:</p>
+                    <p className="text-amber-200">
+                      この記事のコンテンツが取得できませんでした。原文を表示するか、元記事のリンクから直接閲覧してください。
+                    </p>
+                    <a 
+                      href={article.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-block px-3 py-1 bg-amber-700/50 text-amber-200 rounded hover:bg-amber-700 transition-colors"
+                    >
+                      元の記事を読む
+                    </a>
                   </div>
                 )}
                 
