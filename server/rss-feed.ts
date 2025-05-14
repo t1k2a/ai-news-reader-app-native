@@ -75,10 +75,10 @@ const AI_RSS_FEEDS = [
     defaultCategories: [AI_CATEGORIES.GENERAL]
   },
   {
-    url: 'https://jpn.nec.com/press/rss/rss.xml',
-    name: 'NEC プレスリリース',
+    url: 'https://forest.watch.impress.co.jp/data/rss/1.0/wf/feed.rdf',
+    name: '窓の杜',
     language: 'ja',
-    defaultCategories: [AI_CATEGORIES.BUSINESS, AI_CATEGORIES.RESEARCH]
+    defaultCategories: [AI_CATEGORIES.GENERAL, AI_CATEGORIES.BUSINESS]
   }
 ];
 

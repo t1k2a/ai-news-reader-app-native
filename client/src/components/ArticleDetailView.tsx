@@ -1,38 +1,6 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { stripHtmlTags } from '../lib/utils';
-
-/**
- * HTML文字列を安全に処理し、HTMLタグを保持するか除去するかを選択
- */
-function processContent(html: string, keepHtml: boolean = true): string {
-  if (!html) return '';
-  
-  // HTMLタグを除去する場合
-  if (!keepHtml) {
-    return stripHtmlTags(html);
-  }
-  
-  // HTMLを保持する場合は安全な処理を行う
-  let cleaned = html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-    .replace(/on\w+="[^"]*"/g, '') // onClick等のイベントハンドラを削除
-    
-    // 画像のレスポンシブ対応
-    .replace(/<img(.*?)>/gi, (match, attributes) => {
-      // width/heightの固定値を削除し、classを追加
-      const cleanedAttributes = attributes
-        .replace(/width=["'](\d+)["']/g, '')
-        .replace(/height=["'](\d+)["']/g, '');
-      
-      return `<img${cleanedAttributes} class="max-w-full h-auto rounded-md my-2" loading="lazy">`;
-    })
-    
-    // リンクを安全に開く
-    .replace(/<a(.*?)>/gi, '<a$1 target="_blank" rel="noopener noreferrer">');
-    
-  return cleaned;
-}
+import { BookmarkButton } from './BookmarkButton';
 
 interface AINewsItem {
   id: string;
@@ -52,55 +20,26 @@ interface AINewsItem {
 interface ArticleDetailViewProps {
   article: AINewsItem | null;
   onClose: () => void;
+  showOriginal: boolean;
+  onToggleOriginal: () => void;
 }
 
-export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) {
-  const [showOriginal, setShowOriginal] = useState(false);
-  const [showHtml, setShowHtml] = useState(true);
-  const [isActive, setIsActive] = useState(false);
+export function ArticleDetailView({ 
+  article, 
+  onClose, 
+  showOriginal, 
+  onToggleOriginal 
+}: ArticleDetailViewProps) {
   const detailRef = useRef<HTMLDivElement>(null);
   
-  // ESCキーで閉じる
+  // 記事が変更されたらスクロール位置をリセット
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleClose();
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-  
-  // 閉じる処理
-  const handleClose = () => {
-    setIsActive(false);
-    // アニメーション終了後に実際にコンポーネントを閉じる
-    setTimeout(() => {
-      onClose();
-    }, 300);
-  };
-  
-  // 記事が開かれたらアニメーションを開始
-  useEffect(() => {
-    if (article) {
-      // スクロールを固定
-      document.body.style.overflow = 'hidden';
-      
-      // 表示アニメーションのタイミング調整
-      setTimeout(() => {
-        setIsActive(true);
-      }, 10);
-      
-      return () => {
-        // スクロールを戻す
-        document.body.style.overflow = '';
-      };
-    } else {
-      setIsActive(false);
+    if (detailRef.current) {
+      detailRef.current.scrollTop = 0;
     }
-  }, [article]);
-  
+  }, [article?.id]);
+
+  // 詳細ビューが表示されてないときはnullを返す
   if (!article) return null;
   
   // 日付のフォーマット
@@ -108,169 +47,103 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('ja-JP', {
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      timeZone: 'Asia/Tokyo'
     }).format(date);
   };
+
+  // 現在表示する言語のコンテンツを取得
+  const displayTitle = showOriginal && article.originalTitle ? article.originalTitle : article.title;
+  const displayContent = showOriginal && article.originalContent ? article.originalContent : article.content;
   
   return (
-    <div className={`article-detail-overlay ${isActive ? 'active' : ''}`}>
-      {/* 背景オーバーレイ */}
-      <div 
-        className="absolute inset-0 bg-black/50"
-        onClick={handleClose}
-      />
-      
-      {/* 記事コンテナ */}
-      <div 
+    <div className="article-detail-overlay active" onClick={onClose}>
+      <div
         ref={detailRef}
         className="article-detail-container"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6 md:p-8 flex-1">
+        <div className="p-4 sm:p-6 flex flex-col h-full">
           {/* ヘッダー */}
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <div className="text-sm text-blue-400 font-medium">
-                {article.sourceName}
-              </div>
-              <div className="text-sm text-slate-400 mt-1">
-                {formatDate(article.publishDate)}
-              </div>
-            </div>
-            
-            <button 
-              onClick={handleClose}
-              className="p-2 text-slate-400 hover:text-white rounded-full hover:bg-slate-800 transition-colors"
-            >
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                width="24" 
-                height="24" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-              >
-                <path d="M18 6 6 18" />
-                <path d="m6 6 12 12" />
-              </svg>
-            </button>
-          </div>
-          
-          {/* 記事タイトル */}
-          <h1 className="text-2xl font-bold text-white mb-4">
-            {showOriginal && article.originalTitle ? article.originalTitle : article.title}
-          </h1>
-          
-          {/* カテゴリタグ */}
-          {article.categories && article.categories.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6">
-              {article.categories.map(category => (
-                <span 
-                  key={category} 
-                  className="inline-block px-3 py-1 bg-slate-700/80 text-sm text-slate-300 rounded-full border border-slate-600/50 hover:bg-slate-600/80 transition-colors"
-                >
-                  {category}
-                </span>
-              ))}
-            </div>
-          )}
-          
-          {/* 記事コンテンツ */}
-          <div className="prose prose-lg prose-invert max-w-none mb-8 bg-slate-800/30 p-5 rounded-lg">
-            <div 
-              className="leading-relaxed article-content"
-              dangerouslySetInnerHTML={{ 
-                __html: showOriginal && article.originalContent 
-                  ? processContent(article.originalContent, showHtml) 
-                  : processContent(article.content, showHtml) 
-              }}
-            />
-            
-            {/* 記事のメタ情報 */}
-            <div className="mt-6 pt-4 border-t border-slate-700/50">
-              <div className="text-sm text-slate-400 flex items-center">
-                <span className="inline-block w-4 h-4 mr-2 bg-blue-500 rounded-full"></span>
-                <span>{article.sourceName}</span>
+          <div className="flex justify-between items-start mb-5">
+            <div className="flex-1">
+              <div className="text-sm text-slate-400 mb-1">
+                <span className="font-medium text-blue-400">{article.sourceName}</span>
                 <span className="mx-2">•</span>
-                <time dateTime={article.publishDate}>{formatDate(article.publishDate)}</time>
+                <span>{formatDate(article.publishDate)} JST</span>
               </div>
+              
+              <h2 className="text-2xl font-bold mb-3">{displayTitle}</h2>
+              
+              {/* カテゴリタグ */}
+              {article.categories && article.categories.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {article.categories.map(category => (
+                    <span 
+                      key={category} 
+                      className="inline-block px-2 py-0.5 bg-slate-700/80 text-xs text-slate-300 rounded-full border border-slate-600/50"
+                    >
+                      {category}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-          
-          {/* フッター */}
-          <div className="border-t border-slate-700 pt-6 mt-8">
-            {/* アクションボタン */}
-            <div className="flex flex-wrap gap-3 mb-6">
+            
+            <div className="flex items-center gap-2">
               {article.sourceLanguage === 'en' && (
                 <button 
-                  onClick={() => setShowOriginal(!showOriginal)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-full transition-colors"
+                  onClick={onToggleOriginal}
+                  className="text-sm px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-full transition-colors"
                 >
-                  {showOriginal ? '日本語に切り替え' : '原文に切り替え (English)'}
+                  {showOriginal ? '翻訳を表示' : '原文を表示'}
                 </button>
               )}
-              <button 
-                onClick={() => setShowHtml(!showHtml)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-full transition-colors"
-              >
-                {showHtml ? 'プレーンテキストで表示' : 'HTML形式で表示'}
-              </button>
               
-              <a 
-                href={article.link} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors flex items-center"
+              <BookmarkButton article={article} />
+              
+              <button
+                onClick={onClose}
+                className="text-slate-400 hover:text-slate-300 p-1"
+                aria-label="閉じる"
               >
-                元の記事を読む
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
-                  width="16" 
-                  height="16" 
+                  width="20" 
+                  height="20" 
                   viewBox="0 0 24 24" 
                   fill="none" 
                   stroke="currentColor" 
                   strokeWidth="2" 
                   strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  className="ml-2"
+                  strokeLinejoin="round"
                 >
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                  <polyline points="15 3 21 3 21 9" />
-                  <line x1="10" y1="14" x2="21" y2="3" />
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
-              </a>
+              </button>
             </div>
-            
-            {/* 共有ボタン */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <button className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full transition-colors">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-                  </svg>
-                </button>
-                <button className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full transition-colors">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
-                  </svg>
-                </button>
-                <button className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full transition-colors">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="2" width="20" height="20" rx="5"></rect>
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                  </svg>
-                </button>
-              </div>
+          </div>
+          
+          {/* 本文 */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="prose prose-invert prose-sm sm:prose max-w-none">
+              <div dangerouslySetInnerHTML={{ __html: displayContent }} />
             </div>
-            
-            <div className="text-sm text-slate-400 flex items-center">
+          </div>
+          
+          {/* フッター */}
+          <div className="border-t border-slate-700 mt-6 pt-4 flex justify-between items-center">
+            <a 
+              href={article.link} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              <span>元の記事を読む</span>
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
                 width="16" 
@@ -278,15 +151,18 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
                 viewBox="0 0 24 24" 
                 fill="none" 
                 stroke="currentColor" 
-                strokeWidth="2"
+                strokeWidth="2" 
                 strokeLinecap="round" 
                 strokeLinejoin="round"
-                className="mr-2 text-blue-400"
               >
-                <path d="m3 11 18-5v12L3 14v-3z"></path>
-                <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
               </svg>
-              出典: <span className="font-medium text-slate-300 ml-1">{article.sourceName}</span>
+            </a>
+            
+            <div className="text-sm text-slate-400">
+              AI News Reader
             </div>
           </div>
         </div>
