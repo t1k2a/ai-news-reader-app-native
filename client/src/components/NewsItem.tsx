@@ -64,7 +64,7 @@ export function NewsItem({ item }: NewsItemProps) {
             {showOriginal && item.originalTitle ? item.originalTitle : item.title}
           </h3>
           
-          <div className="prose prose-sm prose-invert max-w-none bg-slate-800/50 p-3 rounded-md">
+          <div className="prose prose-sm prose-invert max-w-none bg-slate-800/50 p-3 rounded-md line-clamp-6">
             {expanded ? (
               <p>{stripHtmlTags(showOriginal && item.originalContent ? item.originalContent : item.content)}</p>
             ) : (
