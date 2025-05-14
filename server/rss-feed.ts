@@ -75,8 +75,8 @@ const AI_RSS_FEEDS = [
     defaultCategories: [AI_CATEGORIES.GENERAL]
   },
   {
-    url: 'https://forest.watch.impress.co.jp/data/rss/1.0/wf/feed.rdf',
-    name: '窓の杜',
+    url: 'https://www.itmedia.co.jp/news/subtop/aiplus/aiplus.2.xml',
+    name: 'ITmedia AI+',
     language: 'ja',
     defaultCategories: [AI_CATEGORIES.GENERAL, AI_CATEGORIES.BUSINESS]
   }

@@ -137,11 +137,12 @@ export function ArticleDetailView({
           
           {/* フッター */}
           <div className="border-t border-slate-700 mt-6 pt-4 flex justify-between items-center">
-            <a 
-              href={article.link} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
+            <div 
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(article.link, '_blank', 'noopener,noreferrer');
+              }}
+              className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
             >
               <span>元の記事を読む</span>
               <svg 
@@ -159,7 +160,7 @@ export function ArticleDetailView({
                 <polyline points="15 3 21 3 21 9"></polyline>
                 <line x1="10" y1="14" x2="21" y2="3"></line>
               </svg>
-            </a>
+            </div>
             
             <div className="text-sm text-slate-400">
               AI News Reader
