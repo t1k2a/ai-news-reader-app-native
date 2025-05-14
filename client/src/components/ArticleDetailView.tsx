@@ -7,42 +7,70 @@ import { motion, AnimatePresence } from 'framer-motion';
 function sanitizeHtml(html: string): string {
   if (!html) return '';
   
-  // 基本的な処理 - スクリプトタグを削除
-  let cleaned = html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/on\w+="[^"]*"/g, '') // onClick等のイベントハンドラを削除
-    
-    // <hr>タグをより見やすい区切りに置き換え
-    .replace(/<hr\s*\/?>|<hr\s+[^>]*>/gi, '<div class="border-t border-slate-600 my-6"></div>')
-    
-    // 画像のレスポンシブ対応
-    .replace(/<img(.*?)>/gi, (match, attributes) => {
-      // width/heightの固定値を削除し、classを追加
-      const cleanedAttributes = attributes
-        .replace(/width=["'](\d+)["']/g, '')
-        .replace(/height=["'](\d+)["']/g, '');
-      
-      return `<img${cleanedAttributes} class="max-w-full h-auto rounded-md my-4 mx-auto" loading="lazy">`;
-    })
-    
-    // リンクを安全に開く
-    .replace(/<a(.*?)>/gi, '<a$1 target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline">')
-    
-    // 不足している閉じタグを修正
-    .replace(/<p([^>]*)>([^<]*)/gi, (match, attributes, content) => {
-      // 段落内容と閉じタグの追加を確認
-      if (!match.includes('</p>')) {
-        return `<p${attributes}>${content}</p>`;
-      }
-      return match;
-    });
-
-  // HTML内容が不足している場合はタグを追加
-  if (!cleaned.includes('<p') && !cleaned.includes('<div') && !cleaned.includes('<h')) {
-    cleaned = `<p>${cleaned}</p>`;
+  // HTML内容がほとんどない場合はデバッグ情報を表示
+  if (html.length < 100) {
+    console.log('Warning: Very short HTML content to sanitize:', html);
   }
+  
+  try {
+    // 基本的な処理 - スクリプトタグを削除
+    let cleaned = html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/on\w+="[^"]*"/g, '') // onClick等のイベントハンドラを削除
+      
+      // <hr>タグをより見やすい区切りに置き換え
+      .replace(/<hr\s*\/?>|<hr\s+[^>]*>/gi, '<div class="border-t border-slate-600 my-6"></div>')
+      
+      // __HTML_TAG_や__IMG_PLACEHOLDER_などの置換文字列を削除（翻訳プロセスの残骸）
+      .replace(/__HTML_TAG_\d+__|__IMG_PLACEHOLDER_\d+__/g, '')
+      
+      // 画像のレスポンシブ対応
+      .replace(/<img(.*?)>/gi, (match, attributes) => {
+        // width/heightの固定値を削除し、classを追加
+        const cleanedAttributes = attributes
+          .replace(/width=["'](\d+)["']/g, '')
+          .replace(/height=["'](\d+)["']/g, '');
+        
+        return `<img${cleanedAttributes} class="max-w-full h-auto rounded-md my-4 mx-auto" loading="lazy">`;
+      })
+      
+      // リンクを安全に開く
+      .replace(/<a(.*?)>/gi, '<a$1 target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline">')
+      
+      // 不足している閉じタグを修正
+      .replace(/<p([^>]*)>([^<]*)/gi, (match, attributes, content) => {
+        // 段落内容と閉じタグの追加を確認
+        if (!match.includes('</p>')) {
+          return `<p${attributes}>${content}</p>`;
+        }
+        return match;
+      });
+
+    // HTML内容が不足している場合はタグを追加
+    if (!cleaned.includes('<p') && !cleaned.includes('<div') && !cleaned.includes('<h')) {
+      // 空白行で分割して段落にする
+      const paragraphs = cleaned.split(/\n\s*\n|\r\n\s*\r\n/);
+      if (paragraphs.length > 1) {
+        cleaned = paragraphs.map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('\n');
+      } else {
+        cleaned = `<p>${cleaned}</p>`;
+      }
+    }
     
-  return cleaned;
+    // 文字実体参照の修正
+    cleaned = cleaned
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+      
+    return cleaned;
+  } catch (error) {
+    console.error('HTML sanitization error:', error);
+    // エラーが発生した場合でも何らかのコンテンツを返す
+    return `<p>${html.replace(/<\/?[^>]+(>|$)/g, "")}</p>`;
+  }
 }
 
 interface AINewsItem {
@@ -226,12 +254,13 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
                   />
                 )}
                 
-                {/* 全文表示ボタン - 原文が存在し、翻訳が不完全な場合に表示 */}
-                {!fullTranslationLoaded && article.originalContent && !showSideBySide && !showOriginal && (
+                {/* 全文表示ボタン - 常に表示（デフォルトで両言語表示を優先） */}
+                {article.originalContent && !showSideBySide && (
                   <div className="mt-6 p-3 bg-green-900/30 rounded border border-green-800/50 text-sm">
                     <p className="font-medium text-green-300">表示オプション:</p>
                     <p className="text-green-200">
-                      全文を表示するためのオプションがあります
+                      この記事は{article.sourceLanguage === 'en' ? '英語から日本語に翻訳' : '日本語'}の記事です。
+                      {!fullTranslationLoaded && article.sourceLanguage === 'en' && ' 記事の全文表示が必要な場合は以下のオプションをお試しください。'}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button 
@@ -250,7 +279,7 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
                         }}
                         className="px-3 py-1 bg-blue-700/50 text-blue-200 rounded hover:bg-blue-700 transition-colors"
                       >
-                        原文のみ表示 (English)
+                        {article.sourceLanguage === 'en' ? '原文のみ表示 (English)' : '元の表示に戻す'}
                       </button>
                       <a 
                         href={article.link} 
