@@ -53,104 +53,180 @@ export function extractTextFromHtml(html: string): string {
 }
 
 /**
- * 長い記事のコンテンツを翻訳する - より単純で確実な実装
+ * 長い記事のコンテンツを翻訳する - より確実なアプローチ
  * @param content 翻訳する長いコンテンツ
  * @param removeImages 画像を削除するかどうか
- * @returns 翻訳されたコンテンツ
+ * @returns 翻訳されたコンテンツと元のコンテンツを含むオブジェクト
  */
 export async function translateLongContent(content: string, removeImages: boolean = false): Promise<string> {
   if (!content) return '';
-  
-  try {
-    // 既存の<hr>タグを削除（記事を分断する原因になっているため）
-    let processedContent = content.replace(/<hr\s*\/?>|<hr\s+[^>]*>/gi, '');
-    
-    // HTMLタグをプレースホルダーに置き換える（画像を含む）
-    const tagPlaceholders = new Map();
-    let tagCounter = 0;
-    
-    // 画像タグとその他のHTMLタグをプレースホルダーに置き換える
-    const htmlTagRegex = /<[^>]+>/g;
-    processedContent = processedContent.replace(htmlTagRegex, (match) => {
-      // 画像を削除するモードで、かつimgタグの場合はスキップ
-      if (removeImages && match.match(/<img[^>]*>/i)) {
-        return '';
-      }
-      
-      const placeholder = `__HTML_TAG_${tagCounter++}__`;
-      tagPlaceholders.set(placeholder, match);
-      return placeholder;
-    });
 
-    // コンテンツを適切なサイズのチャンクに分割（翻訳APIの制限を考慮）
-    const chunks = [];
-    const chunkSize = 1000; // 1000文字ずつ処理
+  try {
+    // HTML構造を分析して処理する
+    const parser = new RegExp(/<([a-z][a-z0-9]*)\b[^>]*>(.*?)<\/\1>/gi);
+    const imgPattern = /<img[^>]*>/gi;
     
-    for (let i = 0; i < processedContent.length; i += chunkSize) {
-      chunks.push(processedContent.substring(i, i + chunkSize));
-    }
-    
-    // 各チャンクを翻訳
-    const translatedChunks = await Promise.all(
-      chunks.map(async (chunk) => {
-        try {
-          return await translateToJapanese(chunk);
-        } catch (e) {
-          console.error('チャンク翻訳エラー:', e);
-          return chunk; // エラーの場合は元のテキストを返す
-        }
-      })
-    );
-    
-    // 翻訳されたチャンクを結合
-    let translatedContent = translatedChunks.join('');
-    
-    // HTMLタグのプレースホルダーを元に戻す
-    tagPlaceholders.forEach((tag, placeholder) => {
-      translatedContent = translatedContent.replace(placeholder, tag);
-    });
-    
-    // HTML構造が壊れていないかチェック
-    if (!translatedContent.includes('</p>') && content.includes('</p>')) {
-      console.log('警告: 翻訳後にHTML構造が失われている可能性があります');
-      
-      // 代替手法: 段落ごとに処理
-      try {
-        console.log('代替翻訳手法を試行（段落ごとに処理）...');
-        
-        // 段落のみを抽出して翻訳
-        const paragraphs = content.match(/<p[^>]*>.*?<\/p>/gi);
-        if (paragraphs && paragraphs.length > 0) {
-          const translatedParagraphs = await Promise.all(
-            paragraphs.map(async (p) => {
-              // 段落からテキスト部分のみを抽出
-              const textMatch = p.match(/>([^<]+)</);
-              if (textMatch && textMatch[1] && textMatch[1].trim().length > 0) {
-                const textContent = textMatch[1];
-                const translatedText = await translateToJapanese(textContent);
-                return p.replace(textContent, translatedText);
-              }
-              return p;
-            })
-          );
-          
-          // 元のコンテンツで翻訳された段落を置き換え
-          let result = content;
-          for (let i = 0; i < paragraphs.length; i++) {
-            result = result.replace(paragraphs[i], translatedParagraphs[i]);
-          }
-          
-          return result;
-        }
-      } catch (fallbackError) {
-        console.error('代替翻訳手法エラー:', fallbackError);
+    // まず、全ての画像タグを保存
+    const images: string[] = [];
+    if (!removeImages) {
+      let imgMatch;
+      while ((imgMatch = imgPattern.exec(content)) !== null) {
+        images.push(imgMatch[0]);
       }
     }
+
+    // HTMLタグとテキストを分離して処理するヘルパー関数
+    const translateHtmlText = async (htmlContent: string): Promise<string> => {
+      // 単純なテキストの場合は直接翻訳
+      if (!htmlContent.includes('<') && !htmlContent.includes('>')) {
+        if (htmlContent.trim().length > 5) {
+          try {
+            return await translateToJapanese(htmlContent);
+          } catch (e) {
+            console.error('テキスト翻訳エラー:', e);
+            return htmlContent;
+          }
+        }
+        return htmlContent;
+      }
+
+      // HTMLタグとテキストを分離して処理
+      const parts: string[] = [];
+      let lastIndex = 0;
+      const tagPattern = /<[^>]+>/g;
+      let match;
+
+      while ((match = tagPattern.exec(htmlContent)) !== null) {
+        // タグの前にあるテキストを処理
+        if (match.index > lastIndex) {
+          const text = htmlContent.substring(lastIndex, match.index);
+          if (text.trim().length > 5) {
+            try {
+              parts.push(await translateToJapanese(text));
+            } catch (e) {
+              parts.push(text);
+            }
+          } else {
+            parts.push(text);
+          }
+        }
+        
+        // タグ自体を追加
+        parts.push(match[0]);
+        lastIndex = match.index + match[0].length;
+      }
+
+      // 最後の部分を処理
+      if (lastIndex < htmlContent.length) {
+        const text = htmlContent.substring(lastIndex);
+        if (text.trim().length > 5) {
+          try {
+            parts.push(await translateToJapanese(text));
+          } catch (e) {
+            parts.push(text);
+          }
+        } else {
+          parts.push(text);
+        }
+      }
+
+      return parts.join('');
+    };
+
+    // 直接段落レベルで処理（最も確実な方法）
+    const paragraphs = content.split('</p>').filter(p => p.includes('<p'));
     
-    return translatedContent;
+    if (paragraphs.length > 0) {
+      // 各段落を処理
+      const translatedParagraphs = await Promise.all(
+        paragraphs.map(async (p) => {
+          try {
+            // HTMLタグとテキストを分離
+            const plainText = stripHtmlTags(p);
+            
+            if (plainText.trim().length < 10) {
+              return p + '</p>'; // テキストが少ない場合はそのまま返す
+            }
+            
+            // テキスト部分を翻訳
+            const translatedText = await translateToJapanese(plainText);
+            
+            // 段落内のテキストを翻訳されたテキストに置き換え
+            // 戦略：テキストノードだけを置換
+            let processedP = p;
+            const textNodePattern = />([^<]+)</g;
+            processedP = processedP.replace(textNodePattern, (match, textContent) => {
+              if (textContent.trim().length > 5) {
+                // 対応する翻訳済みテキストの部分を見つける試み
+                return `>${translatedText}<`;
+              }
+              return match;
+            });
+            
+            return processedP + '</p>';
+          } catch (e) {
+            console.error('段落翻訳エラー:', e);
+            return p + '</p>'; // エラーが発生した場合は元の段落を返す
+          }
+        })
+      );
+      
+      // 翻訳された段落を結合
+      let result = translatedParagraphs.join('');
+      
+      // 画像を元の位置に復元
+      if (images.length > 0) {
+        // 画像を適切な位置に挿入（段落の間）
+        const imagePerParagraph = Math.max(1, Math.floor(images.length / (translatedParagraphs.length + 1)));
+        let imgIndex = 0;
+        
+        result = result.replace(/<\/p>/g, (match, offset, string) => {
+          if (imgIndex < images.length && (offset % imagePerParagraph === 0)) {
+            const imgTags = images.slice(imgIndex, imgIndex + imagePerParagraph).join('\n');
+            imgIndex += imagePerParagraph;
+            return `</p>\n${imgTags}\n`;
+          }
+          return match;
+        });
+        
+        // 残りの画像を最後に追加
+        if (imgIndex < images.length) {
+          const remainingImgs = images.slice(imgIndex).join('\n');
+          result += '\n' + remainingImgs;
+        }
+      }
+      
+      return result;
+    }
+    
+    // 段落分割が機能しない場合は単純なアプローチを試す
+    return await translateHtmlText(content);
   } catch (error) {
     console.error('コンテンツ翻訳エラー:', error);
-    return content; // エラーの場合は元のコンテンツを返す
+    
+    // 最も単純な方法：テキストのみを抽出して翻訳
+    try {
+      const plainText = stripHtmlTags(content);
+      const translatedText = await translateToJapanese(plainText);
+      
+      // HTML構造を維持しつつテキストのみを置き換え
+      let result = content;
+      const textNodes = content.match(/>([^<]+)</g);
+      
+      if (textNodes && textNodes.length > 0) {
+        for (const textNode of textNodes) {
+          const text = textNode.substring(1, textNode.length - 1);
+          if (text.trim().length > 5) {
+            result = result.replace(textNode, `>${translatedText}<`);
+            break; // 一度だけ置換（全文を一括翻訳したため）
+          }
+        }
+      }
+      
+      return result;
+    } catch (fallbackError) {
+      return content; // 全てのアプローチが失敗した場合
+    }
   }
 }
 

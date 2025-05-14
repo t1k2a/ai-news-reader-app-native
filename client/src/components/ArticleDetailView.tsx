@@ -67,6 +67,8 @@ interface ArticleDetailViewProps {
 
 export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) {
   const [showOriginal, setShowOriginal] = useState(false);
+  const [showSideBySide, setShowSideBySide] = useState(false);
+  const [fullTranslationLoaded, setFullTranslationLoaded] = useState(true);
   
   // ESCキーで閉じる
   useEffect(() => {
@@ -87,6 +89,12 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
       
       // スクロールを固定
       document.body.style.overflow = 'hidden';
+      
+      // 翻訳コンテンツの品質チェック
+      if (article.originalContent && article.content) {
+        const contentRatio = article.content.length / article.originalContent.length;
+        setFullTranslationLoaded(contentRatio > 0.7);
+      }
       
       return () => {
         // スクロールを戻す
@@ -184,17 +192,80 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
               
               {/* 記事コンテンツ */}
               <div className="prose prose-lg prose-invert max-w-none mb-8 bg-slate-800/30 p-5 rounded-lg">
-                <div 
-                  className="leading-relaxed article-content"
-                  dangerouslySetInnerHTML={{ 
-                    __html: showOriginal && article.originalContent 
-                      ? sanitizeHtml(article.originalContent) 
-                      : sanitizeHtml(article.content) 
-                  }}
-                />
+                {/* 並べて表示モード */}
+                {showSideBySide && article.originalContent ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="border-r border-slate-700/50 pr-4">
+                      <h3 className="text-lg text-blue-400 font-semibold mb-2">日本語</h3>
+                      <div 
+                        className="leading-relaxed article-content"
+                        dangerouslySetInnerHTML={{ 
+                          __html: sanitizeHtml(article.content)
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <h3 className="text-lg text-amber-400 font-semibold mb-2">原文</h3>
+                      <div 
+                        className="leading-relaxed article-content"
+                        dangerouslySetInnerHTML={{ 
+                          __html: sanitizeHtml(article.originalContent)
+                        }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  // 通常の表示モード
+                  <div 
+                    className="leading-relaxed article-content"
+                    dangerouslySetInnerHTML={{ 
+                      __html: showOriginal && article.originalContent 
+                        ? sanitizeHtml(article.originalContent) 
+                        : sanitizeHtml(article.content) 
+                    }}
+                  />
+                )}
+                
+                {/* 全文表示ボタン - 原文が存在し、翻訳が不完全な場合に表示 */}
+                {!fullTranslationLoaded && article.originalContent && !showSideBySide && !showOriginal && (
+                  <div className="mt-6 p-3 bg-green-900/30 rounded border border-green-800/50 text-sm">
+                    <p className="font-medium text-green-300">表示オプション:</p>
+                    <p className="text-green-200">
+                      全文を表示するためのオプションがあります
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button 
+                        onClick={() => {
+                          setShowSideBySide(true);
+                          setShowOriginal(false);
+                        }}
+                        className="px-3 py-1 bg-green-700/50 text-green-200 rounded hover:bg-green-700 transition-colors"
+                      >
+                        両言語を並べて表示
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setShowOriginal(true);
+                          setShowSideBySide(false);
+                        }}
+                        className="px-3 py-1 bg-blue-700/50 text-blue-200 rounded hover:bg-blue-700 transition-colors"
+                      >
+                        原文のみ表示 (English)
+                      </button>
+                      <a 
+                        href={article.link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="px-3 py-1 bg-amber-700/50 text-amber-200 rounded hover:bg-amber-700 transition-colors"
+                      >
+                        元サイトで読む
+                      </a>
+                    </div>
+                  </div>
+                )}
                 
                 {/* オリジナルコンテンツがあり、翻訳コンテンツが不完全または短すぎる場合のメッセージ */}
-                {!showOriginal && 
+                {!showOriginal && !showSideBySide && 
                   article.originalContent && 
                   article.content && 
                   (article.content.length < article.originalContent.length * 0.7 || 
@@ -210,12 +281,26 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
                       {article.originalContent && ` / 元テキスト長: ${article.originalContent.length} 文字`}
                       {article.originalContent && ` (${Math.round(article.content.length / article.originalContent.length * 100)}%)`}
                     </div>
-                    <button 
-                      onClick={() => setShowOriginal(true)}
-                      className="mt-2 px-3 py-1 bg-blue-700/50 text-blue-200 rounded hover:bg-blue-700 transition-colors"
-                    >
-                      原文を表示する
-                    </button>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button 
+                        onClick={() => {
+                          setShowOriginal(true);
+                          setShowSideBySide(false);
+                        }}
+                        className="px-3 py-1 bg-blue-700/50 text-blue-200 rounded hover:bg-blue-700 transition-colors"
+                      >
+                        原文を表示する
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setShowSideBySide(true);
+                          setShowOriginal(false);
+                        }}
+                        className="px-3 py-1 bg-green-700/50 text-green-200 rounded hover:bg-green-700 transition-colors"
+                      >
+                        両言語を並べて表示
+                      </button>
+                    </div>
                   </div>
                 )}
                 
@@ -227,14 +312,27 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
                     <p className="text-amber-200">
                       この記事のコンテンツが取得できませんでした。原文を表示するか、元記事のリンクから直接閲覧してください。
                     </p>
-                    <a 
-                      href={article.link} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="mt-2 inline-block px-3 py-1 bg-amber-700/50 text-amber-200 rounded hover:bg-amber-700 transition-colors"
-                    >
-                      元の記事を読む
-                    </a>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {article.originalContent && (
+                        <button 
+                          onClick={() => {
+                            setShowOriginal(true);
+                            setShowSideBySide(false);
+                          }}
+                          className="px-3 py-1 bg-blue-700/50 text-blue-200 rounded hover:bg-blue-700 transition-colors"
+                        >
+                          原文を表示する
+                        </button>
+                      )}
+                      <a 
+                        href={article.link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="px-3 py-1 bg-amber-700/50 text-amber-200 rounded hover:bg-amber-700 transition-colors"
+                      >
+                        元の記事を読む
+                      </a>
+                    </div>
                   </div>
                 )}
                 
@@ -254,12 +352,41 @@ export function ArticleDetailView({ article, onClose }: ArticleDetailViewProps) 
                 {/* アクションボタン */}
                 <div className="flex flex-wrap gap-3 mb-6">
                   {article.sourceLanguage === 'en' && (
-                    <button 
-                      onClick={() => setShowOriginal(!showOriginal)}
-                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-full transition-colors"
-                    >
-                      {showOriginal ? '日本語に切り替え' : '原文に切り替え (English)'}
-                    </button>
+                    <>
+                      {showSideBySide ? (
+                        <button 
+                          onClick={() => {
+                            setShowSideBySide(false);
+                            setShowOriginal(false);
+                          }}
+                          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-full transition-colors"
+                        >
+                          日本語のみに切り替え
+                        </button>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={() => {
+                              setShowOriginal(!showOriginal);
+                              setShowSideBySide(false);
+                            }}
+                            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-full transition-colors"
+                          >
+                            {showOriginal ? '日本語に切り替え' : '原文に切り替え (English)'}
+                          </button>
+                          
+                          <button 
+                            onClick={() => {
+                              setShowSideBySide(true);
+                              setShowOriginal(false);
+                            }}
+                            className="px-4 py-2 bg-green-800 hover:bg-green-700 text-slate-200 rounded-full transition-colors"
+                          >
+                            両言語を並べて表示
+                          </button>
+                        </>
+                      )}
+                    </>
                   )}
                   
                   <a 
