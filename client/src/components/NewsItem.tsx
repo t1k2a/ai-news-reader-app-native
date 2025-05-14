@@ -24,29 +24,22 @@ interface NewsItemProps {
 
 export function NewsItem({ item }: NewsItemProps) {
   const [showOriginal, setShowOriginal] = useState(false);
-  // 記事詳細表示の状態管理
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   
-  // 詳細を開く関数
   const handleOpenDetail = () => {
     setIsDetailOpen(true);
-    // ボディのスクロールを無効化
     document.body.style.overflow = 'hidden';
   };
   
-  // 詳細を閉じる関数
   const handleCloseDetail = () => {
     setIsDetailOpen(false);
-    // ボディのスクロールを有効化
     document.body.style.overflow = '';
   };
   
-  // 原文/翻訳を切り替える関数（詳細ビュー用）
   const handleToggleOriginal = () => {
     setShowOriginal(!showOriginal);
   };
   
-  // 日付のフォーマット（JSTに調整）
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('ja-JP', {
@@ -61,7 +54,6 @@ export function NewsItem({ item }: NewsItemProps) {
   
   return (
     <>
-      {/* 記事詳細表示 */}
       {isDetailOpen && (
         <ArticleDetailView 
           article={item} 
@@ -71,9 +63,8 @@ export function NewsItem({ item }: NewsItemProps) {
         />
       )}
       
-      {/* 記事カードビュー */}
       <div 
-        className="bg-slate-800 rounded-lg overflow-hidden hover:bg-slate-800/80 transition-colors border border-slate-700/50 shadow-md cursor-pointer"
+        className="bg-slate-800 rounded-lg overflow-hidden hover:bg-slate-700 transition-colors border border-slate-700/50 shadow-md cursor-pointer"
         onClick={handleOpenDetail}
       >
         <div className="flex items-start p-4">
@@ -84,7 +75,6 @@ export function NewsItem({ item }: NewsItemProps) {
               <span>{formatDate(item.publishDate)} JST</span>
             </div>
             
-            {/* カテゴリタグ */}
             {item.categories && item.categories.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-2">
                 {item.categories.map(category => (
