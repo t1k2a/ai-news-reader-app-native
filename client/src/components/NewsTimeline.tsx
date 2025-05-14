@@ -288,7 +288,7 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
         ))}
       </div>
       
-      <div className="space-y-4 overflow-y-auto">
+      <div className="space-y-4 overflow-y-auto overflow-x-hidden overscroll-contain">
         {currentPageItems.map(item => (
           <div key={item.id} onClick={() => handleArticleSelect(item)} className="cursor-pointer">
             <NewsItem item={item} />
