@@ -75,8 +75,8 @@ const AI_RSS_FEEDS = [
     defaultCategories: [AI_CATEGORIES.GENERAL]
   },
   {
-    url: 'https://www.itmedia.co.jp/news/subtop/aiplus/aiplus.2.xml',
-    name: 'ITmedia AI+',
+    url: 'https://rss.itmedia.co.jp/rss/2.0/ait.xml',
+    name: 'ITmedia AI',
     language: 'ja',
     defaultCategories: [AI_CATEGORIES.GENERAL, AI_CATEGORIES.BUSINESS]
   }

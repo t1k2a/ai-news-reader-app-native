@@ -57,7 +57,23 @@ export function ArticleDetailView({
 
   // 現在表示する言語のコンテンツを取得
   const displayTitle = showOriginal && article.originalTitle ? article.originalTitle : article.title;
-  const displayContent = showOriginal && article.originalContent ? article.originalContent : article.content;
+  
+  // 本文コンテンツの取得とフォールバック
+  let displayContent = '';
+  if (showOriginal && article.originalContent) {
+    displayContent = article.originalContent;
+  } else if (article.content) {
+    displayContent = article.content;
+  } else {
+    // コンテンツがない場合は要約を表示
+    displayContent = `<p>${article.summary}</p>`;
+  }
+  
+  console.log('記事詳細 - コンテンツ:', {
+    content: article.content?.substring(0, 100) + '...',
+    originalContent: article.originalContent?.substring(0, 100) + '...',
+    displaying: displayContent.substring(0, 100) + '...'
+  });
   
   return (
     <div className="article-detail-overlay active" onClick={onClose}>
