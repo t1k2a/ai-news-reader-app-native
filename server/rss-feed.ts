@@ -75,10 +75,10 @@ const AI_RSS_FEEDS = [
     defaultCategories: [AI_CATEGORIES.GENERAL]
   },
   {
-    url: 'https://ledge.ai/feed/',
-    name: 'Ledge.ai',
+    url: 'https://www.jst.go.jp/ristex/hite/topics/feed',
+    name: 'JST HITE',
     language: 'ja',
-    defaultCategories: [AI_CATEGORIES.GENERAL, AI_CATEGORIES.BUSINESS]
+    defaultCategories: [AI_CATEGORIES.ETHICS, AI_CATEGORIES.RESEARCH]
   }
 ];
 

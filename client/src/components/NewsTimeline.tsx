@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { NewsItem } from './NewsItem';
+import { LoadingSpinner } from './LoadingSpinner';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { AI_CATEGORIES } from '../lib/constants';
 
 interface AINewsItem {
@@ -162,23 +164,33 @@ function Pagination({
 
 export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
   // 1ページあたりの表示件数
-  const PAGE_SIZE = 5;
+  const PAGE_SIZE = 10;
   
-  // 現在のページ状態
-  const [currentPage, setCurrentPage] = useState(1);
+  // 無限スクロール用の要素参照
+  const loaderRef = useRef<HTMLDivElement>(null);
+  
+  // 表示アイテム数の状態
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   // 選択したカテゴリ
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   
   // カテゴリを選択する関数
   const handleCategorySelect = (category: string | null) => {
     setSelectedCategory(category);
-    setCurrentPage(1); // カテゴリが変わったら1ページ目に戻す
+    setVisibleCount(PAGE_SIZE); // カテゴリが変わったら初期表示数に戻す
   };
   
-  // ソースが変更されたら1ページ目に戻す
+  // ソースが変更されたら表示数リセット
   useEffect(() => {
-    setCurrentPage(1);
+    setVisibleCount(PAGE_SIZE);
   }, [selectedSource]);
+  
+  // 追加のアイテムを読み込む関数
+  const loadMoreItems = () => {
+    if (news && visibleCount < news.length) {
+      setVisibleCount(prev => Math.min(prev + PAGE_SIZE, news.length));
+    }
+  };
   
   // React Queryを使用したキャッシュ対応データフェッチ
   const { data: news, isLoading, error } = useQuery<AINewsItem[], Error>({
