@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { NewsItem } from './NewsItem';
-import { ArticleDetailView } from './ArticleDetailView';
 import { AI_CATEGORIES } from '../lib/constants';
 
 interface AINewsItem {
@@ -167,33 +166,18 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
   
   // 現在のページ状態
   const [currentPage, setCurrentPage] = useState(1);
-  // 選択した記事
-  const [selectedArticle, setSelectedArticle] = useState<AINewsItem | null>(null);
   // 選択したカテゴリ
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  
-  // 記事を選択する関数
-  const handleArticleSelect = (article: AINewsItem) => {
-    setSelectedArticle(article);
-  };
-  
-  // 記事の詳細ビューを閉じる関数
-  const handleCloseArticleView = () => {
-    setSelectedArticle(null);
-  };
   
   // カテゴリを選択する関数
   const handleCategorySelect = (category: string | null) => {
     setSelectedCategory(category);
     setCurrentPage(1); // カテゴリが変わったら1ページ目に戻す
-    setSelectedArticle(null); // カテゴリが変わったらディテールビューも閉じる
   };
   
   // ソースが変更されたら1ページ目に戻す
   useEffect(() => {
     setCurrentPage(1);
-    // ソースが変更されたらディテールビューも閉じる
-    setSelectedArticle(null);
   }, [selectedSource]);
   
   // React Queryを使用したキャッシュ対応データフェッチ
@@ -290,8 +274,10 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
       
       <div className="space-y-4 overflow-y-auto overflow-x-hidden overscroll-contain">
         {currentPageItems.map(item => (
-          <div key={item.id} onClick={() => handleArticleSelect(item)} className="cursor-pointer">
-            <NewsItem item={item} />
+          <div key={item.id} className="cursor-pointer">
+            <a href={item.link} target="_blank" rel="noopener noreferrer" className="no-underline">
+              <NewsItem item={item} />
+            </a>
           </div>
         ))}
       </div>
@@ -301,12 +287,6 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
         currentPage={currentPage} 
         totalPages={totalPages} 
         onPageChange={setCurrentPage} 
-      />
-      
-      {/* 記事詳細ビュー */}
-      <ArticleDetailView 
-        article={selectedArticle} 
-        onClose={handleCloseArticleView}
       />
     </div>
   );
