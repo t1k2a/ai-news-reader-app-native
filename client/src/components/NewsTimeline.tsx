@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { NewsItem } from './NewsItem';
 import { LoadingSpinner } from './LoadingSpinner';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
@@ -24,141 +24,27 @@ interface NewsTimelineProps {
   selectedSource: string | null;
 }
 
-// ニュースを取得する関数
-const fetchNews = async (sourceName: string | null, category: string | null): Promise<AINewsItem[]> => {
-  let url = '/api/news';
-  const params = new URLSearchParams();
-  
-  // カテゴリが選択されている場合はクエリパラメータに追加
-  if (category) {
-    params.append('category', category);
-  }
-  
-  // ソースが選択されている場合は別のエンドポイントを使用
-  if (sourceName) {
-    url = `/api/news/source/${encodeURIComponent(sourceName)}`;
-  }
-  
-  // クエリパラメータがある場合はURLに追加
-  if (params.toString()) {
-    url += `?${params.toString()}`;
-  }
-  
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error('ニュースの取得に失敗しました');
-  }
-  return response.json();
-};
-
-// ページネーション用コンポーネント
-function Pagination({ 
-  currentPage, 
-  totalPages, 
-  onPageChange 
+// カテゴリボタンコンポーネント
+function CategoryButton({ 
+  category, 
+  isSelected, 
+  onClick 
 }: { 
-  currentPage: number; 
-  totalPages: number; 
-  onPageChange: (page: number) => void; 
+  category: string | null;
+  isSelected: boolean;
+  onClick: () => void;
 }) {
-  // ページ数が1以下の場合は表示しない
-  if (totalPages <= 1) return null;
-  
-  // 表示するページ番号の範囲を計算
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxVisiblePages = 5; // 最大表示ページ数
-    
-    // 表示するページのスタート位置を計算
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
-    // スタート位置を調整（表示数を一定に保つため）
-    startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    
-    // ページ番号を配列に追加
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-    
-    return pages;
-  };
-  
-  const pageNumbers = getPageNumbers();
-  
   return (
-    <div className="flex justify-center items-center mt-8 space-x-2">
-      {/* 前へボタン */}
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className={`px-3 py-1 rounded-md ${
-          currentPage === 1
-            ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-            : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
-        }`}
-      >
-        ←
-      </button>
-      
-      {/* 最初のページボタン (1ページ目が表示されていない場合) */}
-      {pageNumbers[0] > 1 && (
-        <>
-          <button
-            onClick={() => onPageChange(1)}
-            className="px-3 py-1 bg-slate-700 text-slate-200 hover:bg-slate-600 rounded-md"
-          >
-            1
-          </button>
-          {pageNumbers[0] > 2 && (
-            <span className="text-slate-500">...</span>
-          )}
-        </>
-      )}
-      
-      {/* ページ番号ボタン */}
-      {pageNumbers.map(pageNum => (
-        <button
-          key={pageNum}
-          onClick={() => onPageChange(pageNum)}
-          className={`px-3 py-1 rounded-md ${
-            pageNum === currentPage
-              ? 'bg-blue-600 text-white'
-              : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
-          }`}
-        >
-          {pageNum}
-        </button>
-      ))}
-      
-      {/* 最後のページボタン (最終ページが表示されていない場合) */}
-      {pageNumbers[pageNumbers.length - 1] < totalPages && (
-        <>
-          {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
-            <span className="text-slate-500">...</span>
-          )}
-          <button
-            onClick={() => onPageChange(totalPages)}
-            className="px-3 py-1 bg-slate-700 text-slate-200 hover:bg-slate-600 rounded-md"
-          >
-            {totalPages}
-          </button>
-        </>
-      )}
-      
-      {/* 次へボタン */}
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className={`px-3 py-1 rounded-md ${
-          currentPage === totalPages
-            ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-            : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
-        }`}
-      >
-        →
-      </button>
-    </div>
+    <button
+      onClick={onClick}
+      className={`px-3 py-1 text-sm rounded-full transition-colors whitespace-nowrap border ${
+        isSelected
+          ? 'bg-blue-600 text-white border-blue-500'
+          : 'bg-slate-700 text-slate-200 hover:bg-slate-600 border-slate-600/50'
+      }`}
+    >
+      {category === null ? 'すべて' : category}
+    </button>
   );
 }
 
@@ -185,64 +71,74 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
     setVisibleCount(PAGE_SIZE);
   }, [selectedSource]);
   
-  // 追加のアイテムを読み込む関数
-  const loadMoreItems = () => {
-    if (news && visibleCount < news.length) {
-      setVisibleCount(prev => Math.min(prev + PAGE_SIZE, news.length));
-    }
-  };
-  
   // React Queryを使用したキャッシュ対応データフェッチ
   const { data: news, isLoading, error } = useQuery<AINewsItem[], Error>({
     queryKey: ['news', selectedSource, selectedCategory],
-    queryFn: () => fetchNews(selectedSource, selectedCategory),
-    staleTime: 5 * 60 * 1000, // 5分間キャッシュを保持
-    retry: 1, // エラー時に1回だけリトライ
+    queryFn: async () => {
+      const url = selectedSource
+        ? `/api/news/source/${encodeURIComponent(selectedSource)}`
+        : '/api/news';
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error('ニュースの取得に失敗しました');
+      }
+      
+      let data = await response.json();
+      
+      // カテゴリでフィルタリング
+      if (selectedCategory) {
+        data = data.filter((item: AINewsItem) => 
+          item.categories && item.categories.includes(selectedCategory)
+        );
+      }
+      
+      return data;
+    },
+    staleTime: 60000, // 1分間はキャッシュを新鮮とみなす
+    refetchOnWindowFocus: false, // ウィンドウフォーカス時に再取得しない
   });
   
-  // スクロール位置をリセット
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [currentPage]);
+  // 追加のアイテムを読み込む関数
+  const loadMoreItems = useCallback(() => {
+    if (news && visibleCount < news.length) {
+      setVisibleCount(prev => Math.min(prev + PAGE_SIZE, news.length));
+    }
+  }, [news, visibleCount]);
+  
+  // 無限スクロールの設定
+  const hasMore = news ? visibleCount < news.length : false;
+  useInfiniteScroll(loaderRef, hasMore, loadMoreItems);
   
   if (isLoading) {
     return (
-      <div className="w-full py-10 flex justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex justify-center items-center h-64">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
-
+  
   if (error) {
     return (
       <div className="bg-red-900/30 border border-red-500/50 p-4 rounded-lg">
         <h3 className="text-lg font-medium text-red-200">エラー</h3>
-        <p className="text-red-100">ニュースを読み込めませんでした。時間をおいて再試行してください。</p>
-        <p className="text-sm text-red-200/70 mt-2">{error.message}</p>
+        <p className="text-red-100">{error.message}</p>
       </div>
     );
   }
-
+  
   if (!news || news.length === 0) {
     return (
-      <div className="bg-slate-800/50 border border-slate-700 p-6 rounded-lg text-center">
-        <p className="text-lg text-slate-300">
-          {selectedSource 
-            ? `「${selectedSource}」からのニュースはありません` 
-            : 'ニュースはありません'}
-        </p>
+      <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-lg text-center">
+        <p className="text-lg text-slate-300">記事が見つかりませんでした</p>
       </div>
     );
   }
   
-  // 総ページ数を計算
-  const totalPages = Math.ceil(news.length / PAGE_SIZE);
+  // 表示するアイテムを取得
+  const visibleItems = news.slice(0, visibleCount);
   
-  // 現在のページに表示する記事を取得
-  const startIndex = (currentPage - 1) * PAGE_SIZE;
-  const endIndex = startIndex + PAGE_SIZE;
-  const currentPageItems = news.slice(startIndex, endIndex);
-
   return (
     <div className="space-y-4 pb-8">
       <div className="flex justify-between items-center">
@@ -252,54 +148,52 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
         </h2>
         
         <div className="text-sm text-slate-400">
-          {news.length}件の記事 ({currentPage}/{totalPages}ページ)
+          {news.length}件の記事 ({visibleCount < news.length ? `${visibleCount}/${news.length}表示` : '全て表示'})
         </div>
       </div>
       
       {/* カテゴリ選択UI */}
       <div className="flex flex-wrap gap-2 pb-3 pt-1 overflow-x-auto overscroll-contain scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-800 pb-2 -mx-2 px-2">
-        <button
-          onClick={() => handleCategorySelect(null)}
-          className={`px-3 py-1 text-sm rounded-full transition-colors whitespace-nowrap border ${
-            selectedCategory === null
-              ? 'bg-blue-600 text-white border-blue-500'
-              : 'bg-slate-700 text-slate-200 hover:bg-slate-600 border-slate-600/50'
-          }`}
-        >
-          すべて
-        </button>
+        <CategoryButton 
+          category={null} 
+          isSelected={selectedCategory === null} 
+          onClick={() => handleCategorySelect(null)} 
+        />
         
         {Object.values(AI_CATEGORIES).map(category => (
-          <button
-            key={category}
-            onClick={() => handleCategorySelect(category)}
-            className={`px-3 py-1 text-sm rounded-full transition-colors whitespace-nowrap border ${
-              selectedCategory === category
-                ? 'bg-blue-600 text-white border-blue-500'
-                : 'bg-slate-700 text-slate-200 hover:bg-slate-600 border-slate-600/50'
-            }`}
-          >
-            {category}
-          </button>
+          <CategoryButton 
+            key={category} 
+            category={category} 
+            isSelected={selectedCategory === category} 
+            onClick={() => handleCategorySelect(category)} 
+          />
         ))}
       </div>
       
       <div className="space-y-4 overflow-y-auto overflow-x-hidden overscroll-contain">
-        {currentPageItems.map(item => (
+        {/* 表示アイテム */}
+        {visibleItems.map((item) => (
           <div key={item.id} className="cursor-pointer">
             <a href={item.link} target="_blank" rel="noopener noreferrer" className="no-underline">
               <NewsItem item={item} />
             </a>
           </div>
         ))}
+        
+        {/* 無限スクロール用のローディング要素 */}
+        {hasMore && (
+          <div ref={loaderRef} className="py-4">
+            <LoadingSpinner size="sm" />
+          </div>
+        )}
+        
+        {/* すべて表示したメッセージ */}
+        {!hasMore && news.length > 0 && (
+          <div className="text-center py-4 text-slate-400 text-sm">
+            すべての記事を表示しました
+          </div>
+        )}
       </div>
-      
-      {/* ページネーション */}
-      <Pagination 
-        currentPage={currentPage} 
-        totalPages={totalPages} 
-        onPageChange={setCurrentPage} 
-      />
     </div>
   );
 }
