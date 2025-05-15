@@ -88,6 +88,7 @@ export interface AINewsItem {
   link: string;
   content: string;
   summary: string;
+  firstParagraph?: string;
   publishDate: Date;
   sourceName: string;
   sourceLanguage: string;
@@ -95,6 +96,7 @@ export interface AINewsItem {
   originalTitle?: string;
   originalContent?: string;
   originalSummary?: string;
+  originalFirstParagraph?: string;
 }
 
 /**
@@ -238,9 +240,13 @@ export async function fetchFeed(feedInfo: { url: string, name: string, language:
       // 要約作成（最大500文字）
       const summary = summarizeText(content);
       
+      // 最初の段落を抽出
+      const firstParagraph = extractFirstParagraph(content);
+      
       let translatedTitle = item.title || '';
       let translatedContent = content;
       let translatedSummary = summary;
+      let translatedFirstParagraph = firstParagraph;
       
       // 英語の場合は翻訳する
       if (feedInfo.language === 'en') {
@@ -248,8 +254,10 @@ export async function fetchFeed(feedInfo: { url: string, name: string, language:
           translatedTitle = await translateToJapanese(item.title || '');
           // 記事の全文を段落ごとに翻訳する
           translatedContent = await translateLongContent(content);
-          // 要約も翻訳
+          // 要約を翻訳
           translatedSummary = await translateToJapanese(summary);
+          // 最初の段落も翻訳
+          translatedFirstParagraph = await translateToJapanese(firstParagraph);
           
           // 記事URLからユニークIDを生成
           const id = item.guid || item.link || `${feedInfo.name}-${Date.now()}-${Math.random()}`;
@@ -269,13 +277,15 @@ export async function fetchFeed(feedInfo: { url: string, name: string, language:
             link: item.link || '',
             content: translatedContent,
             summary: translatedSummary,
+            firstParagraph: translatedFirstParagraph,
             publishDate: item.pubDate ? new Date(item.pubDate) : new Date(),
             sourceName: feedInfo.name,
             sourceLanguage: feedInfo.language,
             categories,
             originalTitle: item.title,
             originalContent: content,
-            originalSummary: summary
+            originalSummary: summary,
+            originalFirstParagraph: firstParagraph
           });
         } catch (error) {
           console.error(`翻訳エラー (${feedInfo.name}):`, error);
@@ -299,6 +309,7 @@ export async function fetchFeed(feedInfo: { url: string, name: string, language:
           link: item.link || '',
           content: translatedContent,
           summary: translatedSummary,
+          firstParagraph: translatedFirstParagraph,
           publishDate: item.pubDate ? new Date(item.pubDate) : new Date(),
           sourceName: feedInfo.name,
           sourceLanguage: feedInfo.language,
