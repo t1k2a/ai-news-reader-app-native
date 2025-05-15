@@ -103,7 +103,7 @@ export function ArticleDetailView({
     <div className="article-detail-overlay active" onClick={onClose}>
       <div
         ref={detailRef}
-        className="article-detail-container bg-gray-100 dark:bg-slate-900"
+        className="article-detail-container bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 sm:p-6 flex flex-col h-full">
