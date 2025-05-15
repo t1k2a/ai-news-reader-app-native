@@ -29,13 +29,12 @@
   border-radius: 0.5rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   width: 95%;
-  max-width: 1200px;
+  max-width: 1000px;
   height: 85vh;
   max-height: 900px;
   overflow-y: auto;
   transform: translateY(20px);
   transition: transform 0.3s;
-
 }
 
 .article-detail-overlay.active .article-detail-container {
