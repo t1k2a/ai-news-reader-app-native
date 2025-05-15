@@ -8,6 +8,7 @@ interface AINewsItem {
   link: string;
   content: string;
   summary: string;
+  firstParagraph?: string;
   publishDate: string;
   sourceName: string;
   sourceLanguage: string;
@@ -15,6 +16,7 @@ interface AINewsItem {
   originalTitle?: string;
   originalContent?: string;
   originalSummary?: string;
+  originalFirstParagraph?: string;
 }
 
 interface ArticleDetailViewProps {
@@ -75,15 +77,26 @@ export function ArticleDetailView({
     }
   };
   
+  const getFirstParagraph = () => {
+    if (showOriginal && article.originalFirstParagraph) {
+      return article.originalFirstParagraph;
+    } else {
+      return article.firstParagraph || '';
+    }
+  };
+  
   const summary = getSummary();
   const fullContent = getFullContent();
+  const firstParagraph = getFirstParagraph();
   
   // コンテンツの長さをログに出力（デバッグ用）
   console.log('記事詳細 - コンテンツサイズ:', {
     summaryLength: article.summary?.length || 0,
     contentLength: article.content?.length || 0,
+    firstParagraphLength: article.firstParagraph?.length || 0,
     originalSummaryLength: article.originalSummary?.length || 0,
-    originalContentLength: article.originalContent?.length || 0
+    originalContentLength: article.originalContent?.length || 0,
+    originalFirstParagraphLength: article.originalFirstParagraph?.length || 0
   });
   
   return (
@@ -167,6 +180,16 @@ export function ArticleDetailView({
                   ))}
                 </div>
               </div>
+              
+              {/* 記事の最初の段落 */}
+              {firstParagraph && (
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold mb-4">記事の導入部分</h3>
+                  <div className="leading-relaxed bg-slate-700/50 p-4 rounded-md border-l-4 border-green-500">
+                    <p>{firstParagraph}</p>
+                  </div>
+                </div>
+              )}
               
               {/* 記事の本文 */}
               <div className="mt-6">
