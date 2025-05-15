@@ -103,20 +103,20 @@ export function ArticleDetailView({
     <div className="article-detail-overlay active" onClick={onClose}>
       <div
         ref={detailRef}
-        className="article-detail-container"
+        className="article-detail-container bg-gray-100 dark:bg-slate-900"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 sm:p-6 flex flex-col h-full">
           {/* ヘッダー */}
           <div className="flex justify-between items-start mb-5">
             <div className="flex-1">
-              <div className="text-sm text-slate-400 mb-1">
-                <span className="font-medium text-blue-400">{article.sourceName}</span>
+              <div className="text-sm text-gray-600 dark:text-slate-400 mb-1">
+                <span className="font-medium text-blue-600 dark:text-blue-400">{article.sourceName}</span>
                 <span className="mx-2">•</span>
                 <span>{formatDate(article.publishDate)} JST</span>
               </div>
               
-              <h2 className="text-2xl font-bold mb-3">{displayTitle}</h2>
+              <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">{displayTitle}</h2>
               
               {/* カテゴリタグ */}
               {article.categories && article.categories.length > 0 && (
@@ -124,7 +124,7 @@ export function ArticleDetailView({
                   {article.categories.map(category => (
                     <span 
                       key={category} 
-                      className="inline-block px-2 py-0.5 bg-slate-700/80 text-xs text-slate-300 rounded-full border border-slate-600/50"
+                      className="inline-block px-2 py-0.5 bg-blue-100 dark:bg-slate-700/80 text-xs text-blue-800 dark:text-slate-200 rounded-full border border-blue-200 dark:border-slate-600/50"
                     >
                       {category}
                     </span>
@@ -170,11 +170,11 @@ export function ArticleDetailView({
           
           {/* 本文 */}
           <div className="flex-1 overflow-y-auto">
-            <div className="prose prose-invert prose-sm sm:prose max-w-none px-4 py-2">
+            <div className="prose prose-gray dark:prose-invert prose-sm sm:prose max-w-none px-4 py-2">
               {/* 記事要約 */}
               <div className="mt-4">
-                <h3 className="text-lg font-semibold mb-4">記事の要約</h3>
-                <div className="leading-relaxed bg-slate-800/50 p-4 rounded-md border-l-4 border-blue-500">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">記事の要約</h3>
+                <div className="leading-relaxed bg-blue-50 dark:bg-slate-800/50 p-4 rounded-md border-l-4 border-blue-500 text-gray-800 dark:text-gray-200">
                   {summary.split('\n').map((paragraph: string, index: number) => (
                     paragraph.trim() ? <p key={index} className="mb-4">{paragraph}</p> : null
                   ))}
@@ -184,8 +184,8 @@ export function ArticleDetailView({
               {/* 記事の最初の段落 */}
               {firstParagraph && (
                 <div className="mt-6">
-                  <h3 className="text-lg font-semibold mb-4">記事の導入部分</h3>
-                  <div className="leading-relaxed bg-slate-700/50 p-4 rounded-md border-l-4 border-green-500">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">記事の導入部分</h3>
+                  <div className="leading-relaxed bg-green-50 dark:bg-slate-700/50 p-4 rounded-md border-l-4 border-green-500 text-gray-800 dark:text-gray-200">
                     <p>{stripHtmlTags(firstParagraph)}</p>
                   </div>
                 </div>
@@ -193,8 +193,8 @@ export function ArticleDetailView({
               
               {/* 記事の本文 */}
               <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-4">記事の本文</h3>
-                <div className="leading-relaxed">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">記事の本文</h3>
+                <div className="leading-relaxed bg-gray-50 dark:bg-slate-800/80 p-4 rounded-md text-gray-800 dark:text-gray-200">
                   {stripHtmlTags(fullContent).split('\n').map((paragraph: string, index: number) => (
                     paragraph.trim() ? <p key={index} className="mb-4">{paragraph}</p> : null
                   ))}
