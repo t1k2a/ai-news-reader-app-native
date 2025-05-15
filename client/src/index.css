@@ -44,8 +44,9 @@
 @media (max-width: 640px) {
   .article-detail-container {
     width: 95%;
-    height: 90vh;
+    height: 92vh;
     max-height: none;
+    border-radius: 0.375rem;
   }
 }
 
