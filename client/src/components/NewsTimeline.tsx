@@ -212,10 +212,8 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
       <div className="space-y-4 overflow-y-auto overflow-x-hidden overscroll-contain">
         {/* 表示アイテム */}
         {visibleItems.map((item) => (
-          <div key={item.id} className="cursor-pointer">
-            <a href={item.link} target="_blank" rel="noopener noreferrer" className="no-underline">
-              <NewsItem item={item} />
-            </a>
+          <div key={item.id}>
+            <NewsItem item={item} />
           </div>
         ))}
         
