@@ -44,7 +44,13 @@ export async function translateLongContent(content: string): Promise<string> {
   
   try {
     // HTMLタグを除去
-    const cleanedContent = stripHtmlTags(content);
+    let cleanedContent = '';
+    try {
+      cleanedContent = stripHtmlTags(content);
+    } catch (error) {
+      console.error('HTMLタグの除去に失敗:', error);
+      cleanedContent = content.replace(/<[^>]*>/g, ''); // 簡易的なタグ除去
+    }
     
     // 段落で分割（改行や空行で区切る）
     const paragraphs = cleanedContent.split(/\n\s*\n|\r\n\s*\r\n/).filter(p => p.trim() !== '');
