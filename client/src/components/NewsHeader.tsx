@@ -14,7 +14,7 @@ export function NewsHeader() {
   });
   
   return (
-    <header className="bg-slate-800 border-b border-slate-700 px-4 py-3 sticky top-0 z-10">
+    <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-4 py-3 sticky top-0 z-10 shadow-sm">
       <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center">
         <div className="flex items-center mb-2 sm:mb-0">
           <svg 
@@ -28,10 +28,10 @@ export function NewsHeader() {
               d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A2,2 0 0,0 10,6A2,2 0 0,0 12,8A2,2 0 0,0 14,6A2,2 0 0,0 12,4M10,10A2,2 0 0,0 8,12A2,2 0 0,0 10,14A2,2 0 0,0 12,12A2,2 0 0,0 10,10M16,10A2,2 0 0,0 14,12A2,2 0 0,0 16,14A2,2 0 0,0 18,12A2,2 0 0,0 16,10M12,16A2,2 0 0,0 10,18A2,2 0 0,0 12,20A2,2 0 0,0 14,18A2,2 0 0,0 12,16Z" 
             />
           </svg>
-          <h1 className="text-xl font-bold">AI News Reader</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">AI News Reader</h1>
         </div>
         
-        <div className="text-sm text-slate-400">
+        <div className="text-sm text-gray-600 dark:text-slate-400">
           最終更新: {currentTime} JST
           <button 
             onClick={() => {
@@ -46,7 +46,7 @@ export function NewsHeader() {
               }).format(new Date()));
               window.location.reload();
             }}
-            className="ml-2 p-1 text-blue-400 hover:text-blue-300"
+            className="ml-2 p-1 text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
             title="ニュースを更新"
           >
             <svg 

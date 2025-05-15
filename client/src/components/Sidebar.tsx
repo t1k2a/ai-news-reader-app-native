@@ -53,7 +53,7 @@ export function Sidebar({ selectedSource, onSourceSelect }: SidebarProps) {
         md:w-60 md:block ${isOpen ? 'block' : 'hidden'}
       `}>
         <div className="p-4">
-          <h2 className="font-bold text-xl mb-3">ニュースソース</h2>
+          <h2 className="font-bold text-xl mb-3 text-gray-900 dark:text-white">ニュースソース</h2>
           
           <ul className="space-y-1">
             <li>
@@ -81,8 +81,8 @@ export function Sidebar({ selectedSource, onSourceSelect }: SidebarProps) {
                     onClick={() => onSourceSelect(source.name)}
                     className={`w-full text-left px-3 py-2 rounded-md ${
                       selectedSource === source.name
-                        ? 'bg-blue-500/20 text-blue-300'
-                        : 'hover:bg-slate-700/50'
+                        ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
+                        : 'hover:bg-gray-100 dark:hover:bg-slate-700/50 text-gray-800 dark:text-gray-200'
                     }`}
                   >
                     {source.name}
@@ -103,8 +103,8 @@ export function Sidebar({ selectedSource, onSourceSelect }: SidebarProps) {
                     onClick={() => onSourceSelect(source.name)}
                     className={`w-full text-left px-3 py-2 rounded-md ${
                       selectedSource === source.name
-                        ? 'bg-blue-500/20 text-blue-300'
-                        : 'hover:bg-slate-700/50'
+                        ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
+                        : 'hover:bg-gray-100 dark:hover:bg-slate-700/50 text-gray-800 dark:text-gray-200'
                     }`}
                   >
                     {source.name}
