@@ -163,8 +163,18 @@ export function ArticleDetailView({
           {/* 本文 */}
           <div className="flex-1 overflow-y-auto">
             <div className="prose prose-gray dark:prose-invert prose-base sm:prose-lg max-w-none px-6 py-4">
+              {/* 最初の段落 */}
+              {firstParagraph && firstParagraph.trim() && (
+                <div className="mt-4 max-w-5xl mx-auto">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">記事の導入</h3>
+                  <div className="leading-relaxed bg-amber-50 dark:bg-amber-900/20 p-5 rounded-md border-l-4 border-amber-400 text-gray-800 dark:text-gray-200 text-lg font-medium">
+                    <p>{firstParagraph}</p>
+                  </div>
+                </div>
+              )}
+              
               {/* 記事要約 */}
-              <div className="mt-4 max-w-5xl mx-auto">
+              <div className="mt-6 max-w-5xl mx-auto">
                 <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">記事の要約</h3>
                 <div className="leading-relaxed bg-blue-50 dark:bg-slate-800/50 p-5 rounded-md border-l-4 border-blue-500 text-gray-800 dark:text-gray-200 text-base">
                   {summary.split('\n').map((paragraph: string, index: number) => (
