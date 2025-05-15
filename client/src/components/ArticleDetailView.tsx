@@ -59,7 +59,7 @@ export function ArticleDetailView({
   const displayTitle = showOriginal && article.originalTitle ? article.originalTitle : article.title;
   
   // 本文コンテンツの取得とフォールバック
-  const getContent = () => {
+  const getSummary = () => {
     if (showOriginal && article.originalSummary) {
       return article.originalSummary;
     } else {
@@ -67,12 +67,23 @@ export function ArticleDetailView({
     }
   };
   
-  const content = getContent();
+  const getFullContent = () => {
+    if (showOriginal && article.originalContent) {
+      return article.originalContent;
+    } else {
+      return article.content;
+    }
+  };
   
-  // 本文に使用するコンテンツは単にプレーンテキストにする
+  const summary = getSummary();
+  const fullContent = getFullContent();
+  
+  // コンテンツの長さをログに出力（デバッグ用）
   console.log('記事詳細 - コンテンツサイズ:', {
     summaryLength: article.summary?.length || 0,
-    originalLength: article.originalSummary?.length || 0
+    contentLength: article.content?.length || 0,
+    originalSummaryLength: article.originalSummary?.length || 0,
+    originalContentLength: article.originalContent?.length || 0
   });
   
   return (
@@ -147,11 +158,21 @@ export function ArticleDetailView({
           {/* 本文 */}
           <div className="flex-1 overflow-y-auto">
             <div className="prose prose-invert prose-sm sm:prose max-w-none px-4 py-2">
-              {/* シンプルな記事コンテンツ表示 */}
+              {/* 記事要約 */}
               <div className="mt-4">
-                <h3 className="text-lg font-semibold mb-4">記事の内容</h3>
+                <h3 className="text-lg font-semibold mb-4">記事の要約</h3>
+                <div className="leading-relaxed bg-slate-800/50 p-4 rounded-md border-l-4 border-blue-500">
+                  {summary.split('\n').map((paragraph: string, index: number) => (
+                    paragraph.trim() ? <p key={index} className="mb-4">{paragraph}</p> : null
+                  ))}
+                </div>
+              </div>
+              
+              {/* 記事の本文 */}
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-4">記事の本文</h3>
                 <div className="leading-relaxed">
-                  {content.split('\n').map((paragraph, index) => (
+                  {fullContent.split('\n').map((paragraph: string, index: number) => (
                     paragraph.trim() ? <p key={index} className="mb-4">{paragraph}</p> : null
                   ))}
                 </div>
