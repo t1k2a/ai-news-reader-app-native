@@ -150,11 +150,11 @@ export function ArticleDetailView({
           
           {/* 本文 */}
           <div className="flex-1 overflow-y-auto">
-            <div className="prose prose-gray dark:prose-invert prose-sm sm:prose max-w-none px-4 py-2">
+            <div className="prose prose-gray dark:prose-invert prose-base sm:prose-lg max-w-none px-6 py-4">
               {/* 記事要約 */}
-              <div className="mt-4">
+              <div className="mt-4 max-w-5xl mx-auto">
                 <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">記事の要約</h3>
-                <div className="leading-relaxed bg-blue-50 dark:bg-slate-800/50 p-4 rounded-md border-l-4 border-blue-500 text-gray-800 dark:text-gray-200">
+                <div className="leading-relaxed bg-blue-50 dark:bg-slate-800/50 p-5 rounded-md border-l-4 border-blue-500 text-gray-800 dark:text-gray-200 text-base">
                   {summary.split('\n').map((paragraph: string, index: number) => (
                     paragraph.trim() ? <p key={index} className="mb-4">{paragraph}</p> : null
                   ))}
@@ -162,10 +162,10 @@ export function ArticleDetailView({
               </div>
               
               {/* 記事リンク */}
-              <div className="mt-6">
+              <div className="mt-6 text-center">
                 <button 
                   onClick={() => window.open(article.link, '_blank', 'noopener,noreferrer')} 
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                  className="inline-flex items-center gap-1.5 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors text-base font-medium shadow-md"
                 >
                   <span>続きを元の記事で読む</span>
                   <svg 
