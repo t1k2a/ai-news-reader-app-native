@@ -49,7 +49,7 @@ export function Sidebar({ selectedSource, onSourceSelect }: SidebarProps) {
       
       {/* サイドバー本体 */}
       <div className={`
-        bg-slate-800 rounded-lg overflow-hidden
+        bg-white dark:bg-slate-800 rounded-lg overflow-hidden shadow-sm border border-gray-200 dark:border-slate-700
         md:w-60 md:block ${isOpen ? 'block' : 'hidden'}
       `}>
         <div className="p-4">
@@ -61,16 +61,16 @@ export function Sidebar({ selectedSource, onSourceSelect }: SidebarProps) {
                 onClick={() => onSourceSelect(null)}
                 className={`w-full text-left px-3 py-2 rounded-md ${
                   selectedSource === null
-                    ? 'bg-blue-500/20 text-blue-300'
-                    : 'hover:bg-slate-700/50'
+                    ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
+                    : 'hover:bg-gray-100 dark:hover:bg-slate-700/50 text-gray-800 dark:text-gray-200'
                 }`}
               >
                 すべて表示
               </button>
             </li>
             
-            <li className="border-t border-slate-700 my-2 pt-2">
-              <h3 className="px-3 text-sm font-medium text-slate-400">日本語ソース</h3>
+            <li className="border-t border-gray-200 dark:border-slate-700 my-2 pt-2">
+              <h3 className="px-3 text-sm font-medium text-gray-600 dark:text-slate-400">日本語ソース</h3>
             </li>
             
             {NEWS_SOURCES
@@ -91,8 +91,8 @@ export function Sidebar({ selectedSource, onSourceSelect }: SidebarProps) {
               ))
             }
             
-            <li className="border-t border-slate-700 my-2 pt-2">
-              <h3 className="px-3 text-sm font-medium text-slate-400">英語ソース（翻訳）</h3>
+            <li className="border-t border-gray-200 dark:border-slate-700 my-2 pt-2">
+              <h3 className="px-3 text-sm font-medium text-gray-600 dark:text-slate-400">英語ソース（翻訳）</h3>
             </li>
             
             {NEWS_SOURCES
