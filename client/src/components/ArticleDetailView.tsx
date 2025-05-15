@@ -99,24 +99,24 @@ export function ArticleDetailView({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 sm:p-6 flex flex-col h-full">
-          {/* ヘッダー（コンパクト化） */}
-          <div className="flex justify-between items-start mb-3">
+          {/* ヘッダー */}
+          <div className="flex justify-between items-start mb-5">
             <div className="flex-1">
-              <div className="text-xs sm:text-sm text-gray-600 dark:text-slate-400 mb-1">
+              <div className="text-sm text-gray-600 dark:text-slate-400 mb-2">
                 <span className="font-medium text-blue-600 dark:text-blue-400">{article.sourceName}</span>
-                <span className="mx-1 sm:mx-2">•</span>
+                <span className="mx-2">•</span>
                 <span>{formatDate(article.publishDate)} JST</span>
               </div>
               
-              <h2 className="text-xl sm:text-2xl font-bold mb-2 text-gray-900 dark:text-white leading-tight">{displayTitle}</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 dark:text-white leading-tight">{displayTitle}</h2>
               
-              {/* カテゴリタグ（コンパクト化） */}
+              {/* カテゴリタグ */}
               {article.categories && article.categories.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-2">
+                <div className="flex flex-wrap gap-2 mb-4">
                   {article.categories.map(category => (
                     <span 
                       key={category} 
-                      className="inline-block px-2 py-0.5 bg-blue-100 dark:bg-slate-700/80 text-xs font-medium text-blue-800 dark:text-slate-200 rounded-full border border-blue-200 dark:border-slate-600/50"
+                      className="inline-block px-2.5 py-1 bg-blue-100 dark:bg-slate-700/80 text-sm font-medium text-blue-800 dark:text-slate-200 rounded-full border border-blue-200 dark:border-slate-600/50"
                     >
                       {category}
                     </span>
@@ -160,34 +160,34 @@ export function ArticleDetailView({
             </div>
           </div>
           
-          {/* 本文（コンパクト化） */}
+          {/* 本文 */}
           <div className="flex-1 overflow-y-auto">
-            <div className="prose prose-gray dark:prose-invert prose-sm sm:prose-base max-w-none px-3 sm:px-4 py-2 sm:py-3">
-              {/* 最初の段落（コンパクト化） */}
+            <div className="prose prose-gray dark:prose-invert prose-base sm:prose-lg max-w-none px-6 py-4">
+              {/* 最初の段落 */}
               {firstParagraph && firstParagraph.trim() && (
-                <div className="mt-2 max-w-5xl mx-auto">
-                  <h3 className="text-base font-semibold mb-2 text-gray-800 dark:text-gray-200">記事の導入</h3>
-                  <div className="leading-relaxed bg-amber-50 dark:bg-amber-900/20 p-3 rounded-md border-l-4 border-amber-400 text-gray-800 dark:text-gray-200 text-base font-medium">
+                <div className="mt-4 max-w-5xl mx-auto">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">記事の導入</h3>
+                  <div className="leading-relaxed bg-amber-50 dark:bg-amber-900/20 p-5 rounded-md border-l-4 border-amber-400 text-gray-800 dark:text-gray-200 text-lg font-medium">
                     <p>{firstParagraph}</p>
                   </div>
                 </div>
               )}
               
-              {/* 記事要約（コンパクト化） */}
-              <div className="mt-4 max-w-5xl mx-auto">
-                <h3 className="text-base font-semibold mb-2 text-gray-800 dark:text-gray-200">記事の要約</h3>
-                <div className="leading-relaxed bg-blue-50 dark:bg-slate-800/50 p-3 rounded-md border-l-4 border-blue-500 text-gray-800 dark:text-gray-200 text-sm sm:text-base">
+              {/* 記事要約 */}
+              <div className="mt-6 max-w-5xl mx-auto">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">記事の要約</h3>
+                <div className="leading-relaxed bg-blue-50 dark:bg-slate-800/50 p-5 rounded-md border-l-4 border-blue-500 text-gray-800 dark:text-gray-200 text-base">
                   {summary.split('\n').map((paragraph: string, index: number) => (
-                    paragraph.trim() ? <p key={index} className="mb-2 last:mb-0">{paragraph}</p> : null
+                    paragraph.trim() ? <p key={index} className="mb-4">{paragraph}</p> : null
                   ))}
                 </div>
               </div>
               
-              {/* 記事リンク（コンパクト化） */}
-              <div className="mt-4 text-center">
+              {/* 記事リンク */}
+              <div className="mt-6 text-center">
                 <button 
                   onClick={() => window.open(article.link, '_blank', 'noopener,noreferrer')} 
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors text-sm sm:text-base font-medium shadow-sm"
+                  className="inline-flex items-center gap-1.5 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors text-base font-medium shadow-md"
                 >
                   <span>続きを元の記事で読む</span>
                   <svg 
