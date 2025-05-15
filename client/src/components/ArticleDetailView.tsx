@@ -90,21 +90,21 @@ export function ArticleDetailView({
           {/* ヘッダー */}
           <div className="flex justify-between items-start mb-5">
             <div className="flex-1">
-              <div className="text-sm text-gray-600 dark:text-slate-400 mb-1">
+              <div className="text-sm text-gray-600 dark:text-slate-400 mb-2">
                 <span className="font-medium text-blue-600 dark:text-blue-400">{article.sourceName}</span>
                 <span className="mx-2">•</span>
                 <span>{formatDate(article.publishDate)} JST</span>
               </div>
               
-              <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">{displayTitle}</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 dark:text-white leading-tight">{displayTitle}</h2>
               
               {/* カテゴリタグ */}
               {article.categories && article.categories.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-3">
+                <div className="flex flex-wrap gap-2 mb-4">
                   {article.categories.map(category => (
                     <span 
                       key={category} 
-                      className="inline-block px-2 py-0.5 bg-blue-100 dark:bg-slate-700/80 text-xs text-blue-800 dark:text-slate-200 rounded-full border border-blue-200 dark:border-slate-600/50"
+                      className="inline-block px-3 py-1 bg-blue-100 dark:bg-slate-700/80 text-xs font-medium text-blue-800 dark:text-slate-200 rounded-full border border-blue-200 dark:border-slate-600/50"
                     >
                       {category}
                     </span>
@@ -117,7 +117,7 @@ export function ArticleDetailView({
               {article.sourceLanguage === 'en' && (
                 <button 
                   onClick={onToggleOriginal}
-                  className="text-sm px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded-full transition-colors"
+                  className="text-sm font-medium px-4 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded-full transition-colors shadow-sm"
                 >
                   {showOriginal ? '翻訳を表示' : '原文を表示'}
                 </button>
@@ -127,7 +127,7 @@ export function ArticleDetailView({
               
               <button
                 onClick={onClose}
-                className="text-gray-600 hover:text-gray-800 dark:text-slate-400 dark:hover:text-slate-300 p-1"
+                className="text-gray-600 hover:text-gray-800 dark:text-slate-400 dark:hover:text-slate-300 p-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-full transition-colors"
                 aria-label="閉じる"
               >
                 <svg 
