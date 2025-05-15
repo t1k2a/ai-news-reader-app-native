@@ -159,10 +159,8 @@ export function ArticleDetailView({
               
               {/* 記事リンク */}
               <div className="mt-6">
-                <a 
-                  href={article.link} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
+                <button 
+                  onClick={() => window.open(article.link, '_blank', 'noopener,noreferrer')} 
                   className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
                 >
                   <span>続きを元の記事で読む</span>
@@ -181,7 +179,7 @@ export function ArticleDetailView({
                     <polyline points="15 3 21 3 21 9"></polyline>
                     <line x1="10" y1="14" x2="21" y2="3"></line>
                   </svg>
-                </a>
+                </button>
               </div>
             </div>
           </div>
