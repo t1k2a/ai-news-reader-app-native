@@ -177,6 +177,9 @@ export function summarizeText(text: string, maxLength: number = 1000): string {
   // まずHTMLタグを除去
   const plainText = stripHtmlTags(text);
   
+  // デバッグ用ログ
+  console.log(`要約前テキスト長: ${plainText.length} 文字, 制限: ${maxLength} 文字`);
+  
   if (plainText.length <= maxLength) return plainText;
   
   // 文章を句点で分割
@@ -199,6 +202,9 @@ export function summarizeText(text: string, maxLength: number = 1000): string {
       break;
     }
   }
+  
+  // デバッグ用ログ
+  console.log(`要約後テキスト長: ${summary.length} 文字`);
   
   return summary;
 }
