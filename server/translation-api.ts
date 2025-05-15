@@ -43,8 +43,11 @@ export async function translateLongContent(content: string): Promise<string> {
   if (!content) return '';
   
   try {
+    // HTMLタグを除去
+    const cleanedContent = stripHtmlTags(content);
+    
     // 段落で分割（改行や空行で区切る）
-    const paragraphs = content.split(/\n\s*\n|\r\n\s*\r\n/).filter(p => p.trim() !== '');
+    const paragraphs = cleanedContent.split(/\n\s*\n|\r\n\s*\r\n/).filter(p => p.trim() !== '');
     
     // 段落ごとに翻訳
     const translatedParagraphs = await batchTranslateToJapanese(paragraphs);

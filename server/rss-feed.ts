@@ -253,6 +253,7 @@ export async function fetchFeed(feedInfo: { url: string, name: string, language:
         try {
           translatedTitle = await translateToJapanese(item.title || '');
           // 記事の全文を段落ごとに翻訳する
+          // （translateLongContent内でHTMLタグは除去される）
           translatedContent = await translateLongContent(content);
           // 要約を翻訳
           translatedSummary = await translateToJapanese(summary);

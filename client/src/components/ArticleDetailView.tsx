@@ -60,28 +60,28 @@ export function ArticleDetailView({
   // 現在表示する言語のコンテンツを取得
   const displayTitle = showOriginal && article.originalTitle ? article.originalTitle : article.title;
   
-  // 本文コンテンツの取得とフォールバック
+  // 本文コンテンツの取得とフォールバック（HTMLタグを除去）
   const getSummary = () => {
     if (showOriginal && article.originalSummary) {
-      return article.originalSummary;
+      return stripHtmlTags(article.originalSummary);
     } else {
-      return article.summary;
+      return stripHtmlTags(article.summary);
     }
   };
   
   const getFullContent = () => {
     if (showOriginal && article.originalContent) {
-      return article.originalContent;
+      return stripHtmlTags(article.originalContent);
     } else {
-      return article.content;
+      return stripHtmlTags(article.content);
     }
   };
   
   const getFirstParagraph = () => {
     if (showOriginal && article.originalFirstParagraph) {
-      return article.originalFirstParagraph;
+      return stripHtmlTags(article.originalFirstParagraph);
     } else {
-      return article.firstParagraph || '';
+      return stripHtmlTags(article.firstParagraph || '');
     }
   };
   
@@ -186,7 +186,7 @@ export function ArticleDetailView({
                 <div className="mt-6">
                   <h3 className="text-lg font-semibold mb-4">記事の導入部分</h3>
                   <div className="leading-relaxed bg-slate-700/50 p-4 rounded-md border-l-4 border-green-500">
-                    <p>{firstParagraph}</p>
+                    <p>{stripHtmlTags(firstParagraph)}</p>
                   </div>
                 </div>
               )}
@@ -195,7 +195,7 @@ export function ArticleDetailView({
               <div className="mt-6">
                 <h3 className="text-lg font-semibold mb-4">記事の本文</h3>
                 <div className="leading-relaxed">
-                  {fullContent.split('\n').map((paragraph: string, index: number) => (
+                  {stripHtmlTags(fullContent).split('\n').map((paragraph: string, index: number) => (
                     paragraph.trim() ? <p key={index} className="mb-4">{paragraph}</p> : null
                   ))}
                 </div>
