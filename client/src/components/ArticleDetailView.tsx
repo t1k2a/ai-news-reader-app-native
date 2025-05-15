@@ -69,34 +69,14 @@ export function ArticleDetailView({
     }
   };
   
-  const getFullContent = () => {
-    if (showOriginal && article.originalContent) {
-      return stripHtmlTags(article.originalContent);
-    } else {
-      return stripHtmlTags(article.content);
-    }
-  };
-  
-  const getFirstParagraph = () => {
-    if (showOriginal && article.originalFirstParagraph) {
-      return stripHtmlTags(article.originalFirstParagraph);
-    } else {
-      return stripHtmlTags(article.firstParagraph || '');
-    }
-  };
+
   
   const summary = getSummary();
-  const fullContent = getFullContent();
-  const firstParagraph = getFirstParagraph();
   
-  // コンテンツの長さをログに出力（デバッグ用）
-  console.log('記事詳細 - コンテンツサイズ:', {
+  // 要約の長さをログに出力（デバッグ用）
+  console.log('記事詳細 - 要約サイズ:', {
     summaryLength: article.summary?.length || 0,
-    contentLength: article.content?.length || 0,
-    firstParagraphLength: article.firstParagraph?.length || 0,
-    originalSummaryLength: article.originalSummary?.length || 0,
-    originalContentLength: article.originalContent?.length || 0,
-    originalFirstParagraphLength: article.originalFirstParagraph?.length || 0
+    originalSummaryLength: article.originalSummary?.length || 0
   });
   
   return (
@@ -176,26 +156,6 @@ export function ArticleDetailView({
                 <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">記事の要約</h3>
                 <div className="leading-relaxed bg-blue-50 dark:bg-slate-800/50 p-4 rounded-md border-l-4 border-blue-500 text-gray-800 dark:text-gray-200">
                   {summary.split('\n').map((paragraph: string, index: number) => (
-                    paragraph.trim() ? <p key={index} className="mb-4">{paragraph}</p> : null
-                  ))}
-                </div>
-              </div>
-              
-              {/* 記事の最初の段落 */}
-              {firstParagraph && (
-                <div className="mt-6">
-                  <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">記事の導入部分</h3>
-                  <div className="leading-relaxed bg-green-50 dark:bg-slate-700/50 p-4 rounded-md border-l-4 border-green-500 text-gray-800 dark:text-gray-200">
-                    <p>{stripHtmlTags(firstParagraph)}</p>
-                  </div>
-                </div>
-              )}
-              
-              {/* 記事の本文 */}
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">記事の本文</h3>
-                <div className="leading-relaxed bg-gray-50 dark:bg-slate-800/80 p-4 rounded-md text-gray-800 dark:text-gray-200">
-                  {stripHtmlTags(fullContent).split('\n').map((paragraph: string, index: number) => (
                     paragraph.trim() ? <p key={index} className="mb-4">{paragraph}</p> : null
                   ))}
                 </div>
