@@ -71,12 +71,24 @@ export function ArticleDetailView({
   
 
   
-  const summary = getSummary();
+  // 最初の段落を取得
+  const getFirstParagraph = () => {
+    if (showOriginal && article.originalFirstParagraph) {
+      return stripHtmlTags(article.originalFirstParagraph);
+    } else {
+      return stripHtmlTags(article.firstParagraph || '');
+    }
+  };
   
-  // 要約の長さをログに出力（デバッグ用）
-  console.log('記事詳細 - 要約サイズ:', {
+  const summary = getSummary();
+  const firstParagraph = getFirstParagraph();
+  
+  // 要約と最初の段落の長さをログに出力（デバッグ用）
+  console.log('記事詳細 - コンテンツサイズ:', {
     summaryLength: article.summary?.length || 0,
-    originalSummaryLength: article.originalSummary?.length || 0
+    originalSummaryLength: article.originalSummary?.length || 0,
+    firstParagraphLength: article.firstParagraph?.length || 0,
+    originalFirstParagraphLength: article.originalFirstParagraph?.length || 0
   });
   
   return (
