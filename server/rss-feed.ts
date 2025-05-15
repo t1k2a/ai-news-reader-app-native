@@ -237,8 +237,8 @@ export async function fetchFeed(feedInfo: { url: string, name: string, language:
         content = item.contentSnippet || '';
       }
       
-      // 要約作成（最大1000文字）
-      const summary = summarizeText(content, 1000);
+      // 要約作成（最大2000文字）
+      const summary = summarizeText(content, 2000);
       
       // 最初の段落を抽出
       const firstParagraph = extractFirstParagraph(content);
