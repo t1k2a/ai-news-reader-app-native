@@ -28,14 +28,14 @@
 .article-detail-container {
   border-radius: 0.5rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  width: 90%;
-  max-width: 900px;
+  width: 95%;
+  max-width: 1200px;
   height: 85vh;
-  max-height: 800px;
+  max-height: 900px;
   overflow-y: auto;
   transform: translateY(20px);
   transition: transform 0.3s;
-  border: 1px solid #2d3748;
+
 }
 
 .article-detail-overlay.active .article-detail-container {
