@@ -69,8 +69,8 @@ export function NewsItem({ item }: NewsItemProps) {
       >
         <div className="flex items-start p-4">
           <div className="flex-1">
-            <div className="flex items-center text-sm text-slate-400 mb-1">
-              <span className="font-medium text-blue-400">{item.sourceName}</span>
+            <div className="flex items-center text-sm text-gray-600 dark:text-slate-400 mb-1">
+              <span className="font-medium text-blue-600 dark:text-blue-400">{item.sourceName}</span>
               <span className="mx-2">•</span>
               <span>{formatDate(item.publishDate)} JST</span>
             </div>
@@ -80,7 +80,7 @@ export function NewsItem({ item }: NewsItemProps) {
                 {item.categories.map(category => (
                   <span 
                     key={category} 
-                    className="inline-block px-2 py-0.5 bg-slate-700/80 text-xs text-slate-300 rounded-full border border-slate-600/50"
+                    className="inline-block px-2 py-0.5 bg-blue-100 dark:bg-slate-700/80 text-xs text-blue-800 dark:text-slate-200 rounded-full border border-blue-200 dark:border-slate-600/50"
                   >
                     {category}
                   </span>

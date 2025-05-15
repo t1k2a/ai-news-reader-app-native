@@ -27,7 +27,7 @@ export function Sidebar({ selectedSource, onSourceSelect }: SidebarProps) {
     <>
       {/* モバイルトグルボタン */}
       <button 
-        className="md:hidden w-full py-2 px-4 bg-slate-800 rounded-lg text-left flex justify-between items-center"
+        className="md:hidden w-full py-2 px-4 bg-white dark:bg-slate-800 text-gray-800 dark:text-white rounded-lg text-left flex justify-between items-center border border-gray-200 dark:border-slate-700"
         onClick={() => setIsOpen(!isOpen)}
       >
         <span>{selectedSource || 'すべてのソース'}</span>

@@ -34,7 +34,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-slate-900 text-white flex flex-col">
+      <div className="min-h-screen bg-gray-100 dark:bg-slate-900 text-gray-900 dark:text-white flex flex-col">
         <NewsHeader />
         
         <main className="flex-1 container mx-auto p-4 flex flex-col md:flex-row gap-4">
@@ -49,9 +49,9 @@ function App() {
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
               </div>
             ) : error ? (
-              <div className="bg-red-900/30 border border-red-500/50 p-4 rounded-lg">
-                <h3 className="text-lg font-medium text-red-200">エラー</h3>
-                <p className="text-red-100">{error}</p>
+              <div className="bg-red-50 dark:bg-red-900/30 border border-red-300 dark:border-red-500/50 p-4 rounded-lg">
+                <h3 className="text-lg font-medium text-red-800 dark:text-red-200">エラー</h3>
+                <p className="text-red-700 dark:text-red-100">{error}</p>
               </div>
             ) : (
               <NewsTimeline selectedSource={selectedSource} />
