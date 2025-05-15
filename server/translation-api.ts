@@ -122,6 +122,41 @@ export function stripHtmlTags(html: string): string {
 }
 
 /**
+ * HTMLコンテンツから最初の段落を抽出する
+ * @param html HTMLを含むテキスト
+ * @returns 最初の<p>タグの内容（HTMLタグなし）
+ */
+export function extractFirstParagraph(html: string): string {
+  if (!html) return '';
+  
+  try {
+    // スクリプトとスタイルタグを削除
+    const cleanHtml = html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
+    
+    // 簡易的な方法で最初の<p>タグの位置を特定
+    const pTagStart = cleanHtml.toLowerCase().indexOf('<p');
+    
+    if (pTagStart !== -1) {
+      const contentStart = cleanHtml.indexOf('>', pTagStart) + 1;
+      const contentEnd = cleanHtml.indexOf('</p>', contentStart);
+      
+      if (contentStart !== -1 && contentEnd !== -1) {
+        const paragraphContent = cleanHtml.substring(contentStart, contentEnd);
+        return stripHtmlTags(paragraphContent).trim();
+      }
+    }
+    
+    // <p>タグが見つからない場合は最初の100文字を返す
+    return stripHtmlTags(cleanHtml).substring(0, 100) + '...';
+  } catch (error) {
+    console.error('段落の抽出に失敗:', error);
+    return '';
+  }
+}
+
+/**
  * テキストを指定した長さ（約500文字）に要約する
  * @param text 要約するテキスト
  * @param maxLength 最大文字数（デフォルト500）

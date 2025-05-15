@@ -1,5 +1,5 @@
 import Parser from 'rss-parser';
-import { translateToJapanese, summarizeText, translateLongContent } from './translation-api';
+import { translateToJapanese, summarizeText, translateLongContent, extractFirstParagraph } from './translation-api';
 
 // RSSパーサーの初期化
 const parser = new Parser({
