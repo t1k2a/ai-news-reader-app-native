@@ -64,7 +64,7 @@ export function NewsItem({ item }: NewsItemProps) {
       )}
       
       <div 
-        className="bg-slate-800 rounded-lg overflow-hidden hover:bg-slate-700 transition-colors border border-slate-700/50 shadow-md cursor-pointer"
+        className="bg-white dark:bg-slate-800 rounded-lg overflow-hidden hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors border border-gray-200 dark:border-slate-700/50 shadow-md cursor-pointer"
         onClick={handleOpenDetail}
       >
         <div className="flex items-start p-4">
@@ -88,11 +88,11 @@ export function NewsItem({ item }: NewsItemProps) {
               </div>
             )}
             
-            <h3 className="text-lg font-bold mb-2 text-white">
+            <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">
               {showOriginal && item.originalTitle ? item.originalTitle : item.title}
             </h3>
             
-            <div className="prose prose-sm prose-invert max-w-none bg-slate-800/50 p-3 rounded-md">
+            <div className="prose prose-sm dark:prose-invert max-w-none bg-blue-50 dark:bg-slate-800/50 p-3 rounded-md text-gray-800 dark:text-gray-200">
               <p>{stripHtmlTags(showOriginal && item.originalSummary ? item.originalSummary : item.summary)}</p>
             </div>
             
@@ -103,7 +103,7 @@ export function NewsItem({ item }: NewsItemProps) {
                     e.stopPropagation();
                     setShowOriginal(!showOriginal);
                   }}
-                  className="text-sm px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-full transition-colors"
+                  className="text-sm px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded-full transition-colors"
                 >
                   {showOriginal ? '翻訳を表示' : '原文を表示'}
                 </button>

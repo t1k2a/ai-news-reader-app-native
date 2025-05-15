@@ -137,7 +137,7 @@ export function ArticleDetailView({
               {article.sourceLanguage === 'en' && (
                 <button 
                   onClick={onToggleOriginal}
-                  className="text-sm px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-full transition-colors"
+                  className="text-sm px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded-full transition-colors"
                 >
                   {showOriginal ? '翻訳を表示' : '原文を表示'}
                 </button>
@@ -147,7 +147,7 @@ export function ArticleDetailView({
               
               <button
                 onClick={onClose}
-                className="text-slate-400 hover:text-slate-300 p-1"
+                className="text-gray-600 hover:text-gray-800 dark:text-slate-400 dark:hover:text-slate-300 p-1"
                 aria-label="閉じる"
               >
                 <svg 
