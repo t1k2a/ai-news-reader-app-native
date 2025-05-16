@@ -208,8 +208,11 @@ function inferCategoriesFromContent(title: string, content: string): string[] {
   return inferredCategories;
 }
 
+// 翻訳のキャッシュ
+const translationCache: Record<string, string> = {};
+
 /**
- * 特定のRSSフィードから記事を取得する
+ * 特定のRSSフィードから記事を取得する（最適化版）
  */
 export async function fetchFeed(feedInfo: { url: string, name: string, language: string, defaultCategories: string[] }): Promise<AINewsItem[]> {
   try {
@@ -222,7 +225,8 @@ export async function fetchFeed(feedInfo: { url: string, name: string, language:
     
     const newsItems: AINewsItem[] = [];
     
-    for (const item of feed.items.slice(0, 10)) { // 最新10件に制限
+    // 最初は5件に制限して高速に表示
+    for (const item of feed.items.slice(0, 5)) {
       // 記事の全文を取得（より多くのコンテンツソースを試す）
       let content = '';
       
@@ -248,20 +252,41 @@ export async function fetchFeed(feedInfo: { url: string, name: string, language:
       let translatedSummary = summary;
       let translatedFirstParagraph = firstParagraph;
       
+      // 記事URLからユニークIDを生成
+      const id = item.guid || item.link || `${feedInfo.name}-${Date.now()}-${Math.random()}`;
+      
       // 英語の場合は翻訳する
       if (feedInfo.language === 'en') {
         try {
-          translatedTitle = await translateToJapanese(item.title || '');
-          // 記事の全文を段落ごとに翻訳する
-          // （translateLongContent内でHTMLタグは除去される）
-          translatedContent = await translateLongContent(content);
-          // 要約を翻訳
-          translatedSummary = await translateToJapanese(summary);
-          // 最初の段落も翻訳
-          translatedFirstParagraph = await translateToJapanese(firstParagraph);
+          // タイトルの翻訳（キャッシュを利用）
+          const titleCacheKey = `title:${item.title}`;
+          if (translationCache[titleCacheKey]) {
+            translatedTitle = translationCache[titleCacheKey];
+          } else {
+            translatedTitle = await translateToJapanese(item.title || '');
+            translationCache[titleCacheKey] = translatedTitle;
+          }
           
-          // 記事URLからユニークIDを生成
-          const id = item.guid || item.link || `${feedInfo.name}-${Date.now()}-${Math.random()}`;
+          // 要約を翻訳（キャッシュを利用）
+          const summaryCacheKey = `summary:${summary.substring(0, 100)}`;
+          if (translationCache[summaryCacheKey]) {
+            translatedSummary = translationCache[summaryCacheKey];
+          } else {
+            translatedSummary = await translateToJapanese(summary);
+            translationCache[summaryCacheKey] = translatedSummary;
+          }
+          
+          // 最初の段落も翻訳（キャッシュを利用）
+          const paragraphCacheKey = `paragraph:${firstParagraph.substring(0, 100)}`;
+          if (translationCache[paragraphCacheKey]) {
+            translatedFirstParagraph = translationCache[paragraphCacheKey];
+          } else {
+            translatedFirstParagraph = await translateToJapanese(firstParagraph);
+            translationCache[paragraphCacheKey] = translatedFirstParagraph;
+          }
+          
+          // 記事本文は必要になった時に翻訳するため、最初は翻訳しない
+          // translatedContent = await translateLongContent(content);
           
           // 記事のカテゴリを取得または生成
           let categories = [...feedInfo.defaultCategories];
@@ -293,8 +318,6 @@ export async function fetchFeed(feedInfo: { url: string, name: string, language:
         }
       } else {
         // 日本語の場合はそのまま追加
-        const id = item.guid || item.link || `${feedInfo.name}-${Date.now()}-${Math.random()}`;
-        
         // 記事のカテゴリを取得または生成
         let categories = [...feedInfo.defaultCategories];
         
@@ -326,19 +349,35 @@ export async function fetchFeed(feedInfo: { url: string, name: string, language:
   }
 }
 
+// キャッシュする時間（ミリ秒）- 5分
+const CACHE_TTL = 5 * 60 * 1000;
+
+// キャッシュを保持する変数
+let cachedNewsItems: AINewsItem[] = [];
+let lastCacheTime = 0;
+
 /**
  * すべてのRSSフィードから記事を取得して結合する
  * タイムアウト機能付き並列処理
+ * キャッシュ機能追加
  */
 export async function fetchAllFeeds(): Promise<AINewsItem[]> {
+  const now = Date.now();
+  
+  // キャッシュが有効であれば、キャッシュを返す
+  if (cachedNewsItems.length > 0 && (now - lastCacheTime) < CACHE_TTL) {
+    console.log('キャッシュからニュースを提供');
+    return cachedNewsItems;
+  }
+  
   const allNewsItems: AINewsItem[] = [];
   
-  // 並列でフィードを取得（各フィードに15秒のタイムアウトを設定）
+  // 並列でフィードを取得（各フィードに8秒のタイムアウトを設定）
   const fetchPromises = AI_RSS_FEEDS.map(async (feedInfo) => {
     try {
-      // タイムアウト付きでフィードを取得（15秒に延長）
+      // タイムアウト付きでフィードを取得（8秒に短縮）
       const timeoutPromise = new Promise<AINewsItem[]>((_, reject) => {
-        setTimeout(() => reject(new Error(`Timeout fetching ${feedInfo.name}`)), 15000);
+        setTimeout(() => reject(new Error(`Timeout fetching ${feedInfo.name}`)), 8000);
       });
       
       const items = await Promise.race([
@@ -353,12 +392,20 @@ export async function fetchAllFeeds(): Promise<AINewsItem[]> {
     }
   });
   
-  // すべての結果を待機して結合
-  const results = await Promise.all(fetchPromises);
-  results.forEach(items => {
-    allNewsItems.push(...items);
+  // 結果が揃い次第、処理を継続
+  const results = await Promise.allSettled(fetchPromises);
+  results.forEach(result => {
+    if (result.status === 'fulfilled') {
+      allNewsItems.push(...result.value);
+    }
   });
   
   // 公開日の新しい順にソート
-  return allNewsItems.sort((a, b) => b.publishDate.getTime() - a.publishDate.getTime());
+  const sortedItems = allNewsItems.sort((a, b) => b.publishDate.getTime() - a.publishDate.getTime());
+  
+  // キャッシュを更新
+  cachedNewsItems = sortedItems;
+  lastCacheTime = now;
+  
+  return sortedItems;
 }
