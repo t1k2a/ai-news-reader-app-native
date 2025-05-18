@@ -1,7 +1,8 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { translateToJapanese } from "./translation-api";
 import { fetchAllFeeds, fetchFeed, AINewsItem, AI_CATEGORIES } from "./rss-feed";
+import { postNewItems } from "./social-posting";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API route for getting all AI-related news
