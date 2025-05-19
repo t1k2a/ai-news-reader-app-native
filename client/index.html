@@ -25,6 +25,13 @@
     <!-- Theme Color -->
     <meta name="theme-color" content="#1e40af" />
     
+    <!-- PWA対応 -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AI News Reader" />
+    <link rel="apple-touch-icon" href="/pwa-icons/icon-192x192.png" />
+    
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <link rel="canonical" href="https://ai-news-reader.replit.app" />
     <title>AI News Reader - 最新のAI関連ニュースをシンプルに</title>
@@ -49,5 +56,19 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // PWA用のService Workerを登録
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then(registration => {
+              console.log('Service Worker登録成功:', registration.scope);
+            })
+            .catch(error => {
+              console.log('Service Worker登録失敗:', error);
+            });
+        });
+      }
+    </script>
   </body>
 </html>
