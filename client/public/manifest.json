@@ -1,0 +1,41 @@
+{
+  "short_name": "AI News",
+  "name": "AI News Reader",
+  "description": "最新のAI関連ニュースを自動収集し、日本語に翻訳して表示するアプリ",
+  "icons": [
+    {
+      "src": "/pwa-icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#1e40af",
+  "display": "standalone",
+  "theme_color": "#1e40af",
+  "scope": "/",
+  "orientation": "portrait",
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "SNS連携設定",
+      "short_name": "SNS設定",
+      "description": "SNSへの自動投稿設定",
+      "url": "/social",
+      "icons": [
+        {
+          "src": "/pwa-icons/share-icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}
