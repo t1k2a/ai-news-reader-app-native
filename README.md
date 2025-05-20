@@ -1,25 +1,51 @@
 # AI News Reader
 
-最新のAI関連ニュースを自動収集し、日本語に翻訳して表示するウェブアプリケーションです。
+AIに関する最新ニュースを自動収集し、日本語に翻訳して提供するウェブアプリケーションです。
 
-## 機能
+## 主な機能
 
-- 複数のRSSフィードからAI関連ニュースを自動収集
-- 英語記事の日本語への自動翻訳
-- カテゴリ別・ソース別フィルタリング
-- 無限スクロールによる記事閲覧
-- 新着通知機能
-- ブックマーク機能
-- レスポンシブデザイン
+- **AIニュースの自動収集**: 複数のソースからAI関連のニュースを収集
+- **自動翻訳**: 英語記事を日本語に自動翻訳
+- **コンパクトな要約**: 長い記事を300文字程度に要約
+- **PWA対応**: スマートフォンのホーム画面に追加可能
+- **オフライン機能**: Service Workerによるオフラインサポート
+- **SNS自動投稿**: 新しいニュースをTwitter/Xに自動投稿
 
 ## 技術スタック
 
-- フロントエンド: React, TypeScript, TailwindCSS
+- フロントエンド: React, TypeScript, Tailwind CSS
 - バックエンド: Node.js, Express
-- データ処理: RSS Parser, 翻訳API連携
+- データベース: PostgreSQL
+- その他: Service Worker (PWA), Twitter API
 
-## 最適化機能
+## 開発方法
 
-- サーバーサイドキャッシュによる高速読み込み
-- 翻訳結果のキャッシング
-- 効率的なデータ取得と処理
+```bash
+# 依存関係のインストール
+npm install
+
+# 開発サーバーの起動
+npm run dev
+```
+
+## PWA機能
+
+このアプリはPWA (Progressive Web App) に対応しています：
+
+- ホーム画面に追加可能
+- オフラインでも動作
+- アプリのような体験
+
+## 環境変数
+
+```
+DATABASE_URL=postgresql://...
+TWITTER_API_KEY=...
+TWITTER_API_SECRET=...
+TWITTER_ACCESS_TOKEN=...
+TWITTER_ACCESS_SECRET=...
+```
+
+## ライセンス
+
+MIT
