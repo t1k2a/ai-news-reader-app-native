@@ -166,12 +166,12 @@ export function extractFirstParagraph(html: string): string {
 }
 
 /**
- * テキストを指定した長さ（約300文字）に要約する
+ * テキストを指定した長さ（約150文字）に要約する
  * @param text 要約するテキスト
- * @param maxLength 最大文字数（デフォルト300）
+ * @param maxLength 最大文字数（デフォルト150）
  * @returns 要約されたテキスト
  */
-export function summarizeText(text: string, maxLength: number = 300): string {
+export function summarizeText(text: string, maxLength: number = 150): string {
   if (!text) return '';
   
   // まずHTMLタグを除去
