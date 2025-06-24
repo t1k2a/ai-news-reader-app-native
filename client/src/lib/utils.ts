@@ -11,6 +11,30 @@ const setLocalStorage = (key: string, value: any): void =>
   window.localStorage.setItem(key, JSON.stringify(value));
 
 /**
+ * シンプルなローカルストレージキャッシュ取得
+ * @param key ストレージキー
+ * @param maxAge 有効期限（ms）
+ */
+export function getCachedData<T>(key: string, maxAge: number): T | null {
+  const cached = getLocalStorage(key);
+  if (!cached) return null;
+  if (Date.now() - cached.timestamp > maxAge) {
+    window.localStorage.removeItem(key);
+    return null;
+  }
+  return cached.data as T;
+}
+
+/**
+ * ローカルストレージにキャッシュを保存
+ * @param key ストレージキー
+ * @param data 保存するデータ
+ */
+export function setCachedData(key: string, data: unknown): void {
+  setLocalStorage(key, { timestamp: Date.now(), data });
+}
+
+/**
  * HTMLタグを除去するヘルパー関数
  */
 export function stripHtmlTags(html: string): string {
@@ -33,4 +57,4 @@ export function stripHtmlTags(html: string): string {
   return plainText;
 }
 
-export { getLocalStorage, setLocalStorage };
+export { getLocalStorage, setLocalStorage, getCachedData, setCachedData };
