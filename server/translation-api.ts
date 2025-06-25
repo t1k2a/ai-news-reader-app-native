@@ -1,5 +1,5 @@
 // シンプルな翻訳用モジュール
-import axios from 'axios';
+import axios from "axios";
 
 /**
  * テキストを英語から日本語に翻訳する
@@ -8,16 +8,18 @@ import axios from 'axios';
  * @returns 翻訳されたテキスト、またはエラーの場合は元のテキスト
  */
 export async function translateToJapanese(text: string): Promise<string> {
-  if (!text) return '';
-  
+  if (!text) return "";
+
   try {
     // 非公式APIを使用（低負荷用）
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=${encodeURIComponent(text)}`;
-    
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=${encodeURIComponent(
+      text
+    )}`;
+
     const { data } = await axios.get(url);
-    
+
     // レスポンスから翻訳テキストを抽出
-    let translatedText = '';
+    let translatedText = "";
     if (data && data[0]) {
       for (let i = 0; i < data[0].length; i++) {
         if (data[0][i][0]) {
@@ -25,10 +27,10 @@ export async function translateToJapanese(text: string): Promise<string> {
         }
       }
     }
-    
+
     return translatedText || text;
   } catch (error) {
-    console.error('翻訳エラー:', error);
+    console.error("翻訳エラー:", error);
     return text; // エラーの場合は元のテキストを返す
   }
 }
@@ -40,28 +42,30 @@ export async function translateToJapanese(text: string): Promise<string> {
  * @returns 翻訳されたコンテンツ
  */
 export async function translateLongContent(content: string): Promise<string> {
-  if (!content) return '';
-  
+  if (!content) return "";
+
   try {
     // HTMLタグを除去
-    let cleanedContent = '';
+    let cleanedContent = "";
     try {
       cleanedContent = stripHtmlTags(content);
     } catch (error) {
-      console.error('HTMLタグの除去に失敗:', error);
-      cleanedContent = content.replace(/<[^>]*>/g, ''); // 簡易的なタグ除去
+      console.error("HTMLタグの除去に失敗:", error);
+      cleanedContent = content.replace(/<[^>]*>/g, ""); // 簡易的なタグ除去
     }
-    
+
     // 段落で分割（改行や空行で区切る）
-    const paragraphs = cleanedContent.split(/\n\s*\n|\r\n\s*\r\n/).filter(p => p.trim() !== '');
-    
+    const paragraphs = cleanedContent
+      .split(/\n\s*\n|\r\n\s*\r\n/)
+      .filter((p) => p.trim() !== "");
+
     // 段落ごとに翻訳
     const translatedParagraphs = await batchTranslateToJapanese(paragraphs);
-    
+
     // 翻訳された段落を元の形式で結合
-    return translatedParagraphs.join('\n\n');
+    return translatedParagraphs.join("\n\n");
   } catch (error) {
-    console.error('コンテンツ翻訳エラー:', error);
+    console.error("コンテンツ翻訳エラー:", error);
     return content; // エラーの場合は元のコンテンツを返す
   }
 }
@@ -72,35 +76,37 @@ export async function translateLongContent(content: string): Promise<string> {
  * @param texts 翻訳するテキストの配列
  * @returns 翻訳されたテキストの配列
  */
-export async function batchTranslateToJapanese(texts: string[]): Promise<string[]> {
+export async function batchTranslateToJapanese(
+  texts: string[]
+): Promise<string[]> {
   if (!texts || texts.length === 0) return [];
-  
-  const validTexts = texts.filter(text => text && text.trim() !== '');
+
+  const validTexts = texts.filter((text) => text && text.trim() !== "");
   if (validTexts.length === 0) return [];
-  
+
   try {
     // 5つずつに分割して処理（API制限を避けるため）
     const chunks = [];
     for (let i = 0; i < validTexts.length; i += 5) {
       chunks.push(validTexts.slice(i, i + 5));
     }
-    
+
     const results: string[] = [];
-    
+
     for (const chunk of chunks) {
-      const promises = chunk.map(text => translateToJapanese(text));
+      const promises = chunk.map((text) => translateToJapanese(text));
       const translatedChunk = await Promise.all(promises);
       results.push(...translatedChunk);
-      
+
       // APIリクエスト制限を回避するための短い待機
       if (chunks.length > 1) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
-    
+
     return results;
   } catch (error) {
-    console.error('一括翻訳エラー:', error);
+    console.error("一括翻訳エラー:", error);
     return validTexts; // エラーの場合は元のテキストを返す
   }
 }
@@ -111,22 +117,22 @@ export async function batchTranslateToJapanese(texts: string[]): Promise<string[
  * @returns HTMLタグを除去したプレーンテキスト
  */
 export function stripHtmlTags(html: string): string {
-  if (!html) return '';
-  
+  if (!html) return "";
+
   // HTMLタグを除去
   const plainText = html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // スクリプトタグを削除
-    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')   // スタイルタグを削除
-    .replace(/<[^>]*>/g, '')                                           // 残りのHTMLタグを削除
-    .replace(/&nbsp;/g, ' ')                                           // &nbsp;をスペースに置換
-    .replace(/&amp;/g, '&')                                            // &amp;を&に置換
-    .replace(/&lt;/g, '<')                                             // &lt;を<に置換
-    .replace(/&gt;/g, '>')                                             // &gt;を>に置換
-    .replace(/&quot;/g, '"')                                           // &quot;を"に置換
-    .replace(/&#039;/g, "'")                                           // &#039;を'に置換
-    .replace(/\s+/g, ' ')                                              // 連続する空白を1つに
-    .trim();                                                           // 前後の空白を削除
-  
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "") // スクリプトタグを削除
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "") // スタイルタグを削除
+    .replace(/<[^>]*>/g, "") // 残りのHTMLタグを削除
+    .replace(/&nbsp;/g, " ") // &nbsp;をスペースに置換
+    .replace(/&amp;/g, "&") // &amp;を&に置換
+    .replace(/&lt;/g, "<") // &lt;を<に置換
+    .replace(/&gt;/g, ">") // &gt;を>に置換
+    .replace(/&quot;/g, '"') // &quot;を"に置換
+    .replace(/&#039;/g, "'") // &#039;を'に置換
+    .replace(/\s+/g, " ") // 連続する空白を1つに
+    .trim(); // 前後の空白を削除
+
   return plainText;
 }
 
@@ -136,75 +142,80 @@ export function stripHtmlTags(html: string): string {
  * @returns 最初の<p>タグの内容（HTMLタグなし）
  */
 export function extractFirstParagraph(html: string): string {
-  if (!html) return '';
-  
+  if (!html) return "";
+
   try {
     // スクリプトとスタイルタグを削除
     const cleanHtml = html
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
-    
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "");
+
     // 簡易的な方法で最初の<p>タグの位置を特定
-    const pTagStart = cleanHtml.toLowerCase().indexOf('<p');
-    
+    const pTagStart = cleanHtml.toLowerCase().indexOf("<p");
+
     if (pTagStart !== -1) {
-      const contentStart = cleanHtml.indexOf('>', pTagStart) + 1;
-      const contentEnd = cleanHtml.indexOf('</p>', contentStart);
-      
+      const contentStart = cleanHtml.indexOf(">", pTagStart) + 1;
+      const contentEnd = cleanHtml.indexOf("</p>", contentStart);
+
       if (contentStart !== -1 && contentEnd !== -1) {
         const paragraphContent = cleanHtml.substring(contentStart, contentEnd);
         return stripHtmlTags(paragraphContent).trim();
       }
     }
-    
+
     // <p>タグが見つからない場合は最初の100文字を返す
-    return stripHtmlTags(cleanHtml).substring(0, 100) + '...';
+    return stripHtmlTags(cleanHtml).substring(0, 100) + "...";
   } catch (error) {
-    console.error('段落の抽出に失敗:', error);
-    return '';
+    console.error("段落の抽出に失敗:", error);
+    return "";
   }
 }
 
 /**
- * テキストを指定した長さ（約150文字）に要約する
+ * テキストを指定した長さ（約300文字）に要約する
  * @param text 要約するテキスト
- * @param maxLength 最大文字数（デフォルト150）
+ * @param maxLength 最大文字数（デフォルト300）
  * @returns 要約されたテキスト
  */
-export function summarizeText(text: string, maxLength: number = 150): string {
-  if (!text) return '';
-  
+export function summarizeText(text: string, maxLength: number = 300): string {
+  if (!text) return "";
+
   // まずHTMLタグを除去
   const plainText = stripHtmlTags(text);
-  
+
   // デバッグ用ログ
-  console.log(`要約前テキスト長: ${plainText.length} 文字, 制限: ${maxLength} 文字`);
-  
+  console.log(
+    `要約前テキスト長: ${plainText.length} 文字, 制限: ${maxLength} 文字`
+  );
+
   if (plainText.length <= maxLength) return plainText;
-  
+
   // 文章を句点で分割
-  const sentences = plainText.split(/。|！|？|\.|!|\?/).filter(s => s.trim().length > 0);
-  
-  let summary = '';
+  const sentences = plainText
+    .split(/。|！|？|\.|!|\?/)
+    .filter((s) => s.trim().length > 0);
+
+  let summary = "";
   let currentLength = 0;
-  
+
   for (const sentence of sentences) {
-    const sentenceWithPeriod = sentence + '。';
+    const sentenceWithPeriod = sentence + "。";
     if (currentLength + sentenceWithPeriod.length <= maxLength) {
       summary += sentenceWithPeriod;
       currentLength += sentenceWithPeriod.length;
     } else {
       // 残りのスペースに収まる部分だけを追加
       const remainingSpace = maxLength - currentLength;
-      if (remainingSpace > 10) { // 最低10文字は入るようにする
-        summary += sentenceWithPeriod.substring(0, remainingSpace - 1) + '…';
+      if (remainingSpace > 10) {
+        // 最低10文字は入るようにする
+        summary += sentenceWithPeriod.substring(0, remainingSpace - 1) + "…";
       }
       break;
     }
   }
-  
+
   // デバッグ用ログ
   console.log(`要約後テキスト長: ${summary.length} 文字`);
-  
+
   return summary;
 }
