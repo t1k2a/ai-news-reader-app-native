@@ -5,6 +5,7 @@ import { LoadingSpinner } from './LoadingSpinner';
 import { NewContentBanner } from './NewContentBanner';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { AI_CATEGORIES } from '../lib/constants';
+import { getCachedData, setCachedData } from '../lib/utils';
 
 interface AINewsItem {
   id: string;
@@ -79,6 +80,9 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
   // 定期的な更新間隔（ミリ秒）
   const AUTO_REFRESH_INTERVAL = 60000; // 1分
   
+  // キャッシュキー（ソース・カテゴリ別）
+  const cacheKey = `news:${selectedSource ?? 'all'}:${selectedCategory ?? 'all'}`;
+
   // React Queryを使用したキャッシュ対応データフェッチ
   const { data: news, isLoading, error, refetch } = useQuery<AINewsItem[], Error>({
     queryKey: ['news', selectedSource, selectedCategory],
@@ -106,6 +110,11 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
     },
     staleTime: 60000, // 1分間はキャッシュを新鮮とみなす
     refetchOnWindowFocus: false, // ウィンドウフォーカス時に再取得しない
+    initialData: () =>
+      getCachedData<AINewsItem[]>(cacheKey, 5 * 60 * 1000) ?? undefined,
+    onSuccess: data => {
+      setCachedData(cacheKey, data);
+    },
   });
   
   // 追加のアイテムを読み込む関数
