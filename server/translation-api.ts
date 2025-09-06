@@ -194,11 +194,7 @@ export function summarizeText(text: string, maxLength: number = 150): string {
       summary += sentenceWithPeriod;
       currentLength += sentenceWithPeriod.length;
     } else {
-      // 残りのスペースに収まる部分だけを追加
-      const remainingSpace = maxLength - currentLength;
-      if (remainingSpace > 10) { // 最低10文字は入るようにする
-        summary += sentenceWithPeriod.substring(0, remainingSpace - 1) + '…';
-      }
+      // 途中で切らず、直前までに追加した文で終了（句点で終了）
       break;
     }
   }

@@ -165,15 +165,6 @@ export function ArticleDetailView({
             )}
             
             {/* 最初の段落 */}
-            {firstParagraph && firstParagraph.length > 0 && (
-              <div className="mb-6">
-                <p className="text-base text-gray-800 dark:text-gray-200 leading-relaxed font-medium">
-                  {firstParagraph}
-                </p>
-              </div>
-            )}
-            
-            {/* 要約 */}
             <div className="mb-6">
               <h2 className="text-base font-semibold mb-3 text-gray-800 dark:text-gray-200">記事の要約</h2>
               <div className="bg-blue-50 dark:bg-slate-800/50 p-4 rounded-lg border-l-4 border-blue-500 text-gray-800 dark:text-gray-200">

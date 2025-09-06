@@ -28,7 +28,7 @@ export const AI_CATEGORIES = {
 };
 
 // AI関連のRSSフィードのURL
-const AI_RSS_FEEDS = [
+export const AI_RSS_FEEDS = [
   // 英語のRSSフィード
   { 
     url: 'https://venturebeat.com/category/ai/feed/',
@@ -242,7 +242,7 @@ export async function fetchFeed(feedInfo: { url: string, name: string, language:
       }
       
       // 要約作成（最大2000文字）
-      const summary = summarizeText(content, 2000);
+      const summary = summarizeText(content, 300);
       
       // 最初の段落を抽出
       const firstParagraph = extractFirstParagraph(content);

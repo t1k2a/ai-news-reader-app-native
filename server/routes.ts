@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { translateToJapanese } from "./translation-api";
-import { fetchAllFeeds, fetchFeed, AINewsItem, AI_CATEGORIES } from "./rss-feed";
+import { fetchAllFeeds, fetchFeed, AINewsItem, AI_CATEGORIES, AI_RSS_FEEDS } from "./rss-feed";
 import { postNewItems } from "./social-posting";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -31,15 +31,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const allNews = await fetchAllFeeds();
-      const filteredNews = allNews.filter(item => 
-        item.sourceName.toLowerCase().includes(sourceName.toLowerCase())
+      // パラメータを正規化（デコード・トリム・小文字化）
+      const normalized = decodeURIComponent(sourceName).trim().toLowerCase();
+      const filteredNews = allNews.filter(item =>
+        item.sourceName && item.sourceName.trim().toLowerCase().includes(normalized)
       );
-      
-      if (filteredNews.length === 0) {
-        return res.status(404).json({ message: '指定されたソースのニュースが見つかりませんでした' });
+
+      if (filteredNews.length > 0) {
+        return res.json(filteredNews);
       }
-      
-      res.json(filteredNews);
+
+      // フィード名が一致する場合は、そのソースのみ新規取得（キャッシュや他ソースの失敗の影響を避ける）
+      const feedInfo = AI_RSS_FEEDS.find(f => f.name.trim().toLowerCase() === normalized);
+      if (feedInfo) {
+        try {
+          const fresh = await fetchFeed(feedInfo);
+          return res.json(fresh);
+        } catch (_e) {
+          // フォールバック不可の場合は空配列
+          return res.json([]);
+        }
+      }
+
+      return res.json([]);
     } catch (error) {
       console.error(`ソース "${sourceName}" のニュース取得エラー:`, error);
       res.status(500).json({ message: 'ニュースの取得に失敗しました' });
