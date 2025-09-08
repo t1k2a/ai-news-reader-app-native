@@ -35,8 +35,8 @@ export async function setupVite(app: Express, server: Server) {
     customLogger: {
       ...viteLogger,
       error: (msg, options) => {
+        // 開発中はプロセスを落とさずエラー内容を表示する
         viteLogger.error(msg, options);
-        process.exit(1);
       },
     },
     server: serverOptions,
