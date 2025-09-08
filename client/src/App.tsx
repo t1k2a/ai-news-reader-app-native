@@ -9,6 +9,7 @@ import { NewsHeader } from "./components/NewsHeader";
 import { BookmarksPanel } from "./components/BookmarksPanel";
 import { SocialPostingPanel } from "./components/social/SocialPostingPanel";
 import "@fontsource/inter";
+import PrivacyPage from "./pages/privacy";
 
 function App() {
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
@@ -98,6 +99,8 @@ function App() {
                 </div>
               </main>
             } />
+            {/* プライバシーポリシー（SPA配信用） */}
+            <Route path="/privacy" element={<PrivacyPage />} />
             
             {/* 404ページ */}
             <Route path="*" element={<Navigate to="/" replace />} />
@@ -107,7 +110,7 @@ function App() {
             <span>AI News Reader - 最新のAI関連ニュースをシンプルに</span>
             <span className="mx-2">•</span>
             <a
-              href="/privacy.html"
+              href="/privacy"
               className="underline hover:text-slate-300"
             >
               プライバシーポリシー
