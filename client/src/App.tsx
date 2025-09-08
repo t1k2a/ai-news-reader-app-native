@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "sonner";
 import { NewsTimeline } from "./components/NewsTimeline";
@@ -109,12 +109,7 @@ function App() {
           <footer className="bg-slate-800 p-3 text-center text-sm text-slate-400">
             <span>AI News Reader - 最新のAI関連ニュースをシンプルに</span>
             <span className="mx-2">•</span>
-            <a
-              href="/privacy"
-              className="underline hover:text-slate-300"
-            >
-              プライバシーポリシー
-            </a>
+            <Link to="/privacy" className="underline hover:text-slate-300">プライバシーポリシー</Link>
           </footer>
           <BookmarksPanel />
           <Toaster position="top-right" />
