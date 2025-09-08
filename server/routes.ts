@@ -10,6 +10,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // クエリパラメータからカテゴリを取得
       const category = req.query.category as string;
+      const limitParam = req.query.limit as string | undefined;
+      const limit = limitParam ? Math.max(1, Math.min(100, parseInt(limitParam, 10) || 0)) : undefined;
       
       const newsItems = await fetchAllFeeds();
       
@@ -17,8 +19,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const filteredNews = category 
         ? newsItems.filter(item => item.categories.includes(category))
         : newsItems;
+      const limited = typeof limit === 'number' ? filteredNews.slice(0, limit) : filteredNews;
       
-      res.json(filteredNews);
+      res.json(limited);
     } catch (error) {
       console.error('ニュース取得エラー:', error);
       res.status(500).json({ message: 'ニュースの取得に失敗しました' });
@@ -28,6 +31,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 特定のフィードからニュースを取得するルート
   app.get('/api/news/source/:sourceName', async (req: Request, res: Response) => {
     const { sourceName } = req.params;
+    const limitParam = req.query.limit as string | undefined;
+    const limit = limitParam ? Math.max(1, Math.min(100, parseInt(limitParam, 10) || 0)) : undefined;
     
     try {
       const allNews = await fetchAllFeeds();
@@ -38,7 +43,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       if (filteredNews.length > 0) {
-        return res.json(filteredNews);
+        const limited = typeof limit === 'number' ? filteredNews.slice(0, limit) : filteredNews;
+        return res.json(limited);
       }
 
       // フィード名が一致する場合は、そのソースのみ新規取得（キャッシュや他ソースの失敗の影響を避ける）
@@ -46,7 +52,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (feedInfo) {
         try {
           const fresh = await fetchFeed(feedInfo);
-          return res.json(fresh);
+          const limitedFresh = typeof limit === 'number' ? fresh.slice(0, limit) : fresh;
+          return res.json(limitedFresh);
         } catch (_e) {
           // フォールバック不可の場合は空配列
           return res.json([]);
