@@ -1,10 +1,9 @@
 // キャッシュの名前とバージョン
-const CACHE_NAME = "ai-news-reader-v1";
+const CACHE_NAME = "ai-news-reader-v2";
 
 // キャッシュするファイルのリスト
 const CACHE_URLS = [
-  "/",
-  "/index.html",
+  // HTML はプリキャッシュしない（常に最新を取得するため）
   "/manifest.json",
   "/pwa-icons/icon.svg",
   "/logo.svg",
@@ -40,6 +39,22 @@ self.addEventListener("activate", (event) => {
 
 // フェッチリクエスト時
 self.addEventListener("fetch", (event) => {
+  // HTML（ナビゲーション）リクエストはネットワーク優先
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      (async () => {
+        try {
+          const fresh = await fetch(event.request);
+          return fresh;
+        } catch (_e) {
+          // オフライン時はキャッシュのルートを返す
+          return caches.match("/") || caches.match("/index.html");
+        }
+      })()
+    );
+    return;
+  }
+
   // 以下のリクエストはキャッシュしない
   if (
     event.request.url.includes("/api/") ||
