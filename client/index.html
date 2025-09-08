@@ -74,24 +74,26 @@
         }
       }
     </script>
+    <script type="module"> if (import.meta.env.PROD && 'serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('/service-worker.js'); }); } </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      // PWA用のService Workerを登録
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
+    <!-- 本番のみService Workerを登録（開発時のキャッシュ汚染を防止） -->
+    <script type="module">
+      if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
           navigator.serviceWorker
-            .register("/service-worker.js")
+            .register('/service-worker.js')
             .then((registration) => {
-              console.log("Service Worker登録成功:", registration.scope);
+              console.log('Service Worker登録成功:', registration.scope);
             })
             .catch((error) => {
-              console.log("Service Worker登録失敗:", error);
+              console.log('Service Worker登録失敗:', error);
             });
         });
       }
     </script>
+    
   </body>
 </html>
