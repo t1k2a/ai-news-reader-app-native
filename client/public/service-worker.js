@@ -1,118 +1,144 @@
-// キャッシュの名前とバージョン
-const CACHE_NAME = "ai-news-reader-v2";
+const STATIC_CACHE_NAME = "ai-news-static-v3";
+const RUNTIME_CACHE_NAME = "ai-news-runtime-v3";
+const OFFLINE_URL = "/offline.html";
 
-// キャッシュするファイルのリスト
-const CACHE_URLS = [
-  // HTML はプリキャッシュしない（常に最新を取得するため）
+const PRECACHE_URLS = [
+  "/",
+  "/index.html",
   "/manifest.json",
+  OFFLINE_URL,
   "/pwa-icons/icon.svg",
-  "/logo.svg",
-  "/og-image.svg",
 ];
 
-// Service Workerのインストール時
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log("キャッシュを開きました");
-      return cache.addAll(CACHE_URLS);
-    })
+    caches.open(STATIC_CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
   );
+  self.skipWaiting();
 });
 
-// アクティベーション時（古いキャッシュを削除）
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keyList) => {
-      return Promise.all(
-        keyList.map((key) => {
-          if (key !== CACHE_NAME) {
-            console.log("古いキャッシュを削除:", key);
-            return caches.delete(key);
-          }
-        })
-      );
-    })
+    caches.keys().then((cacheNames) =>
+      Promise.all(
+        cacheNames
+          .filter(
+            (cacheName) =>
+              cacheName !== STATIC_CACHE_NAME && cacheName !== RUNTIME_CACHE_NAME
+          )
+          .map((cacheName) => caches.delete(cacheName))
+      )
+    )
   );
-  return self.clients.claim();
+  self.clients.claim();
 });
 
-// フェッチリクエスト時
+self.addEventListener("message", (event) => {
+  if (event.data === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener("fetch", (event) => {
-  // HTML（ナビゲーション）リクエストはネットワーク優先
-  if (event.request.mode === "navigate") {
-    event.respondWith(
-      (async () => {
-        try {
-          const fresh = await fetch(event.request);
-          return fresh;
-        } catch (_e) {
-          // オフライン時はキャッシュのルートを返す
-          return caches.match("/") || caches.match("/index.html");
-        }
-      })()
-    );
+  const { request } = event;
+
+  if (request.method !== "GET") {
     return;
   }
 
-  // 以下のリクエストはキャッシュしない
+  if (request.mode === "navigate") {
+    event.respondWith(networkFirstForPage(request));
+    return;
+  }
+
+  const requestUrl = new URL(request.url);
+
+  if (requestUrl.origin !== self.location.origin) {
+    return;
+  }
+
+  if (PRECACHE_URLS.includes(requestUrl.pathname)) {
+    event.respondWith(cacheFirst(request));
+    return;
+  }
+
   if (
-    event.request.url.includes("/api/") ||
-    event.request.url.startsWith("chrome-extension://") ||
-    event.request.url.startsWith("chrome://") ||
-    event.request.url.startsWith("moz-extension://")
+    requestUrl.pathname.startsWith("/assets/") ||
+    request.destination === "script" ||
+    request.destination === "style"
   ) {
+    event.respondWith(staleWhileRevalidate(request));
     return;
   }
 
-  event.respondWith(
-    caches
-      .match(event.request)
-      .then((response) => {
-        // キャッシュにヒットした場合はそれを返す
-        if (response) {
-          return response;
-        }
+  if (request.destination === "image" || request.destination === "font") {
+    event.respondWith(cacheFirst(request));
+    return;
+  }
 
-        // キャッシュにない場合はネットワークリクエスト
-        return fetch(event.request).then((response) => {
-          // 有効なレスポンスでない場合はそのまま返す
-          if (
-            !response ||
-            response.status !== 200 ||
-            response.type !== "basic"
-          ) {
-            return response;
-          }
-
-          // chrome-extensionなどのサポートされていないスキームを除外
-          if (
-            event.request.url.startsWith("chrome-extension://") ||
-            event.request.url.startsWith("chrome://") ||
-            event.request.url.startsWith("moz-extension://")
-          ) {
-            return response;
-          }
-
-          // レスポンスをキャッシュに追加（クローン作成が必要）
-          const responseToCache = response.clone();
-          caches
-            .open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
-            })
-            .catch((error) => {
-              console.log("キャッシュへの保存に失敗:", error);
-            });
-
-          return response;
-        });
-      })
-      .catch(() => {
-        // オフライン時に特定のページをフォールバックとして表示
-        if (event.request.url.includes(".html")) {
-          return caches.match("/");
-        }
-      })
-  );
+  event.respondWith(networkFallingBackToCache(request));
 });
+
+async function networkFirstForPage(request) {
+  try {
+    const response = await fetch(request);
+    const cache = await caches.open(STATIC_CACHE_NAME);
+    cache.put(request, response.clone());
+    return response;
+  } catch (_error) {
+    const cachedMatch = await caches.match(request);
+    if (cachedMatch) {
+      return cachedMatch;
+    }
+    const cachedOffline = await caches.match(OFFLINE_URL);
+    if (cachedOffline) {
+      return cachedOffline;
+    }
+    const cachedIndex = await caches.match("/index.html");
+    if (cachedIndex) {
+      return cachedIndex;
+    }
+    throw _error;
+  }
+}
+
+function cacheFirst(request) {
+  return caches.match(request).then((cached) => cached || fetch(request));
+}
+
+function networkFallingBackToCache(request) {
+  return fetch(request).catch(() => caches.match(request));
+}
+
+function staleWhileRevalidate(request) {
+  return caches.match(request).then((cached) => {
+    const fetchPromise = fetch(request)
+      .then((response) => {
+        if (shouldCacheResponse(response)) {
+          const responseClone = response.clone();
+          caches.open(RUNTIME_CACHE_NAME).then((cache) => {
+            cache.put(request, responseClone);
+          });
+        }
+        return response;
+      })
+      .catch(() => undefined);
+
+    if (cached) {
+      void fetchPromise;
+      return cached;
+    }
+
+    return fetchPromise.then(
+      (response) => response || caches.match(request) || caches.match(OFFLINE_URL)
+    );
+  });
+}
+
+function shouldCacheResponse(response) {
+  return (
+    response &&
+    response.status === 200 &&
+    (response.type === "basic" || response.type === "cors")
+  );
+}
