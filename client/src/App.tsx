@@ -6,7 +6,6 @@ import { Toaster } from "sonner";
 import { NewsTimeline } from "./components/NewsTimeline";
 import { NewsHeader } from "./components/NewsHeader";
 import { BookmarksPanel } from "./components/BookmarksPanel";
-import { SocialPostingPanel } from "./components/social/SocialPostingPanel";
 import "@fontsource/inter";
 import PrivacyPage from "./pages/privacy";
 
@@ -41,7 +40,6 @@ function App() {
           <NewsHeader />
           
           <Routes>
-            {/* メインニュース画面 */}
             <Route path="/" element={
               <main className="flex-1 container mx-auto p-4">
                 <div className="overflow-y-auto overflow-x-hidden overscroll-contain max-h-[calc(100vh-13rem)] w-full">
@@ -60,43 +58,8 @@ function App() {
                 </div>
               </main>
             } />
-            
-            {/* SNS連携設定画面 */}
-            <Route path="/social" element={
-              <main className="flex-1 container mx-auto p-4">
-                <div className="mb-4">
-                  <a 
-                    href="/"
-                    className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 flex items-center w-fit"
-                  >
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      width="16" 
-                      height="16" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="2" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round"
-                      className="mr-1"
-                    >
-                      <path d="M19 12H5M12 19l-7-7 7-7"/>
-                    </svg>
-                    ニュース一覧に戻る
-                  </a>
-                </div>
-                
-                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-                  <h2 className="text-2xl font-bold mb-6 text-slate-800 dark:text-slate-200">SNS連携設定</h2>
-                  <SocialPostingPanel />
-                </div>
-              </main>
-            } />
-            {/* プライバシーポリシー（SPA配信用） */}
+
             <Route path="/privacy" element={<PrivacyPage />} />
-            
-            {/* 404ページ */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           

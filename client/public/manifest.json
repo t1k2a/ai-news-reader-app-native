@@ -22,20 +22,5 @@
   "theme_color": "#1e40af",
   "scope": "/",
   "orientation": "portrait",
-  "prefer_related_applications": false,
-  "shortcuts": [
-    {
-      "name": "SNS連携設定",
-      "short_name": "SNS設定",
-      "description": "SNSへの自動投稿設定",
-      "url": "/social",
-      "icons": [
-        {
-          "src": "/pwa-icons/icon.svg",
-          "sizes": "96x96",
-          "type": "image/svg+xml"
-        }
-      ]
-    }
-  ]
+  "prefer_related_applications": false
 }

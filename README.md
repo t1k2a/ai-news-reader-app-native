@@ -9,14 +9,13 @@ AIに関する最新ニュースを自動収集し、日本語に翻訳して提
 - **コンパクトな要約**: 長い記事を300文字程度に要約
 - **PWA対応**: スマートフォンのホーム画面に追加可能
 - **オフライン機能**: Service Workerによるオフラインサポート
-- **SNS自動投稿**: 新しいニュースをTwitter/Xに自動投稿
 
 ## 技術スタック
 
 - フロントエンド: React, TypeScript, Tailwind CSS
 - バックエンド: Node.js, Express
 - データベース: PostgreSQL
-- その他: Service Worker (PWA), Twitter API
+- その他: Service Worker (PWA)
 
 ## 開発方法
 
@@ -40,10 +39,6 @@ npm run dev
 
 ```
 DATABASE_URL=postgresql://...
-TWITTER_API_KEY=...
-TWITTER_API_SECRET=...
-TWITTER_ACCESS_TOKEN=...
-TWITTER_ACCESS_SECRET=...
 ```
 
 ## ライセンス

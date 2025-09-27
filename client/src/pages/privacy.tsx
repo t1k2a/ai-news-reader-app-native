@@ -20,7 +20,6 @@ export default function PrivacyPage() {
         <h2 className="text-lg font-semibold mt-4">3. 第三者サービスへの送信</h2>
         <ul className="list-disc pl-5 space-y-1">
           <li>ニュースの翻訳・要約のため、記事テキストの一部を Google の翻訳エンドポイント（非公式）へ送信する場合があります。</li>
-          <li>外部SNS連携（X 等）を有効化した場合、記事タイトル・リンク等の投稿内容を各サービスへ送信します。</li>
         </ul>
         <h2 className="text-lg font-semibold mt-4">4. Cookie・セッション</h2>
         <p>現時点で本サービスは独自のセッション Cookie を使用していません。導入する場合は本ポリシーを更新します。</p>
@@ -51,4 +50,3 @@ export default function PrivacyPage() {
     </main>
   );
 }
-
