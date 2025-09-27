@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-ro
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "sonner";
 import { NewsTimeline } from "./components/NewsTimeline";
-import { Sidebar } from "./components/Sidebar";
 import { NewsHeader } from "./components/NewsHeader";
 import { BookmarksPanel } from "./components/BookmarksPanel";
 import { SocialPostingPanel } from "./components/social/SocialPostingPanel";
@@ -12,9 +11,9 @@ import "@fontsource/inter";
 import PrivacyPage from "./pages/privacy";
 
 function App() {
-  const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const selectedSource: string | null = null;
   
   useEffect(() => {
     // ページ読み込み時に健全性チェック
@@ -44,13 +43,8 @@ function App() {
           <Routes>
             {/* メインニュース画面 */}
             <Route path="/" element={
-              <main className="flex-1 container mx-auto p-4 flex flex-col md:flex-row gap-4">
-                <Sidebar 
-                  selectedSource={selectedSource} 
-                  onSourceSelect={setSelectedSource} 
-                />
-                
-                <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain max-h-[calc(100vh-13rem)] w-full md:w-auto">
+              <main className="flex-1 container mx-auto p-4">
+                <div className="overflow-y-auto overflow-x-hidden overscroll-contain max-h-[calc(100vh-13rem)] w-full">
                   {isLoading ? (
                     <div className="flex justify-center items-center h-full">
                       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
