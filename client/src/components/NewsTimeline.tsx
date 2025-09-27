@@ -172,14 +172,7 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
       </div>
     );
   }
-  
-  if (!news || news.length === 0) {
-    return (
-      <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-lg text-center">
-        <p className="text-lg text-slate-300">記事が見つかりませんでした</p>
-      </div>
-    );
-  }
+
   
   // 表示するアイテムを取得
   const visibleItems = news.slice(0, visibleCount);
@@ -217,29 +210,39 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
           />
         ))}
       </div>
+
+        {!news || news.length === 0 ? (
+          <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-lg text-center">
+            <p className="text-lg text-slate-300">記事が見つかりませんでした</p>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-4 overflow-y-auto overflow-x-hidden overscroll-contain">
+            {/* 表示アイテム */}
+            {visibleItems.map((item) => (
+              <div key={item.id}>
+                <NewsItem item={item} />
+              </div>
+            ))}
+            
+            {/* 無限スクロール用のローディング要素 */}
+            {hasMore && (
+              <div ref={loaderRef} className="py-4">
+                <LoadingSpinner size="sm" />
+              </div>
+            )}
+            
+            {/* すべて表示したメッセージ */}
+            {!hasMore && news.length > 0 && (
+              <div className="text-center py-4 text-slate-400 text-sm">
+                すべての記事を表示しました
+              </div>
+            )}
+          </div>
+        </>
+        )}
       
-      <div className="space-y-4 overflow-y-auto overflow-x-hidden overscroll-contain">
-        {/* 表示アイテム */}
-        {visibleItems.map((item) => (
-          <div key={item.id}>
-            <NewsItem item={item} />
-          </div>
-        ))}
-        
-        {/* 無限スクロール用のローディング要素 */}
-        {hasMore && (
-          <div ref={loaderRef} className="py-4">
-            <LoadingSpinner size="sm" />
-          </div>
-        )}
-        
-        {/* すべて表示したメッセージ */}
-        {!hasMore && news.length > 0 && (
-          <div className="text-center py-4 text-slate-400 text-sm">
-            すべての記事を表示しました
-          </div>
-        )}
-      </div>
+
     </div>
   );
 }
