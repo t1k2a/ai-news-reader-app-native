@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { stripHtmlTags } from '../lib/utils';
 import { BookmarkButton } from './BookmarkButton';
-import { ShareButton } from './ShareButton';
+import { TwitterShareWidget } from './TwitterShareWidget';
+import { buildXShareText } from '../lib/share';
 
 interface AINewsItem {
   id: string;
@@ -86,6 +87,18 @@ export function ArticleDetailView({
   const summary = getSummary();
   const firstParagraph = getFirstParagraph();
   const shareSummary = summary || firstParagraph;
+  const shareSnippet = (() => {
+    const normalized = (shareSummary ?? '')
+      .replace(/\s+/gu, ' ')
+      .trim();
+    return Array.from(normalized).slice(0, 100).join('').trim();
+  })();
+  const widgetShareText = buildXShareText({
+    title: displayTitle,
+    url: article.link,
+    categories: article.categories,
+    summary: shareSnippet
+  });
   
   // 要約と最初の段落の長さをログに出力（デバッグ用）
   console.log('記事詳細 - コンテンツサイズ:', {
@@ -181,12 +194,9 @@ export function ArticleDetailView({
         {/* フッター（固定） */}
         <footer className="p-3 md:p-4 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900">
           <div className="flex flex-col md:flex-row gap-2">
-            <ShareButton
-              title={displayTitle}
-              url={article.link}
-              categories={article.categories}
-              summary={shareSummary}
-              className="w-full md:w-auto flex-1 rounded-lg border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-500 dark:text-blue-300 dark:hover:bg-slate-800"
+            <TwitterShareWidget
+              text={widgetShareText}
+              className="w-full md:w-auto flex-1 flex items-center justify-center"
             />
             <button
               onClick={() => window.open(article.link, '_blank', 'noopener,noreferrer')}

@@ -15,14 +15,49 @@ const sanitizeCategoryForHashtag = (category: string): string => {
 };
 
 const createHashtags = (categories: string[] = []): string[] => {
-  const uniqueTags = new Set<string>();
-  categories.forEach(category => {
+  const uniqueTags: string[] = [];
+
+  for (const category of categories) {
     const sanitized = sanitizeCategoryForHashtag(category);
-    if (sanitized) {
-      uniqueTags.add(`#${sanitized}`);
+    if (!sanitized) continue;
+
+    const hashtag = `#${sanitized}`;
+    if (!uniqueTags.includes(hashtag)) {
+      uniqueTags.push(hashtag);
     }
-  });
-  return Array.from(uniqueTags);
+
+    if (uniqueTags.length >= 3) {
+      break;
+    }
+  }
+
+  return uniqueTags;
+};
+
+const truncateToLength = (text: string, maxLength: number): string => {
+  const characters = Array.from(text);
+  if (characters.length <= maxLength) {
+    return text;
+  }
+
+  if (maxLength <= 3) {
+    return characters.slice(0, maxLength).join('');
+  }
+
+  const truncated = characters.slice(0, maxLength - 3).join('').trimEnd();
+  return `${truncated}...`;
+};
+
+const sliceCharacters = (text: string, maxLength: number): string => {
+  if (maxLength < 0) {
+    return '';
+  }
+
+  return Array.from(text).slice(0, maxLength).join('');
+};
+
+const getCharacterLength = (text: string): number => {
+  return Array.from(text).length;
 };
 
 const composeShareText = (
@@ -58,46 +93,32 @@ export function buildXShareText({
     ?.replace(/\s+/gu, ' ')
     .trim();
 
+  const withoutSummary = composeShareText(title, url, hashtags);
+  const withoutSummaryLength = getCharacterLength(withoutSummary);
+  if (!normalizedSummary) {
+    return sliceCharacters(withoutSummary, MAX_X_POST_LENGTH);
+  }
+
   const withSummary = composeShareText(title, url, hashtags, normalizedSummary);
-  if (withSummary.length <= MAX_X_POST_LENGTH) {
+  if (getCharacterLength(withSummary) <= MAX_X_POST_LENGTH) {
     return withSummary;
   }
 
-  const withoutSummary = composeShareText(title, url, hashtags);
-  if (withoutSummary.length <= MAX_X_POST_LENGTH) {
-    return withoutSummary;
+  const separatorLength = withoutSummaryLength > 0 ? 2 : 0;
+  const availableForSummary = MAX_X_POST_LENGTH - withoutSummaryLength - separatorLength;
+  if (availableForSummary <= 0) {
+    return sliceCharacters(withoutSummary, MAX_X_POST_LENGTH);
   }
 
-  return withoutSummary.slice(0, MAX_X_POST_LENGTH);
-}
-
-export interface ShareArticleToXOptions extends BuildXShareTextOptions {}
-
-export async function shareArticleToX(options: ShareArticleToXOptions): Promise<void> {
-  const text = buildXShareText(options);
-
-  if (typeof navigator !== 'undefined') {
-    const nav = navigator as Navigator & {
-      share?: (data?: ShareData) => Promise<void>;
-    };
-
-    if (typeof nav.share === 'function') {
-      try {
-        await nav.share({ text, url: options.url });
-        return;
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          return;
-        }
-        console.warn('Navigator share failed, falling back to intent URL.', error);
-      }
-    }
+  const truncatedSummary = truncateToLength(normalizedSummary, availableForSummary).trimEnd();
+  if (!truncatedSummary) {
+    return sliceCharacters(withoutSummary, MAX_X_POST_LENGTH);
   }
 
-  if (typeof window !== 'undefined') {
-    const shareIntentUrl = new URL('https://twitter.com/intent/tweet');
-    shareIntentUrl.searchParams.set('text', text);
-    shareIntentUrl.searchParams.set('url', options.url);
-    window.open(shareIntentUrl.toString(), '_blank', 'noopener,noreferrer');
+  const truncatedShareText = composeShareText(title, url, hashtags, truncatedSummary);
+  if (getCharacterLength(truncatedShareText) <= MAX_X_POST_LENGTH) {
+    return truncatedShareText;
   }
+
+  return sliceCharacters(withoutSummary, MAX_X_POST_LENGTH);
 }
