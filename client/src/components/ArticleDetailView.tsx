@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { stripHtmlTags } from '../lib/utils';
 import { BookmarkButton } from './BookmarkButton';
+import { ShareButton } from './ShareButton';
 
 interface AINewsItem {
   id: string;
@@ -84,6 +85,7 @@ export function ArticleDetailView({
   
   const summary = getSummary();
   const firstParagraph = getFirstParagraph();
+  const shareSummary = summary || firstParagraph;
   
   // 要約と最初の段落の長さをログに出力（デバッグ用）
   console.log('記事詳細 - コンテンツサイズ:', {
@@ -178,27 +180,36 @@ export function ArticleDetailView({
         
         {/* フッター（固定） */}
         <footer className="p-3 md:p-4 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-          <button 
-            onClick={() => window.open(article.link, '_blank', 'noopener,noreferrer')} 
-            className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
-          >
-            <span>続きを元の記事で読む</span>
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              width="16" 
-              height="16" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
+          <div className="flex flex-col md:flex-row gap-2">
+            <ShareButton
+              title={displayTitle}
+              url={article.link}
+              categories={article.categories}
+              summary={shareSummary}
+              className="w-full md:w-auto flex-1 rounded-lg border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-500 dark:text-blue-300 dark:hover:bg-slate-800"
+            />
+            <button
+              onClick={() => window.open(article.link, '_blank', 'noopener,noreferrer')}
+              className="w-full md:w-auto flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
             >
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-              <polyline points="15 3 21 3 21 9"></polyline>
-              <line x1="10" y1="14" x2="21" y2="3"></line>
-            </svg>
-          </button>
+              <span>続きを元の記事で読む</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+            </button>
+          </div>
         </footer>
       </div>
     </div>
