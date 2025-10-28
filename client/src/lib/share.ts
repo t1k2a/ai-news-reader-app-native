@@ -1,4 +1,4 @@
-export const MAX_X_POST_LENGTH = 280;
+export const MAX_X_POST_LENGTH = 140;
 
 export interface BuildXShareTextOptions {
   title: string;
