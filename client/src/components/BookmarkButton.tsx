@@ -39,12 +39,13 @@ export function BookmarkButton({ article, className = '' }: BookmarkButtonProps)
   return (
     <button
       onClick={handleBookmarkToggle}
-      className={`text-sm p-2 rounded-full transition-colors ${
-        bookmarked 
-          ? 'text-yellow-400 hover:text-yellow-300' 
-          : 'text-slate-400 hover:text-slate-300'
+      className={`inline-flex items-center justify-center rounded-full border p-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 ${
+        bookmarked
+          ? 'border-amber-400/60 bg-amber-400/10 text-amber-300 shadow-[0_12px_28px_-20px_rgba(251,191,36,0.8)] hover:border-amber-300/80 hover:bg-amber-400/20 hover:text-amber-200 focus-visible:ring-amber-300'
+          : 'border-slate-600/60 bg-slate-700/40 text-slate-300 hover:border-slate-500 hover:bg-slate-600/60 hover:text-slate-200 focus-visible:ring-slate-300'
       } ${className}`}
       title={bookmarked ? 'ブックマークから削除' : 'ブックマークに追加'}
+      aria-label={bookmarked ? 'ブックマークから削除' : 'ブックマークに追加'}
     >
       {bookmarked ? (
         <svg 

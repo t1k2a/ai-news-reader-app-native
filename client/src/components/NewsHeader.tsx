@@ -33,7 +33,7 @@ export function NewsHeader() {
         
         <div className="text-sm text-gray-600 dark:text-slate-400 flex items-center">
           最終更新: {currentTime} JST
-          <button 
+          <button
             onClick={() => {
               setCurrentTime(new Intl.DateTimeFormat('ja-JP', {
                 year: 'numeric',
@@ -46,19 +46,21 @@ export function NewsHeader() {
               }).format(new Date()));
               window.location.reload();
             }}
-            className="ml-2 p-1 text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
+            className="group ml-3 inline-flex items-center justify-center rounded-full border border-blue-500/40 bg-blue-500/10 p-1.5 text-blue-500 shadow-[0_8px_16px_-12px_rgba(59,130,246,0.75)] transition-all duration-200 hover:border-blue-400/70 hover:bg-blue-500/20 hover:text-blue-300 dark:hover:text-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
             title="ニュースを更新"
+            aria-label="ニュースを更新"
           >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              width="16" 
-              height="16" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2" 
-              strokeLinecap="round" 
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
               strokeLinejoin="round"
+              className="transition-transform duration-200 group-hover:rotate-180 group-focus-visible:rotate-180"
             >
               <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
               <path d="M21 3v5h-5" />

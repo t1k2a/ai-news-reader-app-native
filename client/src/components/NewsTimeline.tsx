@@ -39,13 +39,26 @@ function CategoryButton({
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1 text-sm rounded-full transition-colors whitespace-nowrap border ${
+      className={`group relative overflow-hidden rounded-full border px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 ${
         isSelected
-          ? 'bg-blue-600 text-white border-blue-500'
-          : 'bg-slate-700 text-slate-200 hover:bg-slate-600 border-slate-600/50'
+          ? 'border-transparent bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-500 text-white shadow-[0_12px_30px_-15px_rgba(56,189,248,0.9)]'
+          : 'border-slate-700/60 bg-slate-800/60 text-slate-200 shadow-inner shadow-slate-900/40 hover:border-slate-500 hover:bg-slate-700/70 hover:text-white'
       }`}
     >
-      {category === null ? 'すべて' : category}
+      <span className="relative z-10 flex items-center gap-2">
+        {isSelected && (
+          <span className="inline-flex size-1.5 rounded-full bg-white/90 shadow-sm"></span>
+        )}
+        {category === null ? 'すべて' : category}
+      </span>
+      <span
+        aria-hidden
+        className={`absolute inset-0 rounded-full opacity-0 transition-opacity duration-200 group-hover:opacity-100 ${
+          isSelected
+            ? 'bg-white/10'
+            : 'bg-gradient-to-r from-slate-700/20 via-slate-600/10 to-slate-700/20'
+        }`}
+      />
     </button>
   );
 }
