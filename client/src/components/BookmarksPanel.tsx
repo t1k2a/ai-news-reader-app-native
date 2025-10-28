@@ -28,18 +28,19 @@ export function BookmarksPanel() {
       {!isOpen ? (
         <button
           onClick={() => setIsOpen(true)}
-          className="bg-blue-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 hover:bg-blue-700 transition-colors"
+          className="group flex items-center gap-2 rounded-full border border-transparent bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_18px_34px_-18px_rgba(79,70,229,0.9)] transition-all duration-200 hover:from-sky-600 hover:via-indigo-600 hover:to-purple-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
         >
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            width="20" 
-            height="20" 
-            viewBox="0 0 24 24" 
-            fill="currentColor" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
             strokeLinejoin="round"
+            className="transition-transform duration-200 group-hover:scale-110"
           >
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
           </svg>
@@ -53,19 +54,20 @@ export function BookmarksPanel() {
               {bookmarks.length > 0 && (
                 <button
                   onClick={clearAllBookmarks}
-                  className="text-sm px-2 py-1 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 transition-colors"
+                  className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-200 transition-all duration-200 hover:border-red-400/70 hover:bg-red-500/20 hover:text-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
                 >
                   すべて削除
                 </button>
               )}
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-slate-400 hover:text-slate-300"
+                className="inline-flex items-center justify-center rounded-full border border-slate-600/50 bg-slate-700/40 p-1 text-slate-300 transition-all duration-200 hover:border-slate-500 hover:bg-slate-600/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
+                aria-label="ブックマークパネルを閉じる"
               >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  width="20" 
-                  height="20" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
                   viewBox="0 0 24 24" 
                   fill="none" 
                   stroke="currentColor" 
@@ -102,8 +104,9 @@ export function BookmarksPanel() {
                     </a>
                     <button
                       onClick={() => removeBookmark(bookmark.id)}
-                      className="text-slate-400 hover:text-red-400 transition-colors"
+                      className="inline-flex items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 p-1 text-red-300 transition-all duration-200 hover:border-red-400/70 hover:bg-red-500/20 hover:text-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
                       title="削除"
+                      aria-label="ブックマークから削除"
                     >
                       <svg 
                         xmlns="http://www.w3.org/2000/svg" 
