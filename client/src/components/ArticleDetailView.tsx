@@ -93,9 +93,10 @@ export function ArticleDetailView({
       .trim();
     return Array.from(normalized).slice(0, 100).join('').trim();
   })();
+  const detailUrl = typeof window !== 'undefined' ? window.location.href : article.link;
   const widgetShareText = buildXShareText({
     title: displayTitle,
-    url: article.link,
+    url: detailUrl,
     categories: article.categories,
     summary: shareSnippet
   });

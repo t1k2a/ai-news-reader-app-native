@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { NewsItem } from './NewsItem';
 import { LoadingSpinner } from './LoadingSpinner';
 import { NewContentBanner } from './NewContentBanner';
@@ -65,6 +66,8 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
   const [previousNewsCount, setPreviousNewsCount] = useState(0);
   // 新着記事の数
   const [newContentCount, setNewContentCount] = useState(0);
+  const [searchParams] = useSearchParams();
+  const selectedArticleId = searchParams.get('article');
   
   // カテゴリを選択する関数
   const handleCategorySelect = (category: string | null) => {
@@ -135,6 +138,17 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
       setPreviousNewsCount(news.length);
     }
   }, [news, previousNewsCount]);
+
+  useEffect(() => {
+    if (!news || !selectedArticleId) {
+      return;
+    }
+
+    const targetIndex = news.findIndex(item => item.id === selectedArticleId);
+    if (targetIndex >= 0 && targetIndex + 1 > visibleCount) {
+      setVisibleCount(targetIndex + 1);
+    }
+  }, [news, selectedArticleId, visibleCount]);
   
   // 定期的な自動更新
   useEffect(() => {

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { stripHtmlTags } from '../lib/utils';
 import { BookmarkButton } from './BookmarkButton';
 import { ArticleDetailView } from './ArticleDetailView';
@@ -24,21 +25,30 @@ interface NewsItemProps {
 
 export function NewsItem({ item }: NewsItemProps) {
   const [showOriginal, setShowOriginal] = useState(false);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const isDetailOpen = searchParams.get('article') === item.id;
   
   const handleOpenDetail = () => {
-    setIsDetailOpen(true);
-    document.body.style.overflow = 'hidden';
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('article', item.id);
+    setSearchParams(nextParams);
   };
   
   const handleCloseDetail = () => {
-    setIsDetailOpen(false);
-    document.body.style.overflow = '';
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('article');
+    setSearchParams(nextParams, { replace: true });
   };
   
   const handleToggleOriginal = () => {
-    setShowOriginal(!showOriginal);
+    setShowOriginal(prev => !prev);
   };
+
+  useEffect(() => {
+    if (!isDetailOpen) {
+      setShowOriginal(false);
+    }
+  }, [isDetailOpen]);
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -101,7 +111,7 @@ export function NewsItem({ item }: NewsItemProps) {
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    setShowOriginal(!showOriginal);
+                    setShowOriginal(prev => !prev);
                   }}
                   className="text-sm px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded-full transition-colors"
                 >
