@@ -1,88 +1,56 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback } from 'react';
 
 interface TwitterShareWidgetProps {
   text: string;
-  size?: 'default' | 'large';
   className?: string;
 }
 
-const TWITTER_WIDGET_SRC = 'https://platform.twitter.com/widgets.js';
+const TWITTER_INTENT_URL = 'https://twitter.com/intent/tweet';
+const SHARE_WINDOW_WIDTH = 600;
+const SHARE_WINDOW_HEIGHT = 420;
 
-const loadTwitterWidgets = (container?: HTMLElement | null) => {
-  if (typeof window === 'undefined') {
-    return;
+const buildShareUrl = (rawText: string) => {
+  const trimmed = rawText.trim();
+  if (!trimmed) {
+    return TWITTER_INTENT_URL;
   }
-
-  const maybeTwitter = (window as unknown as {
-    twttr?: {
-      widgets?: {
-        load: (element?: HTMLElement) => void;
-      };
-    };
-  }).twttr;
-
-  const invokeLoad = () => {
-    maybeTwitter?.widgets?.load(container ?? undefined);
-  };
-
-  const existingScript = document.querySelector<HTMLScriptElement>(`script[src="${TWITTER_WIDGET_SRC}"]`);
-  if (existingScript) {
-    if (maybeTwitter?.widgets) {
-      invokeLoad();
-    } else {
-      existingScript.addEventListener('load', invokeLoad, { once: true });
-    }
-    return;
-  }
-
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = TWITTER_WIDGET_SRC;
-  script.charset = 'utf-8';
-  script.addEventListener('load', invokeLoad, { once: true });
-  document.body.appendChild(script);
+  return `${TWITTER_INTENT_URL}?text=${encodeURIComponent(trimmed)}`;
 };
 
-export function TwitterShareWidget({ text, size = 'default', className }: TwitterShareWidgetProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const anchorRef = useRef<HTMLAnchorElement>(null);
-
-  const normalizedText = useMemo(() => text.trim(), [text]);
-
-  useEffect(() => {
-    if (!anchorRef.current) {
+export function TwitterShareWidget({ text, className }: TwitterShareWidgetProps) {
+  const handleShare = useCallback(() => {
+    if (typeof window === 'undefined') {
       return;
     }
 
-    const anchor = anchorRef.current;
-    anchor.textContent = 'Tweet';
-    if (normalizedText) {
-      anchor.setAttribute('data-text', normalizedText);
-    } else {
-      anchor.removeAttribute('data-text');
-    }
+    const shareUrl = buildShareUrl(text);
+    const viewportWidth = window.outerWidth || window.innerWidth || SHARE_WINDOW_WIDTH;
+    const viewportHeight = window.outerHeight || window.innerHeight || SHARE_WINDOW_HEIGHT;
+    const left = window.screenX + Math.max(0, (viewportWidth - SHARE_WINDOW_WIDTH) / 2);
+    const top = window.screenY + Math.max(0, (viewportHeight - SHARE_WINDOW_HEIGHT) / 2);
+    const features = [
+      `width=${SHARE_WINDOW_WIDTH}`,
+      `height=${SHARE_WINDOW_HEIGHT}`,
+      `left=${left}`,
+      `top=${top}`,
+      'noopener',
+      'noreferrer'
+    ].join(',');
 
-    anchor.setAttribute('data-show-count', 'false');
+    window.open(shareUrl, '_blank', features);
+  }, [text]);
 
-    if (size === 'large') {
-      anchor.setAttribute('data-size', 'large');
-    } else {
-      anchor.removeAttribute('data-size');
-    }
-
-    loadTwitterWidgets(containerRef.current);
-  }, [normalizedText, size]);
+  const baseClassName =
+    'w-full md:w-auto flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-3 bg-black hover:bg-neutral-900 text-white rounded-lg transition-colors text-sm font-medium shadow-sm';
 
   return (
-    <div ref={containerRef} className={className}>
-      <a
-        ref={anchorRef}
-        href="https://twitter.com/share?ref_src=twsrc%5Etfw"
-        className="twitter-share-button"
-        data-show-count="false"
-      >
-        Tweet
-      </a>
-    </div>
+    <button
+      type="button"
+      onClick={handleShare}
+      className={className ? `${baseClassName} ${className}` : baseClassName}
+      aria-label="Xで共有"
+    >
+      <span>Xでシェア</span>
+    </button>
   );
 }

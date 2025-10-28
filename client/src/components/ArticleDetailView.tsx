@@ -196,7 +196,6 @@ export function ArticleDetailView({
           <div className="flex flex-col md:flex-row gap-2">
             <TwitterShareWidget
               text={widgetShareText}
-              className="w-full md:w-auto flex-1 flex items-center justify-center"
             />
             <button
               onClick={() => window.open(article.link, '_blank', 'noopener,noreferrer')}
