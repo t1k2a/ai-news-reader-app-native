@@ -2,14 +2,9 @@ import express, { type Express } from "express";
 import fs from "fs";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
-import { createServer as createViteServer, createLogger } from "vite";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 import { type Server } from "http";
-import viteConfig from "../vite.config";
-import { nanoid } from "nanoid";
-
-const viteLogger = createLogger();
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -23,6 +18,15 @@ export function log(message: string, source = "express") {
 }
 
 export async function setupVite(app: Express, server: Server) {
+  // 動的インポートで開発環境依存のモジュールを読み込む
+  const { createServer: createViteServer, createLogger } = await import("vite");
+  const react = await import("@vitejs/plugin-react");
+  const runtimeErrorOverlay = await import("@replit/vite-plugin-runtime-error-modal");
+  const glsl = await import("vite-plugin-glsl");
+  const { nanoid } = await import("nanoid");
+  
+  const viteLogger = createLogger();
+
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
@@ -30,7 +34,22 @@ export async function setupVite(app: Express, server: Server) {
   };
 
   const vite = await createViteServer({
-    ...viteConfig,
+    plugins: [
+      react.default(),
+      runtimeErrorOverlay.default(),
+      glsl.default(),
+    ],
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "..", "client", "src"),
+        "@shared": path.resolve(__dirname, "..", "shared"),
+      },
+    },
+    root: path.resolve(__dirname, "..", "client"),
+    build: {
+      outDir: path.resolve(__dirname, "..", "dist/public"),
+      emptyOutDir: true,
+    },
     configFile: false,
     customLogger: {
       ...viteLogger,
