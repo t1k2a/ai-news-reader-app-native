@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path, { dirname } from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { fileURLToPath } from "url";
 import glsl from "vite-plugin-glsl";
 
@@ -11,8 +10,7 @@ const __dirname = dirname(__filename);
 export default defineConfig({
   plugins: [
     react(),
-    runtimeErrorOverlay(),
-    glsl(), // Add GLSL shader support
+    glsl(), // Add GLSL shader support (v1.3.1)
   ],
   resolve: {
     alias: {
@@ -39,7 +37,7 @@ export default defineConfig({
   // メモリ最適化設定
   optimizeDeps: {
     include: ["react", "react-dom"],
-    exclude: ["three", "@react-three/fiber"],
+    exclude: ["react-refresh"],
   },
   server: {
     hmr: {

@@ -20,37 +20,17 @@ export function log(message: string, source = "express") {
 export async function setupVite(app: Express, server: Server) {
   // 動的インポートで開発環境依存のモジュールを読み込む
   const { createServer: createViteServer, createLogger } = await import("vite");
-  const react = await import("@vitejs/plugin-react");
-  const runtimeErrorOverlay = await import("@replit/vite-plugin-runtime-error-modal");
-  const glsl = await import("vite-plugin-glsl");
   const { nanoid } = await import("nanoid");
   
   const viteLogger = createLogger();
 
-  const serverOptions = {
-    middlewareMode: true,
-    hmr: { server },
-    allowedHosts: true,
-  };
-
   const vite = await createViteServer({
-    plugins: [
-      react.default(),
-      runtimeErrorOverlay.default(),
-      glsl.default(),
-    ],
-    resolve: {
-      alias: {
-        "@": path.resolve(__dirname, "..", "client", "src"),
-        "@shared": path.resolve(__dirname, "..", "shared"),
-      },
+    // vite.config.tsの設定を使用（プラグイン、resolve、rootなど）
+    configFile: path.resolve(__dirname, "..", "vite.config.ts"),
+    server: {
+      middlewareMode: true,
+      hmr: { server },
     },
-    root: path.resolve(__dirname, "..", "client"),
-    build: {
-      outDir: path.resolve(__dirname, "..", "dist/public"),
-      emptyOutDir: true,
-    },
-    configFile: false,
     customLogger: {
       ...viteLogger,
       error: (msg, options) => {
@@ -58,7 +38,6 @@ export async function setupVite(app: Express, server: Server) {
         viteLogger.error(msg, options);
       },
     },
-    server: serverOptions,
     appType: "custom",
   });
 
