@@ -23,6 +23,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'ニュースの取得に失敗しました' });
     }
   });
+
+  // 記事IDからニュースを取得
+  app.get('/api/news/item', async (req: Request, res: Response) => {
+    try {
+      const idParam = req.query.id;
+      if (!idParam || typeof idParam !== 'string') {
+        return res.status(400).json({ message: '記事IDが指定されていません' });
+      }
+
+      const decodedId = decodeURIComponent(idParam);
+      const newsItems = await fetchAllFeeds();
+      const target = newsItems.find(item => item.id === decodedId);
+
+      if (!target) {
+        return res.status(404).json({ message: '記事が見つかりませんでした' });
+      }
+
+      return res.json(target);
+    } catch (error) {
+      console.error('記事取得エラー:', error);
+      return res.status(500).json({ message: '記事の取得に失敗しました' });
+    }
+  });
   
   // ソース別のニュース取得
   app.get('/api/news/source/:sourceName', async (req: Request, res: Response) => {
