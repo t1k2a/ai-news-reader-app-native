@@ -93,7 +93,15 @@ export function ArticleDetailView({
       .trim();
     return Array.from(normalized).slice(0, 100).join('').trim();
   })();
-  const detailUrl = typeof window !== 'undefined' ? window.location.href : article.link;
+  const detailUrl = (() => {
+    if (typeof window === 'undefined') {
+      return article.link;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('article', article.id);
+    return url.toString();
+  })();
   const widgetShareText = buildXShareText({
     title: displayTitle,
     url: detailUrl,

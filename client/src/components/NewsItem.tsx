@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { stripHtmlTags } from '../lib/utils';
 import { BookmarkButton } from './BookmarkButton';
-import { ArticleDetailView } from './ArticleDetailView';
 
 interface AINewsItem {
   id: string;
@@ -33,16 +32,6 @@ export function NewsItem({ item }: NewsItemProps) {
     nextParams.set('article', item.id);
     setSearchParams(nextParams);
   };
-  
-  const handleCloseDetail = () => {
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.delete('article');
-    setSearchParams(nextParams, { replace: true });
-  };
-  
-  const handleToggleOriginal = () => {
-    setShowOriginal(prev => !prev);
-  };
 
   useEffect(() => {
     if (!isDetailOpen) {
@@ -64,15 +53,6 @@ export function NewsItem({ item }: NewsItemProps) {
   
   return (
     <>
-      {isDetailOpen && (
-        <ArticleDetailView 
-          article={item} 
-          onClose={handleCloseDetail} 
-          showOriginal={showOriginal} 
-          onToggleOriginal={handleToggleOriginal} 
-        />
-      )}
-      
       <div 
         className="bg-white dark:bg-slate-800 rounded-lg overflow-hidden hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors border border-gray-200 dark:border-slate-700/50 shadow-md cursor-pointer"
         onClick={handleOpenDetail}

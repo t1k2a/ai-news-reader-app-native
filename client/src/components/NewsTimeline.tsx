@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { NewsItem } from './NewsItem';
 import { LoadingSpinner } from './LoadingSpinner';
@@ -7,6 +7,7 @@ import { NewContentBanner } from './NewContentBanner';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { AI_CATEGORIES } from '../lib/constants';
 import { getCachedData, setCachedData } from '../lib/utils';
+import { ArticleDetailView } from './ArticleDetailView';
 
 interface AINewsItem {
   id: string;
@@ -66,8 +67,9 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
   const [previousNewsCount, setPreviousNewsCount] = useState(0);
   // 新着記事の数
   const [newContentCount, setNewContentCount] = useState(0);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const selectedArticleId = searchParams.get('article');
+  const [detailShowOriginal, setDetailShowOriginal] = useState(false);
   
   // カテゴリを選択する関数
   const handleCategorySelect = (category: string | null) => {
@@ -119,6 +121,39 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
       setCachedData(cacheKey, data);
     },
   });
+
+  const selectedArticleFromList = useMemo(() => {
+    if (!news || !selectedArticleId) {
+      return null;
+    }
+    return news.find(item => item.id === selectedArticleId) ?? null;
+  }, [news, selectedArticleId]);
+
+  const { data: selectedArticleFromApi } = useQuery<AINewsItem | null, Error>({
+    queryKey: ['news', 'item', selectedArticleId],
+    queryFn: async () => {
+      if (!selectedArticleId) {
+        return null;
+      }
+
+      const response = await fetch(`/api/news/item?id=${encodeURIComponent(selectedArticleId)}`);
+
+      if (response.status === 404) {
+        return null;
+      }
+
+      if (!response.ok) {
+        throw new Error('記事の取得に失敗しました');
+      }
+
+      return response.json();
+    },
+    enabled: Boolean(selectedArticleId && !selectedArticleFromList),
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+  });
+
+  const selectedArticle = selectedArticleFromList ?? selectedArticleFromApi ?? null;
   
   // 追加のアイテムを読み込む関数
   const loadMoreItems = useCallback(() => {
@@ -149,6 +184,10 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
       setVisibleCount(targetIndex + 1);
     }
   }, [news, selectedArticleId, visibleCount]);
+
+  useEffect(() => {
+    setDetailShowOriginal(false);
+  }, [selectedArticleId]);
   
   // 定期的な自動更新
   useEffect(() => {
@@ -165,6 +204,16 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setNewContentCount(0);
   }, [refetch]);
+
+  const handleCloseDetail = useCallback(() => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('article');
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const handleToggleDetailOriginal = useCallback(() => {
+    setDetailShowOriginal(prev => !prev);
+  }, []);
   
   // 無限スクロールの設定
   const hasMore = news ? visibleCount < news.length : false;
@@ -193,6 +242,14 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
   
   return (
     <div className="space-y-4 pb-8">
+      {selectedArticle && (
+        <ArticleDetailView
+          article={selectedArticle}
+          onClose={handleCloseDetail}
+          showOriginal={detailShowOriginal}
+          onToggleOriginal={handleToggleDetailOriginal}
+        />
+      )}
       {/* 新着通知バナー */}
       <NewContentBanner newContentCount={newContentCount} onRefresh={handleRefresh} />
       
