@@ -62,7 +62,7 @@ function App() {
           </Routes>
           
           <footer className="bg-slate-800 p-3 text-center text-sm text-slate-400">
-            <span>AI News Reader - 最新のAI関連ニュースをシンプルに</span>
+            <span>SynapseFeed - 最新のAI関連ニュースをシンプルに</span>
             <span className="mx-2">•</span>
             <Link to="/privacy" className="underline hover:text-slate-300">プライバシーポリシー</Link>
           </footer>

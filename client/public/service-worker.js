@@ -1,5 +1,5 @@
 // キャッシュの名前とバージョン
-const CACHE_NAME = "ai-news-reader-v2";
+const CACHE_NAME = "synapsefeed-v2";
 
 // キャッシュするファイルのリスト
 const CACHE_URLS = [

@@ -1,6 +1,6 @@
 {
-  "short_name": "AI News",
-  "name": "AI News Reader",
+  "short_name": "SynapseFeed",
+  "name": "SynapseFeed",
   "description": "最新のAI関連ニュースを自動収集し、日本語に翻訳して表示するアプリ",
   "icons": [
     {

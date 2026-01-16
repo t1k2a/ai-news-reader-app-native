@@ -7,7 +7,7 @@ export default function PrivacyPage() {
 
       <section className="mt-4 space-y-2">
         <p>
-          本ポリシーは、AI News Reader（以下「本サービス」）におけるユーザーの情報の取り扱いについて定めるものです。
+          本ポリシーは、SynapseFeed（以下「本サービス」）におけるユーザーの情報の取り扱いについて定めるものです。
         </p>
         <h2 className="text-lg font-semibold mt-4">1. 取得する情報</h2>
         <ul className="list-disc pl-5 space-y-1">
