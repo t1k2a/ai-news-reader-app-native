@@ -288,7 +288,7 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
           </div>
         ) : (
           <>
-            <div className="space-y-4 overflow-y-auto overflow-x-hidden overscroll-contain">
+            <div className="space-y-4 overflow-x-hidden">
             {/* 表示アイテム */}
             {visibleItems.map((item) => (
               <div key={item.id}>

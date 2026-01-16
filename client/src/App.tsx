@@ -42,20 +42,18 @@ function App() {
           <Routes>
             <Route path="/" element={
               <main className="flex-1 container mx-auto p-4">
-                <div className="overflow-y-auto overflow-x-hidden overscroll-contain max-h-[calc(100vh-13rem)] w-full">
-                  {isLoading ? (
-                    <div className="flex justify-center items-center h-full">
-                      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-                    </div>
-                  ) : error ? (
-                    <div className="bg-red-50 dark:bg-red-900/30 border border-red-300 dark:border-red-500/50 p-4 rounded-lg">
-                      <h3 className="text-lg font-medium text-red-800 dark:text-red-200">エラー</h3>
-                      <p className="text-red-700 dark:text-red-100">{error}</p>
-                    </div>
-                  ) : (
-                    <NewsTimeline selectedSource={selectedSource} />
-                  )}
-                </div>
+                {isLoading ? (
+                  <div className="flex justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : error ? (
+                  <div className="bg-red-50 dark:bg-red-900/30 border border-red-300 dark:border-red-500/50 p-4 rounded-lg">
+                    <h3 className="text-lg font-medium text-red-800 dark:text-red-200">エラー</h3>
+                    <p className="text-red-700 dark:text-red-100">{error}</p>
+                  </div>
+                ) : (
+                  <NewsTimeline selectedSource={selectedSource} />
+                )}
               </main>
             } />
 
