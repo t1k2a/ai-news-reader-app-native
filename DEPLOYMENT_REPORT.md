@@ -1,9 +1,16 @@
 # AI News Reader アプリケーション GCP デプロイレポート
 
-**作成日**: 2026年1月10日  
-**デプロイ先**: Google Cloud Platform (Cloud Run)  
-**リージョン**: asia-northeast1 (東京)  
-**最終サービスURL**: https://ai-news-reader-1007179888594.asia-northeast1.run.app
+**作成日**: 2026年1月10日
+**デプロイ先**: Google Cloud Platform (Cloud Run)
+
+| 項目 | 値 |
+|---|---|
+| **サービスURL** | https://ai-news-reader-1007179888594.asia-northeast1.run.app |
+| **サービス名** | ai-news-reader |
+| **リビジョン** | ai-news-reader-00003-xp5 |
+| **リージョン** | asia-northeast1 (東京) |
+
+上記のURLにアクセスすると、アプリが表示されます！
 
 ---
 

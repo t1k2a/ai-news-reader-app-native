@@ -1,0 +1,41 @@
+steps:
+  # 1. 前回の最新イメージをプルしてキャッシュとして利用（高速化のため）
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: ['-c', 'docker pull asia-northeast1-docker.pkg.dev/$PROJECT_ID/ai-news-reader/app:latest || true']
+
+  # 2. Dockerイメージのビルド
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/ai-news-reader/app:$COMMIT_SHA'
+      - '-t'
+      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/ai-news-reader/app:latest'
+      - '--cache-from'
+      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/ai-news-reader/app:latest'
+      - '.'
+
+  # 3. Dockerイメージのプッシュ
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/ai-news-reader/app:$COMMIT_SHA']
+  
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/ai-news-reader/app:latest']
+
+  # 4. Cloud Runへのデプロイ
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'services'
+      - 'update'
+      - 'ai-news-reader'
+      - '--image'
+      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/ai-news-reader/app:$COMMIT_SHA'
+      - '--region'
+      - 'asia-northeast1'
+
+images:
+  - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/ai-news-reader/app:$COMMIT_SHA'
+  - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/ai-news-reader/app:latest'
