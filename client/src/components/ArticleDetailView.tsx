@@ -94,13 +94,31 @@ export function ArticleDetailView({
     return Array.from(normalized).slice(0, 100).join('').trim();
   })();
   const detailUrl = (() => {
-    if (typeof window === 'undefined') {
+    const publicBaseUrl = import.meta.env.VITE_PUBLIC_URL;
+    const fallbackUrl = typeof window === 'undefined'
+      ? article.link
+      : window.location.href;
+
+    try {
+      const base = (() => {
+        if (typeof window !== 'undefined') {
+          const hostname = window.location.hostname.toLowerCase();
+          if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            return window.location.origin;
+          }
+        }
+
+        return publicBaseUrl?.trim()
+          ? publicBaseUrl.trim().replace(/\/+$/u, '')
+          : fallbackUrl;
+      })();
+
+      const url = new URL(base);
+      url.searchParams.set('article', article.id);
+      return url.toString();
+    } catch (_error) {
       return article.link;
     }
-
-    const url = new URL(window.location.href);
-    url.searchParams.set('article', article.id);
-    return url.toString();
   })();
   const widgetShareText = buildXShareText({
     title: displayTitle,

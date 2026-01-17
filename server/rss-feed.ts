@@ -1,4 +1,5 @@
 import Parser from "rss-parser";
+import { createHash } from "crypto";
 import {
   translateToJapanese,
   summarizeText,
@@ -270,10 +271,13 @@ export async function fetchFeed(feedInfo: {
       let translatedFirstParagraph = firstParagraph;
 
       // 記事URLからユニークIDを生成
-      const id =
+      const idSource =
         item.guid ||
         item.link ||
-        `${feedInfo.name}-${Date.now()}-${Math.random()}`;
+        `${feedInfo.name}|${item.title ?? ""}|${item.pubDate ?? ""}`;
+      const id = item.guid || item.link
+        ? idSource
+        : createHash("sha256").update(idSource).digest("hex");
 
       // 英語の場合は翻訳する
       if (feedInfo.language === "en") {
@@ -446,4 +450,3 @@ export async function fetchAllFeeds(): Promise<AINewsItem[]> {
 
   return sortedItems;
 }
-
