@@ -67,25 +67,89 @@ export const AI_RSS_FEEDS = [
     language: "en",
     defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.ML],
   },
-
-  // 日本語のRSSフィード
   {
-    url: "https://ai-trend.jp/feed/",
-    name: "AI-TREND",
-    language: "ja",
-    defaultCategories: [AI_CATEGORIES.GENERAL, AI_CATEGORIES.BUSINESS],
+    url: "https://huggingface.co/blog/rss.xml",
+    name: "Hugging Face Blog",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.ML],
   },
   {
-    url: "https://ainow.ai/feed/",
-    name: "AINow",
-    language: "ja",
-    defaultCategories: [AI_CATEGORIES.GENERAL],
+    url: "http://export.arxiv.org/rss/cs.AI",
+    name: "arXiv cs.AI",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.RESEARCH],
   },
   {
-    url: "https://rss.itmedia.co.jp/rss/2.0/ait.xml",
-    name: "ITmedia AI",
-    language: "ja",
-    defaultCategories: [AI_CATEGORIES.GENERAL, AI_CATEGORIES.BUSINESS],
+    url: "http://export.arxiv.org/rss/cs.LG",
+    name: "arXiv cs.LG",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.ML],
+  },
+  {
+    url: "https://paperswithcode.com/rss",
+    name: "Papers with Code",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.ML],
+  },
+  {
+    url: "https://www.anthropic.com/rss.xml",
+    name: "Anthropic News",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.NLP],
+  },
+  {
+    url: "https://ai.meta.com/blog/rss/",
+    name: "Meta AI Blog",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.CV],
+  },
+  {
+    url: "https://deepmind.google/blog/rss.xml",
+    name: "Google DeepMind Blog",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.ML],
+  },
+  {
+    url: "https://www.microsoft.com/en-us/research/feed/",
+    name: "Microsoft Research Blog",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.ML],
+  },
+  {
+    url: "https://developer.nvidia.com/blog/feed/",
+    name: "NVIDIA Technical Blog",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.CV, AI_CATEGORIES.ML],
+  },
+  {
+    url: "https://stability.ai/blog/rss.xml",
+    name: "Stability AI Blog",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.CV, AI_CATEGORIES.ML],
+  },
+  {
+    url: "https://mistral.ai/news/rss.xml",
+    name: "Mistral AI News",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.NLP, AI_CATEGORIES.ML],
+  },
+  {
+    url: "https://x.ai/blog/rss.xml",
+    name: "xAI Blog",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.NLP, AI_CATEGORIES.ML],
+  },
+  {
+    url: "https://www.databricks.com/blog/feed",
+    name: "Databricks Blog",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.BUSINESS, AI_CATEGORIES.ML],
+  },
+  {
+    url: "https://cohere.com/blog/rss.xml",
+    name: "Cohere Blog",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.NLP, AI_CATEGORIES.ML],
   },
 ];
 
@@ -105,6 +169,40 @@ export interface AINewsItem {
   originalSummary?: string;
   originalFirstParagraph?: string;
 }
+
+const ARXIV_KEYWORDS = [
+  "llm",
+  "large language model",
+  "generative ai",
+  "text-to-image",
+  "diffusion",
+  "transformer",
+  "multimodal",
+  "vision-language",
+  "agent",
+  "alignment",
+  "instruction tuning",
+  "rlhf",
+  "reasoning",
+  "foundation model",
+];
+
+const shouldIncludeItem = (
+  feedInfo: { url: string; name: string },
+  title: string,
+  content: string
+): boolean => {
+  const normalizedSource = `${feedInfo.name} ${feedInfo.url}`.toLowerCase();
+  const isArxiv =
+    normalizedSource.includes("arxiv") ||
+    normalizedSource.includes("export.arxiv.org");
+  if (!isArxiv) {
+    return true;
+  }
+
+  const haystack = `${title} ${content}`.toLowerCase();
+  return ARXIV_KEYWORDS.some(keyword => haystack.includes(keyword));
+};
 
 /**
  * 記事の内容からカテゴリを推測する関数
@@ -258,17 +356,16 @@ export async function fetchFeed(feedInfo: {
       } else {
         content = item.contentSnippet || "";
       }
+
+      if (!shouldIncludeItem(feedInfo, item.title || "", content)) {
+        continue;
+      }
       
       // 要約作成（最大2000文字）
       const summary = summarizeText(content, 300);
       
       // 最初の段落を抽出
       const firstParagraph = extractFirstParagraph(content);
-
-      let translatedTitle = item.title || "";
-      let translatedContent = content;
-      let translatedSummary = summary;
-      let translatedFirstParagraph = firstParagraph;
 
       // 記事URLからユニークIDを生成
       const idSource =
@@ -279,6 +376,11 @@ export async function fetchFeed(feedInfo: {
         ? idSource
         : createHash("sha256").update(idSource).digest("hex");
 
+      let translatedTitle = item.title || "";
+      let translatedContent = content;
+      let translatedSummary = summary;
+      let translatedFirstParagraph = firstParagraph;
+
       // 英語の場合は翻訳する
       if (feedInfo.language === "en") {
         try {
@@ -286,9 +388,17 @@ export async function fetchFeed(feedInfo: {
           const titleCacheKey = `title:${item.title}`;
           if (translationCache[titleCacheKey]) {
             translatedTitle = translationCache[titleCacheKey];
+            console.log(`タイトル翻訳（キャッシュ）: "${item.title}" -> "${translatedTitle}"`);
           } else {
+            console.log(`タイトル翻訳中: "${item.title}"`);
             translatedTitle = await translateToJapanese(item.title || "");
-            translationCache[titleCacheKey] = translatedTitle;
+            if (translatedTitle && translatedTitle !== item.title) {
+              translationCache[titleCacheKey] = translatedTitle;
+              console.log(`タイトル翻訳完了: "${item.title}" -> "${translatedTitle}"`);
+            } else {
+              console.warn(`タイトル翻訳失敗または変更なし: "${item.title}"`);
+              // 翻訳が失敗した場合でも、元のタイトルを使用
+            }
           }
 
           // 要約を翻訳（キャッシュを利用）
