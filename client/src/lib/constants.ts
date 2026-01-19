@@ -7,5 +7,5 @@ export const AI_CATEGORIES = {
   ETHICS: 'AI倫理',
   RESEARCH: 'AI研究',
   BUSINESS: 'ビジネス活用',
-  GENERAL: '一般'
+  GENERAL: 'AI'
 };
