@@ -28,7 +28,7 @@ export function NewsHeader() {
               d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A2,2 0 0,0 10,6A2,2 0 0,0 12,8A2,2 0 0,0 14,6A2,2 0 0,0 12,4M10,10A2,2 0 0,0 8,12A2,2 0 0,0 10,14A2,2 0 0,0 12,12A2,2 0 0,0 10,10M16,10A2,2 0 0,0 14,12A2,2 0 0,0 16,14A2,2 0 0,0 18,12A2,2 0 0,0 16,10M12,16A2,2 0 0,0 10,18A2,2 0 0,0 12,20A2,2 0 0,0 14,18A2,2 0 0,0 12,16Z" 
             />
           </svg>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">SynapseFeed</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">GlotNexus</h1>
         </div>
         
         <div className="text-sm text-gray-600 dark:text-slate-400 flex items-center">

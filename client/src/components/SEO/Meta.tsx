@@ -12,8 +12,8 @@ interface MetaProps {
 }
 
 export function Meta({
-  title = 'SynapseFeed - 最新のAI関連ニュースをシンプルに',
-  description = 'SynapseFeedは、最新のAI関連ニュースを自動収集し、日本語に翻訳して表示するサービスです。機械学習、自然言語処理、コンピュータビジョンなど様々な分野のAI情報を簡単に入手できます。',
+  title = 'GlotNexus - 海外AIメディアを翻訳・要約。見出しで掴む世界の最先端',
+  description = 'GlotNexusは、海外AIメディアを翻訳・要約。見出しで掴む世界の最先端情報を提供します。',
   keywords = 'AI,人工知能,機械学習,ニュース,自然言語処理,コンピュータビジョン,最新技術',
   ogTitle,
   ogDescription,
@@ -34,7 +34,7 @@ export function Meta({
       <meta property="og:image" content={ogImage} />
       <meta property="og:url" content={ogUrl} />
       <meta property="og:type" content="website" />
-      <meta property="og:site_name" content="SynapseFeed" />
+      <meta property="og:site_name" content="GlotNexus" />
       
       {/* Twitter Card タグ */}
       <meta name="twitter:card" content={twitterCard} />

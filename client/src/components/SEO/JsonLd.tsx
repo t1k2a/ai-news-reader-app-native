@@ -25,8 +25,8 @@ export function NewsArticleJsonLd({
   image,
   datePublished,
   dateModified,
-  author = 'SynapseFeed',
-  publisher = 'SynapseFeed',
+  author = 'GlotNexus',
+  publisher = 'GlotNexus',
   url = window.location.href
 }: NewsArticleProps) {
   const jsonLd = {

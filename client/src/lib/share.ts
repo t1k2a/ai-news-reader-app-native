@@ -106,7 +106,7 @@ export function buildXShareText({
   summary
 }: BuildXShareTextOptions): string {
   const hashtags = createHashtags(categories);
-  const serviceName = "SynapseFeed";
+  const serviceName = "GlotNexus";
   const tagline = "世界最先端のAIトレンド、日本語見出しで。";
   const marketingLine = `${serviceName} - ${tagline}`;
 
