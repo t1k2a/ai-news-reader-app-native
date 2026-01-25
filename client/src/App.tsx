@@ -8,6 +8,7 @@ import { NewsHeader } from "./components/NewsHeader";
 import { BookmarksPanel } from "./components/BookmarksPanel";
 import "@fontsource/inter";
 import PrivacyPage from "./pages/privacy";
+import { API_BASE_URL } from "./lib/utils";
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -16,7 +17,7 @@ function App() {
   
   useEffect(() => {
     // ページ読み込み時に健全性チェック
-    fetch('/api/health')
+    fetch(`${API_BASE_URL}/api/health`)
       .then(response => {
         if (!response.ok) {
           throw new Error('サーバー接続エラー');

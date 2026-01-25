@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { API_BASE_URL } from '../lib/utils';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { NewsItem } from './NewsItem';
@@ -93,8 +94,8 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
     queryKey: ['news', selectedSource, selectedCategory],
     queryFn: async () => {
       const url = selectedSource
-        ? `/api/news/source/${encodeURIComponent(selectedSource)}`
-        : '/api/news';
+        ? `${API_BASE_URL}/api/news/source/${encodeURIComponent(selectedSource)}`
+        : `${API_BASE_URL}/api/news`;
       
       const response = await fetch(url);
       
@@ -136,7 +137,7 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
         return null;
       }
 
-      const response = await fetch(`/api/news/item?id=${encodeURIComponent(selectedArticleId)}`);
+      const response = await fetch(`${API_BASE_URL}/api/news/item?id=${encodeURIComponent(selectedArticleId)}`);
 
       if (response.status === 404) {
         return null;
