@@ -1,9 +1,8 @@
 import type { Express, Request, Response } from "express";
-import { createServer, type Server } from "http";
 import { translateToJapanese } from "./translation-api";
 import { fetchAllFeeds, fetchFeed, AI_RSS_FEEDS } from "./rss-feed";
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express): Promise<void> {
   // すべてのAIニュースを取得
   app.get('/api/news', async (req: Request, res: Response) => {
     try {
@@ -105,7 +104,5 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  const httpServer = createServer(app);
-
-  return httpServer;
+  return;
 }
