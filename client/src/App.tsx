@@ -20,6 +20,9 @@ function App() {
     fetch(`${API_BASE_URL}/api/health`)
       .then(response => {
         if (!response.ok) {
+          if (response.status === 404 && !API_BASE_URL) {
+            throw new Error('API_BASE_URL_NOT_CONFIGURED');
+          }
           throw new Error('サーバー接続エラー');
         }
         return response.json();
@@ -28,7 +31,11 @@ function App() {
         setIsLoading(false);
       })
       .catch(err => {
-        setError('サーバーに接続できませんでした。数分後に再試行してください。');
+        if (err instanceof Error && err.message === 'API_BASE_URL_NOT_CONFIGURED') {
+          setError('APIエンドポイントが未設定です。Amplifyの環境変数やconfig.jsでAPIのURLを指定してください。');
+        } else {
+          setError('サーバーに接続できませんでした。数分後に再試行してください。');
+        }
         setIsLoading(false);
         console.error('健全性チェックエラー:', err);
       });
