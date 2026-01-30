@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import cors from "cors";
 import { registerRoutes } from "./routes";
-import { log } from "./vite";
+import { log } from "./logger";
 
 export async function createApp() {
   const app = express();
