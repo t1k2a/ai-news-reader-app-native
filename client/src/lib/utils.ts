@@ -1,8 +1,15 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import outputs from "../../../amplify_outputs.json";
 
 type RuntimeConfig = {
   API_BASE_URL?: string;
+};
+
+type AmplifyOutputs = {
+  custom?: {
+    myFunctionUrl?: string;
+  };
 };
 
 const getRuntimeConfig = (): RuntimeConfig => {
@@ -21,8 +28,9 @@ const normalizeBaseUrl = (value?: string): string => {
 
 const runtimeBaseUrl = normalizeBaseUrl(getRuntimeConfig().API_BASE_URL);
 const envBaseUrl = normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL);
+const amplifyFunctionUrl = normalizeBaseUrl((outputs as AmplifyOutputs).custom?.myFunctionUrl);
 
-export const API_BASE_URL = runtimeBaseUrl || envBaseUrl || "";
+export const API_BASE_URL = runtimeBaseUrl || envBaseUrl || amplifyFunctionUrl || "";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
