@@ -58,7 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const newsItems = await fetchAllFeeds();
       const filteredNews = category
-        ? newsItems.filter((item: any) => item.categories.includes(category))
+        ? newsItems.filter((item: any) => item.categories?.includes(category) ?? false)
         : newsItems;
       const limited =
         typeof limit === "number" ? filteredNews.slice(0, limit) : filteredNews;
@@ -95,11 +95,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const allNews = await fetchAllFeeds();
       const normalized = decodeURIComponent(sourceName).trim().toLowerCase();
-      const filteredNews = allNews.filter(
-        (item: any) =>
+      const filteredNews = allNews.filter((item: any) => {
+        return Boolean(
           item.sourceName &&
-          item.sourceName.trim().toLowerCase().includes(normalized)
-      );
+            item.sourceName.trim().toLowerCase().includes(normalized)
+        );
+      });
 
       if (filteredNews.length > 0) {
         const limited =
