@@ -99,10 +99,5 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
   
-  // ヘルスチェック
-  app.get('/api/health', (_req: Request, res: Response) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
-  });
-
   return;
 }
