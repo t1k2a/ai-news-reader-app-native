@@ -1,25 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-
-// Dynamic imports for server modules (lazy loading)
-let serverModulesLoaded = false;
-let translateToJapanese: (text: string) => Promise<string>;
-let fetchAllFeeds: () => Promise<any[]>;
-let fetchFeed: (feedInfo: any) => Promise<any[]>;
-let AI_RSS_FEEDS: any[];
-
-async function loadServerModules(): Promise<void> {
-  if (serverModulesLoaded) return;
-
-  const translationApi = await import("../server/translation-api");
-  const rssFeed = await import("../server/rss-feed");
-
-  translateToJapanese = translationApi.translateToJapanese;
-  fetchAllFeeds = rssFeed.fetchAllFeeds;
-  fetchFeed = rssFeed.fetchFeed;
-  AI_RSS_FEEDS = rssFeed.AI_RSS_FEEDS;
-
-  serverModulesLoaded = true;
-}
+import { translateToJapanese } from "../server/translation-api";
+import { fetchAllFeeds, fetchFeed, AI_RSS_FEEDS } from "../server/rss-feed";
 
 // CORS headers
 function setCorsHeaders(res: VercelResponse): void {
@@ -42,8 +23,6 @@ export default async function handler(
   const method = req.method;
 
   try {
-    await loadServerModules();
-
     // GET /api/news
     if (path === "/api/news" && method === "GET") {
       const category = req.query.category as string;
