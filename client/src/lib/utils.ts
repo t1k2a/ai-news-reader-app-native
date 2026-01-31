@@ -1,28 +1,8 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-type RuntimeConfig = {
-  API_BASE_URL?: string;
-};
-
-const getRuntimeConfig = (): RuntimeConfig => {
-  if (typeof window === "undefined") {
-    return {};
-  }
-
-  const config = (window as Window & { __APP_CONFIG__?: RuntimeConfig }).__APP_CONFIG__;
-  return config ?? {};
-};
-
-const normalizeBaseUrl = (value?: string): string => {
-  if (!value) return "";
-  return value.trim().replace(/\/+$/, "");
-};
-
-const runtimeBaseUrl = normalizeBaseUrl(getRuntimeConfig().API_BASE_URL);
-const envBaseUrl = normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL);
-
-export const API_BASE_URL = runtimeBaseUrl || envBaseUrl || "";
+// API Base URL - 同一ドメインの場合は空文字列（相対パス）
+export const API_BASE_URL = "";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
