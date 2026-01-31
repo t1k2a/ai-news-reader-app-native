@@ -3,10 +3,11 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
   "rewrites": [
-    { "source": "/(?!api(?:/|$)).*", "destination": "/index.html" }
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "functions": {
-    "api/index.cjs": {
+    "api/index.ts": {
       "memory": 1024,
       "maxDuration": 30,
       "includeFiles": "server/**"
