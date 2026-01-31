@@ -58,7 +58,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const newsItems = await fetchAllFeeds();
       const filteredNews = category
-        ? newsItems.filter((item: any) => item.categories?.includes(category) ?? false)
+        ? newsItems.filter((item: any): boolean => {
+            return item.categories?.includes(category) === true;
+          })
         : newsItems;
       const limited =
         typeof limit === "number" ? filteredNews.slice(0, limit) : filteredNews;
@@ -75,7 +77,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const decodedId = decodeURIComponent(idParam);
       const newsItems = await fetchAllFeeds();
-      const target = newsItems.find((item: any) => item.id === decodedId);
+      const target = newsItems.find((item: any): boolean => {
+        return item.id === decodedId;
+      });
 
       if (!target) {
         return res.status(404).json({ message: "記事が見つかりませんでした" });
@@ -95,11 +99,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const allNews = await fetchAllFeeds();
       const normalized = decodeURIComponent(sourceName).trim().toLowerCase();
-      const filteredNews = allNews.filter((item: any) => {
-        return Boolean(
-          item.sourceName &&
-            item.sourceName.trim().toLowerCase().includes(normalized)
-        );
+      const filteredNews = allNews.filter((item: any): boolean => {
+        if (!item.sourceName) return false;
+        return item.sourceName.trim().toLowerCase().includes(normalized);
       });
 
       if (filteredNews.length > 0) {
@@ -110,9 +112,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.json(limited);
       }
 
-      const feedInfo = AI_RSS_FEEDS.find(
-        (f: any) => f.name.trim().toLowerCase() === normalized
-      );
+      const feedInfo = AI_RSS_FEEDS.find((f: any): boolean => {
+        return f.name.trim().toLowerCase() === normalized;
+      });
       if (feedInfo) {
         try {
           const fresh = await fetchFeed(feedInfo);
