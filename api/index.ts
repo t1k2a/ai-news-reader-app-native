@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { translateToJapanese } from "../lib/translation-api";
-import { fetchAllFeeds, fetchFeed, AI_RSS_FEEDS } from "../lib/rss-feed";
+import { translateToJapanese } from "../lib/translation-api.js";
+import { fetchAllFeeds, fetchFeed, AI_RSS_FEEDS } from "../lib/rss-feed.js";
 
 // CORS headers
 function setCorsHeaders(res: VercelResponse): void {

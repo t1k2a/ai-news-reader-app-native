@@ -4,9 +4,9 @@ import {
   translateToJapanese,
   summarizeText,
   extractFirstParagraph,
-} from "./translation-api";
-import { getCachedNews, setCachedNews } from "./cache";
-import type { AINewsItem, FeedInfo } from "./types";
+} from "./translation-api.js";
+import { getCachedNews, setCachedNews } from "./cache.js";
+import type { AINewsItem, FeedInfo } from "./types.js";
 
 // RSSパーサーの初期化（ESM/CommonJS互換）
 const Parser = RssParser as unknown as typeof RssParser.default;

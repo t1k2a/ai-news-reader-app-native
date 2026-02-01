@@ -1,7 +1,7 @@
 // 外部キャッシュの抽象化層
 // Upstash Redis を優先、利用不可の場合はインメモリキャッシュにフォールバック
 
-import type { AINewsItem } from "./types";
+import type { AINewsItem } from "./types.js";
 
 const CACHE_KEY = "news_cache";
 const CACHE_TTL = 5 * 60; // 5分（秒単位）
