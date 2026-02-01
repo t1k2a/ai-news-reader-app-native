@@ -1,7 +1,7 @@
 import { createServer } from "http";
 import { createApp } from "./app";
 import { setupVite, serveStatic, log } from "./vite";
-import { fetchAllFeeds } from "./rss-feed";
+import { fetchAllFeeds } from "../lib/rss-feed";
 
 (async () => {
   const app = await createApp();

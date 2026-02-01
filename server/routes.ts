@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from "express";
-import { translateToJapanese } from "./translation-api";
-import { fetchAllFeeds, fetchFeed, AI_RSS_FEEDS } from "./rss-feed";
+import { translateToJapanese } from "../lib/translation-api";
+import { fetchAllFeeds, fetchFeed, AI_RSS_FEEDS } from "../lib/rss-feed";
 
 export async function registerRoutes(app: Express): Promise<void> {
   // すべてのAIニュースを取得

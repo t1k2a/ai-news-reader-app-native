@@ -214,4 +214,3 @@ export function summarizeText(text: string, maxLength: number = 300): string {
 
   return summary;
 }
-

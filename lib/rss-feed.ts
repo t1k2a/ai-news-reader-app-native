@@ -3,9 +3,10 @@ import { createHash } from "crypto";
 import {
   translateToJapanese,
   summarizeText,
-  translateLongContent,
   extractFirstParagraph,
 } from "./translation-api";
+import { getCachedNews, setCachedNews } from "./cache";
+import type { AINewsItem, FeedInfo } from "./types";
 
 // RSSパーサーの初期化
 const parser = new Parser({
@@ -35,7 +36,7 @@ export const AI_CATEGORIES = {
 };
 
 // AI関連のRSSフィードのURL
-export const AI_RSS_FEEDS = [
+export const AI_RSS_FEEDS: FeedInfo[] = [
   // 英語のRSSフィード
   {
     url: "https://venturebeat.com/category/ai/feed/",
@@ -153,22 +154,8 @@ export const AI_RSS_FEEDS = [
   },
 ];
 
-export interface AINewsItem {
-  id: string;
-  title: string;
-  link: string;
-  content: string;
-  summary: string;
-  firstParagraph?: string;
-  publishDate: Date;
-  sourceName: string;
-  sourceLanguage: string;
-  categories: string[];
-  originalTitle?: string;
-  originalContent?: string;
-  originalSummary?: string;
-  originalFirstParagraph?: string;
-}
+// Re-export types
+export type { AINewsItem, FeedInfo };
 
 const ARXIV_KEYWORDS = [
   "llm",
@@ -313,18 +300,34 @@ function inferCategoriesFromContent(title: string, content: string): string[] {
   return inferredCategories;
 }
 
-// 翻訳のキャッシュ
+// 翻訳のキャッシュ（インメモリ、サーバーレスでは限定的効果）
 const translationCache: Record<string, string> = {};
+
+// サーバーレス環境用の設定
+const FEED_TIMEOUT = 3000; // タイムアウトを3秒に短縮
+const CONCURRENT_LIMIT = 5; // 同時取得数を5に制限
+
+/**
+ * タイムアウト付きでフィードを取得する
+ */
+async function fetchFeedWithTimeout(
+  feedInfo: FeedInfo,
+  timeout: number
+): Promise<AINewsItem[]> {
+  const timeoutPromise = new Promise<AINewsItem[]>((_, reject) => {
+    setTimeout(
+      () => reject(new Error(`Timeout fetching ${feedInfo.name}`)),
+      timeout
+    );
+  });
+
+  return Promise.race([fetchFeed(feedInfo), timeoutPromise]);
+}
 
 /**
  * 特定のRSSフィードから記事を取得する（最適化版）
  */
-export async function fetchFeed(feedInfo: {
-  url: string;
-  name: string;
-  language: string;
-  defaultCategories: string[];
-}): Promise<AINewsItem[]> {
+export async function fetchFeed(feedInfo: FeedInfo): Promise<AINewsItem[]> {
   try {
     const feed = await parser.parseURL(feedInfo.url);
 
@@ -360,10 +363,10 @@ export async function fetchFeed(feedInfo: {
       if (!shouldIncludeItem(feedInfo, item.title || "", content)) {
         continue;
       }
-      
+
       // 要約作成（最大2000文字）
       const summary = summarizeText(content, 300);
-      
+
       // 最初の段落を抽出
       const firstParagraph = extractFirstParagraph(content);
 
@@ -423,9 +426,6 @@ export async function fetchFeed(feedInfo: {
             );
             translationCache[paragraphCacheKey] = translatedFirstParagraph;
           }
-
-          // 記事本文は必要になった時に翻訳するため、最初は翻訳しない
-          // translatedContent = await translateLongContent(content);
 
           // 記事のカテゴリを取得または生成
           let categories = [...feedInfo.defaultCategories];
@@ -498,65 +498,74 @@ export async function fetchFeed(feedInfo: {
   }
 }
 
-// キャッシュする時間（ミリ秒）- 5分
-const CACHE_TTL = 5 * 60 * 1000;
-
-// キャッシュを保持する変数
-let cachedNewsItems: AINewsItem[] = [];
-let lastCacheTime = 0;
-
 /**
  * すべてのRSSフィードから記事を取得して結合する
- * タイムアウト機能付き並列処理
- * キャッシュ機能追加
+ * 外部キャッシュ対応版
  */
 export async function fetchAllFeeds(): Promise<AINewsItem[]> {
-  const now = Date.now();
-
-  // キャッシュが有効であれば、キャッシュを返す
-  if (cachedNewsItems.length > 0 && now - lastCacheTime < CACHE_TTL) {
-    console.log("キャッシュからニュースを提供");
-    return cachedNewsItems;
+  // 外部キャッシュをチェック
+  const cached = await getCachedNews();
+  if (cached && cached.length > 0) {
+    return cached;
   }
 
   const allNewsItems: AINewsItem[] = [];
 
-  // 並列でフィードを取得（各フィードに8秒のタイムアウトを設定）
-  const fetchPromises = AI_RSS_FEEDS.map(async (feedInfo) => {
-    try {
-      // タイムアウト付きでフィードを取得（8秒に短縮）
-      const timeoutPromise = new Promise<AINewsItem[]>((_, reject) => {
-        setTimeout(
-          () => reject(new Error(`Timeout fetching ${feedInfo.name}`)),
-          8000
-        );
-      });
+  // バッチ処理で取得（同時取得数を制限）
+  for (let i = 0; i < AI_RSS_FEEDS.length; i += CONCURRENT_LIMIT) {
+    const batch = AI_RSS_FEEDS.slice(i, i + CONCURRENT_LIMIT);
+    const batchResults = await Promise.allSettled(
+      batch.map(feed => fetchFeedWithTimeout(feed, FEED_TIMEOUT))
+    );
 
-      const items = await Promise.race([fetchFeed(feedInfo), timeoutPromise]);
-
-      return items;
-    } catch (error) {
-      console.error(`フィード処理エラー (${feedInfo.name}):`, error);
-      return [];
+    for (const result of batchResults) {
+      if (result.status === "fulfilled") {
+        allNewsItems.push(...result.value);
+      }
     }
-  });
-
-  // 結果が揃い次第、処理を継続
-  const results = await Promise.allSettled(fetchPromises);
-  results.forEach((result) => {
-    if (result.status === "fulfilled") {
-      allNewsItems.push(...result.value);
-    }
-  });
+  }
 
   // 公開日の新しい順にソート
   const sortedItems = allNewsItems.sort(
-    (a, b) => b.publishDate.getTime() - a.publishDate.getTime()
+    (a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime()
   );
 
-  // キャッシュを更新
-  cachedNewsItems = sortedItems;
-  lastCacheTime = now;
+  // 外部キャッシュに保存
+  await setCachedNews(sortedItems);
 
+  return sortedItems;
+}
+
+/**
+ * キャッシュを強制的に更新する（Cron Job用）
+ */
+export async function refreshCache(): Promise<AINewsItem[]> {
+  console.log("Starting cache refresh...");
+
+  const allNewsItems: AINewsItem[] = [];
+
+  // バッチ処理で取得（同時取得数を制限）
+  for (let i = 0; i < AI_RSS_FEEDS.length; i += CONCURRENT_LIMIT) {
+    const batch = AI_RSS_FEEDS.slice(i, i + CONCURRENT_LIMIT);
+    const batchResults = await Promise.allSettled(
+      batch.map(feed => fetchFeedWithTimeout(feed, FEED_TIMEOUT))
+    );
+
+    for (const result of batchResults) {
+      if (result.status === "fulfilled") {
+        allNewsItems.push(...result.value);
+      }
+    }
+  }
+
+  // 公開日の新しい順にソート
+  const sortedItems = allNewsItems.sort(
+    (a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime()
+  );
+
+  // 外部キャッシュに保存
+  await setCachedNews(sortedItems);
+
+  console.log(`Cache refresh complete. ${sortedItems.length} items cached.`);
   return sortedItems;
 }

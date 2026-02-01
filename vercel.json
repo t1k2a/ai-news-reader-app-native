@@ -2,13 +2,24 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
-  ],
   "functions": {
     "api/**/*.ts": {
-      "includeFiles": "server/**"
+      "maxDuration": 30,
+      "includeFiles": "lib/**"
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/api/news/source/:name", "destination": "/api/news/source/[name]" },
+    { "source": "/api/news/item", "destination": "/api/news/item" },
+    { "source": "/api/news", "destination": "/api/news" },
+    { "source": "/api/translate", "destination": "/api/translate" },
+    { "source": "/api/cron/update-feeds", "destination": "/api/cron/update-feeds" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/update-feeds",
+      "schedule": "*/5 * * * *"
+    }
+  ]
 }
