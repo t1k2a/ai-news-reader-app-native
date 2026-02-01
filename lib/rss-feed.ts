@@ -1,4 +1,4 @@
-import Parser from "rss-parser";
+import RssParser from "rss-parser";
 import { createHash } from "crypto";
 import {
   translateToJapanese,
@@ -8,7 +8,8 @@ import {
 import { getCachedNews, setCachedNews } from "./cache";
 import type { AINewsItem, FeedInfo } from "./types";
 
-// RSSパーサーの初期化
+// RSSパーサーの初期化（ESM/CommonJS互換）
+const Parser = RssParser as unknown as typeof RssParser.default;
 const parser = new Parser({
   headers: {
     "User-Agent":
