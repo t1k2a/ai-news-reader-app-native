@@ -3,6 +3,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
   "rewrites": [
+    { "source": "/api/cron/auto-post", "destination": "/api/cron/auto-post" },
     { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
@@ -10,5 +11,11 @@
     "api/**/*.ts": {
       "includeFiles": "lib/**"
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/auto-post",
+      "schedule": "0 * * * *"
+    }
+  ]
 }

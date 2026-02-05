@@ -11,10 +11,8 @@ let memoryCache: AINewsItem[] = [];
 let memoryCacheTime = 0;
 
 // Upstash Redis クライアント（遅延初期化）
-let redisClient: {
-  get: <T>(key: string) => Promise<T | null>;
-  set: (key: string, value: unknown, options?: { ex?: number }) => Promise<void>;
-} | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let redisClient: any = null;
 
 async function getRedisClient() {
   if (redisClient) return redisClient;
@@ -43,7 +41,7 @@ export async function getCachedNews(): Promise<AINewsItem[] | null> {
     const redis = await getRedisClient();
 
     if (redis) {
-      const cached = await redis.get<AINewsItem[]>(CACHE_KEY);
+      const cached = await redis.get(CACHE_KEY) as AINewsItem[] | null;
       if (cached) {
         console.log("Cache hit (Redis)");
         return cached;
@@ -106,5 +104,41 @@ export async function invalidateCache(): Promise<void> {
     console.error("Cache invalidation error:", error);
     memoryCache = [];
     memoryCacheTime = 0;
+  }
+}
+
+// 投稿済み記事IDの管理
+const POSTED_IDS_KEY = "posted_article_ids";
+const POSTED_IDS_TTL = 30 * 24 * 60 * 60; // 30日間保持
+
+export async function getPostedArticleIds(): Promise<Set<string>> {
+  try {
+    const redis = await getRedisClient();
+    if (redis) {
+      const ids = await redis.get(POSTED_IDS_KEY) as string[] | null;
+      if (ids) {
+        return new Set(ids);
+      }
+    }
+    return new Set();
+  } catch (error) {
+    console.error("Failed to get posted article IDs:", error);
+    return new Set();
+  }
+}
+
+export async function addPostedArticleId(articleId: string): Promise<void> {
+  try {
+    const redis = await getRedisClient();
+    if (redis) {
+      const existingIds = await getPostedArticleIds();
+      existingIds.add(articleId);
+      // 最新1000件のみ保持
+      const idsArray = Array.from(existingIds).slice(-1000);
+      await redis.set(POSTED_IDS_KEY, idsArray, { ex: POSTED_IDS_TTL });
+      console.log(`Added posted article ID: ${articleId}`);
+    }
+  } catch (error) {
+    console.error("Failed to add posted article ID:", error);
   }
 }
