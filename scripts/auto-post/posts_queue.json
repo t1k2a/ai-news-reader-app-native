@@ -4,23 +4,44 @@
     "title": "GPT-5の発表が近いとOpenAIが示唆 - 次世代AIモデルの詳細が明らかに",
     "content": "OpenAIは次世代モデルGPT-5の開発が最終段階にあることを示唆しました。新モデルはより高度な推論能力と長いコンテキストウィンドウを持つとされています。",
     "url": "https://glotnexus.jp",
-    "hashtags": ["AI", "GPT5", "OpenAI", "GlotNexus"],
-    "status": "pending"
+    "hashtags": [
+      "AI",
+      "GPT5",
+      "OpenAI",
+      "GlotNexus"
+    ],
+    "status": "published",
+    "error_message": "Request failed with code 402",
+    "published_at": "2026-02-05T11:52:26.474Z",
+    "tweet_id": "2019378577217863741"
   },
   {
     "id": 2,
     "title": "Google DeepMindが新しい科学発見AIを公開 - 研究を加速させる革新的システム",
     "content": "Google DeepMindは、科学研究を加速させる新しいAIシステムを発表しました。このシステムは複雑な科学的問題を解決する能力を持っています。",
     "url": "https://glotnexus.jp",
-    "hashtags": ["AI", "DeepMind", "Google", "GlotNexus"],
-    "status": "pending"
+    "hashtags": [
+      "AI",
+      "DeepMind",
+      "Google",
+      "GlotNexus"
+    ],
+    "status": "failed",
+    "error_message": "Request failed with code 403"
   },
   {
     "id": 3,
     "title": "Meta、オープンソースLLMの新バージョンLlama 4をリリース",
     "content": "MetaはLlama 4をオープンソースとして公開しました。研究者と開発者は無料でこのモデルを使用できます。",
     "url": "https://glotnexus.jp",
-    "hashtags": ["AI", "Llama4", "Meta", "OpenSource", "GlotNexus"],
-    "status": "pending"
+    "hashtags": [
+      "AI",
+      "Llama4",
+      "Meta",
+      "OpenSource",
+      "GlotNexus"
+    ],
+    "status": "failed",
+    "error_message": "Request failed with code 403"
   }
 ]
