@@ -19,6 +19,7 @@ const DELAY_SECONDS = parseInt(
   process.env.AUTO_POST_DELAY_SECONDS || "10",
   10
 );
+const APP_BASE_URL = process.env.APP_BASE_URL || "https://glotnexus.jp";
 
 /**
  * 投稿結果の型定義
@@ -83,7 +84,10 @@ export function formatTweetText(item: AINewsItem): string {
   const hashtags = generateHashtags(item)
     .map((tag) => `#${tag}`)
     .join(" ");
-  const url = item.link;
+
+  // アプリ内のアーティクルページURLを生成
+  const encodedId = encodeURIComponent(item.id);
+  const url = `${APP_BASE_URL}/?article=${encodedId}`;
 
   // URL の長さ（X では t.co 短縮で 23 文字固定）
   const urlLength = 23;

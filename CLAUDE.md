@@ -131,6 +131,7 @@ X_ACCESS_TOKEN_SECRET=
 # Auto-posting configuration (optional, has defaults)
 AUTO_POST_MAX_PER_RUN=10          # Max posts per cron run (default: 10)
 AUTO_POST_DELAY_SECONDS=10        # Delay between posts in seconds (default: 10)
+APP_BASE_URL=https://glotnexus.jp # Base URL for article links in tweets (default: https://glotnexus.jp)
 
 # Upstash Redis (for serverless caching)
 UPSTASH_REDIS_REST_URL=
@@ -168,12 +169,13 @@ CRON_SECRET=
 ```
 {title}
 
-{url}
+{APP_BASE_URL}/?article={article.id}
 
 #{hashtags} #AI #GlotNexus
 ```
 - 280 character limit
 - URL counts as 23 chars (t.co shortening)
+- URL points to app's article page (not original source)
 - Title auto-truncated with "..." if needed
 
 ## Common Gotchas
