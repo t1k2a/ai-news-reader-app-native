@@ -26,7 +26,6 @@ An AI news aggregator application that fetches RSS feeds from various AI sources
 - **Shared logic**: Common posting utilities in `lib/auto-post.ts`
 - Tracks posted article IDs to prevent duplicates (Redis or local JSON fallback)
 - Configurable posting rate: max 10 posts per run, 10-second intervals (via env vars)
-- GitHub Actions workflow also runs hourly (`auto-post.yml`)
 
 ## Development Commands
 
@@ -162,7 +161,7 @@ CRON_SECRET=
 
 2. **RSS-Based (`npm run auto-post:rss`):**
    - Fetches latest articles from RSS feeds
-   - Can be triggered via GitHub Actions hourly
+   - Manual execution for testing/debugging
    - Uses local `posted_ids.json` as fallback tracking
 
 **Tweet Format:**
