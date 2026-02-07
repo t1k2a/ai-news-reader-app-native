@@ -8,3 +8,4 @@ amplify_outputs*
 amplifyconfiguration*
 
 .env
+.vercel
