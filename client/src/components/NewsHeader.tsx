@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { APP_NAME, APP_TAGLINE } from '../lib/constants';
 
 export function NewsHeader() {
   const [currentTime, setCurrentTime] = useState(() => {
@@ -16,19 +17,25 @@ export function NewsHeader() {
   return (
     <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-4 py-3 sticky top-0 z-10 shadow-sm">
       <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center">
-        <div className="flex items-center mb-2 sm:mb-0">
-          <svg 
-            viewBox="0 0 24 24" 
-            width="28" 
-            height="28" 
-            className="text-blue-500 mr-2"
-          >
-            <path 
-              fill="currentColor" 
-              d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A2,2 0 0,0 10,6A2,2 0 0,0 12,8A2,2 0 0,0 14,6A2,2 0 0,0 12,4M10,10A2,2 0 0,0 8,12A2,2 0 0,0 10,14A2,2 0 0,0 12,12A2,2 0 0,0 10,10M16,10A2,2 0 0,0 14,12A2,2 0 0,0 16,14A2,2 0 0,0 18,12A2,2 0 0,0 16,10M12,16A2,2 0 0,0 10,18A2,2 0 0,0 12,20A2,2 0 0,0 14,18A2,2 0 0,0 12,16Z" 
-            />
-          </svg>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">GlotNexus</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center mb-2 sm:mb-0">
+          <div className="flex items-center justify-center sm:justify-start">
+            <svg 
+              viewBox="0 0 24 24" 
+              width="28" 
+              height="28" 
+              className="text-blue-500 mr-2"
+            >
+              <path 
+                fill="currentColor" 
+                d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A2,2 0 0,0 10,6A2,2 0 0,0 12,8A2,2 0 0,0 14,6A2,2 0 0,0 12,4M10,10A2,2 0 0,0 8,12A2,2 0 0,0 10,14A2,2 0 0,0 12,12A2,2 0 0,0 10,10M16,10A2,2 0 0,0 14,12A2,2 0 0,0 16,14A2,2 0 0,0 18,12A2,2 0 0,0 16,10M12,16A2,2 0 0,0 10,18A2,2 0 0,0 12,20A2,2 0 0,0 14,18A2,2 0 0,0 12,16Z" 
+              />
+            </svg>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">{APP_NAME}</h1>
+          </div>
+          <span className="hidden sm:inline mx-2 text-gray-400 dark:text-slate-500">-</span>
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 mt-1 sm:mt-0 font-medium">
+            {APP_TAGLINE}
+          </p>
         </div>
         
         <div className="text-sm text-gray-600 dark:text-slate-400 flex items-center">

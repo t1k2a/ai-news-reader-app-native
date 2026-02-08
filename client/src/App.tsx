@@ -7,6 +7,7 @@ import { NewsHeader } from "./components/NewsHeader";
 import { BookmarksPanel } from "./components/BookmarksPanel";
 import "@fontsource/inter";
 import PrivacyPage from "./pages/privacy";
+import { APP_TITLE } from "./lib/constants";
 
 function App() {
   const selectedSource: string | null = null;
@@ -29,7 +30,7 @@ function App() {
           </Routes>
 
           <footer className="bg-slate-800 p-3 text-center text-sm text-slate-400">
-            <span>GlotNexus - 海外AIメディアを翻訳・要約。見出しで掴む世界の最先端</span>
+            <span>{APP_TITLE}</span>
             <span className="mx-2">•</span>
             <Link to="/privacy" className="underline hover:text-slate-300">プライバシーポリシー</Link>
           </footer>
