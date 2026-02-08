@@ -20,6 +20,7 @@ import type { AINewsItem } from "../../lib/types.js";
 // ES Module で __dirname を取得
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const APP_BASE_URL = process.env.APP_BASE_URL || "https://glotnexus.jp";
 
 // .env ファイルを読み込み
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
@@ -200,7 +201,7 @@ function formatTweetText(item: AINewsItem): string {
   const hashtags = generateHashtags(item)
     .map((tag) => `#${tag}`)
     .join(" ");
-  const url = item.link;
+  const url = `${APP_BASE_URL}/?article=${item.id}`;
 
   // URL の長さ（X では t.co 短縮で 23 文字固定）
   const urlLength = 23;
