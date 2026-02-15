@@ -8,7 +8,26 @@
   ],
   "functions": {
     "api/**/*.ts": {
-      "includeFiles": "lib/**"
+      "includeFiles": "lib/**",
+      "maxDuration": 300
+    },
+    "api/cron/**/*.ts": {
+      "includeFiles": "lib/**",
+      "maxDuration": 300
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/auto-post",
+      "schedule": "0 23 * * *"
+    },
+    {
+      "path": "/api/cron/auto-post",
+      "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/cron/auto-post",
+      "schedule": "0 11 * * *"
+    }
+  ]
 }

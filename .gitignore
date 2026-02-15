@@ -9,3 +9,11 @@ amplifyconfiguration*
 
 .env
 .vercel
+
+# Claude Code
+.agent/
+.agents/
+.claude/
+
+# Development reports
+daily-report-*.md

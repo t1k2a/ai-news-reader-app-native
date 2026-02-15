@@ -11,11 +11,22 @@ let memoryCache: AINewsItem[] = [];
 let memoryCacheTime = 0;
 
 // Upstash Redis クライアント（遅延初期化）
+// null: 未初期化, false: 初期化失敗, Redis: 初期化成功
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let redisClient: any = null;
 
 async function getRedisClient() {
   if (redisClient) return redisClient;
+
+  // 初期化に失敗した場合は null を返すフラグ
+  if (redisClient === false) return null;
+
+  // 開発環境では常にメモリキャッシュを使用（Redisセットアップ不要）
+  if (process.env.NODE_ENV === 'development') {
+    console.log("Development mode: using memory cache (Redis disabled)");
+    redisClient = false; // 再試行を防ぐ
+    return null;
+  }
 
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -28,10 +39,18 @@ async function getRedisClient() {
   try {
     const { Redis } = await import("@upstash/redis");
     redisClient = new Redis({ url, token });
-    console.log("Upstash Redis client initialized");
+    console.log("Upstash Redis client initialized successfully");
+
+    // 接続テスト
+    await redisClient.ping();
+    console.log("Upstash Redis connection verified");
+
     return redisClient;
   } catch (error) {
     console.error("Failed to initialize Upstash Redis:", error);
+    console.error("Stack trace:", (error as Error).stack);
+    // 初期化失敗をマーク（再試行を防ぐ）
+    redisClient = false;
     return null;
   }
 }

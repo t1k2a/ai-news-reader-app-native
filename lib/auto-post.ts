@@ -5,6 +5,10 @@
 
 import { TwitterApi } from "twitter-api-v2";
 import { getPostedArticleIds, addPostedArticleId } from "./cache.js";
+import {
+  formatTweetTextEnhanced,
+  formatTweetTextEnhancedAsync,
+} from "./auto-post-enhanced.js";
 import type { AINewsItem } from "./types.js";
 
 // X の文字数制限
@@ -21,6 +25,15 @@ const DELAY_SECONDS = parseInt(
 );
 const APP_BASE_URL = process.env.APP_BASE_URL || "https://glotnexus.jp";
 
+// A/Bテスト用のバリアント設定
+// "simple" = シンプル版（旧フォーマット）
+// "enhanced" = 強化版（新フォーマット）
+// "random" = ランダム（50/50）
+const TWEET_FORMAT_VARIANT = (process.env.TWEET_FORMAT_VARIANT || "enhanced") as
+  | "simple"
+  | "enhanced"
+  | "random";
+
 /**
  * 投稿結果の型定義
  */
@@ -30,6 +43,7 @@ export interface PostResult {
   articleTitle: string;
   tweetId?: string;
   error?: string;
+  variant?: "simple" | "enhanced"; // A/Bテスト用バリアント情報
 }
 
 /**
@@ -55,10 +69,10 @@ export function createXClient(): TwitterApi | null {
 }
 
 /**
- * カテゴリからハッシュタグを生成
+ * シンプル版のツイートテキストを生成（旧フォーマット）
  */
-function generateHashtags(item: AINewsItem): string[] {
-  const tags: string[] = ["AI", "GlotNexus"];
+function formatTweetTextSimple(item: AINewsItem): string {
+  const tags = ["AI", "GlotNexus"];
 
   // ソース名からタグを生成
   const sourceMap: Record<string, string> = {
@@ -74,18 +88,7 @@ function generateHashtags(item: AINewsItem): string[] {
     tags.push(sourceMap[item.sourceName]);
   }
 
-  return tags;
-}
-
-/**
- * ツイート用のテキストを生成（文字数制限対応）
- */
-export function formatTweetText(item: AINewsItem): string {
-  const hashtags = generateHashtags(item)
-    .map((tag) => `#${tag}`)
-    .join(" ");
-
-  // アプリ内のアーティクルページURLを生成
+  const hashtags = tags.map((tag) => `#${tag}`).join(" ");
   const encodedId = encodeURIComponent(item.id);
   const url = `${APP_BASE_URL}/?article=${encodedId}`;
 
@@ -105,17 +108,88 @@ export function formatTweetText(item: AINewsItem): string {
 }
 
 /**
- * 単一記事を X に投稿
+ * ツイート用のテキストを生成（A/Bテスト対応、非同期版）
+ *
+ * 環境変数 TWEET_FORMAT_VARIANT で制御：
+ * - "simple": シンプル版（旧フォーマット）
+ * - "enhanced": 強化版（新フォーマット、日本語翻訳対応、デフォルト）
+ * - "random": ランダム（50/50）
+ *
+ * @returns {text, variant}
+ */
+export async function formatTweetTextAsync(
+  item: AINewsItem
+): Promise<{ text: string; variant: "simple" | "enhanced" }> {
+  let variant: "simple" | "enhanced" = "enhanced";
+
+  // バリアント選択
+  if (TWEET_FORMAT_VARIANT === "simple") {
+    variant = "simple";
+  } else if (TWEET_FORMAT_VARIANT === "enhanced") {
+    variant = "enhanced";
+  } else if (TWEET_FORMAT_VARIANT === "random") {
+    // 50/50 ランダム
+    variant = Math.random() < 0.5 ? "simple" : "enhanced";
+  }
+
+  // フォーマット生成
+  const text =
+    variant === "simple"
+      ? formatTweetTextSimple(item)
+      : await formatTweetTextEnhancedAsync(item); // 非同期版を使用（翻訳対応）
+
+  return { text, variant };
+}
+
+/**
+ * ツイート用のテキストを生成（A/Bテスト対応、同期版）
+ *
+ * 注意: この同期版では翻訳機能は使用されません。
+ * 翻訳機能を使用する場合は formatTweetTextAsync を使用してください。
+ *
+ * @returns {text, variant}
+ */
+export function formatTweetText(
+  item: AINewsItem
+): { text: string; variant: "simple" | "enhanced" } {
+  let variant: "simple" | "enhanced" = "enhanced";
+
+  // バリアント選択
+  if (TWEET_FORMAT_VARIANT === "simple") {
+    variant = "simple";
+  } else if (TWEET_FORMAT_VARIANT === "enhanced") {
+    variant = "enhanced";
+  } else if (TWEET_FORMAT_VARIANT === "random") {
+    // 50/50 ランダム
+    variant = Math.random() < 0.5 ? "simple" : "enhanced";
+  }
+
+  // フォーマット生成（同期版）
+  const text =
+    variant === "simple"
+      ? formatTweetTextSimple(item)
+      : formatTweetTextEnhanced(item); // 同期版（翻訳なし）
+
+  return { text, variant };
+}
+
+/**
+ * 単一記事を X に投稿（日本語翻訳対応）
+ *
+ * @returns {tweetId, variant}
  */
 async function postToX(
   client: TwitterApi,
   item: AINewsItem
-): Promise<string | null> {
+): Promise<{ tweetId: string; variant: "simple" | "enhanced" } | null> {
   try {
-    const tweetText = formatTweetText(item);
-    const result = await client.v2.tweet(tweetText);
-    console.log(`Posted to X: ${result.data.id} - ${item.title}`);
-    return result.data.id;
+    // 非同期版を使用（日本語翻訳対応）
+    const { text, variant } = await formatTweetTextAsync(item);
+    const result = await client.v2.tweet(text);
+    console.log(
+      `Posted to X: ${result.data.id} - ${item.title} [variant: ${variant}]`
+    );
+    return { tweetId: result.data.id, variant };
   } catch (error: unknown) {
     const err = error as { data?: unknown; message?: string };
     if (err.data) {
@@ -174,18 +248,21 @@ export async function autoPostArticles(
     );
 
     try {
-      const tweetId = await postToX(client, article);
+      const result = await postToX(client, article);
 
-      if (tweetId) {
+      if (result) {
         // 投稿成功 - IDを記録
         await addPostedArticleId(article.id);
         results.push({
           success: true,
           articleId: article.id,
           articleTitle: article.title,
-          tweetId,
+          tweetId: result.tweetId,
+          variant: result.variant,
         });
-        console.log(`✅ Success: Tweet ID ${tweetId}`);
+        console.log(
+          `✅ Success: Tweet ID ${result.tweetId} [variant: ${result.variant}]`
+        );
       } else {
         // 投稿失敗
         results.push({

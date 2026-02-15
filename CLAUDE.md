@@ -71,8 +71,9 @@ npm run auto-post:rss
   - Vercel Cron for background updates
 
 **Caching Strategy:**
-- Upstash Redis preferred (serverless-compatible)
-- Automatic fallback to in-memory cache if Redis unavailable
+- **Development (`NODE_ENV=development`)**: Always uses in-memory cache (Redis disabled for simplicity)
+- **Production (`NODE_ENV=production`)**: Uses Upstash Redis (serverless-compatible)
+- Automatic fallback to in-memory cache if Redis unavailable or misconfigured
 - 5-minute TTL for news cache
 - 30-day TTL for posted article IDs (max 1000 entries)
 
@@ -118,27 +119,33 @@ client/                # React frontend
 
 ## Environment Variables
 
-Required for auto-posting and external services:
+**Required for auto-posting:**
 
-```
+```bash
 # X (Twitter) API v2 Credentials
 X_API_KEY=
 X_API_SECRET=
 X_ACCESS_TOKEN=
 X_ACCESS_TOKEN_SECRET=
+```
 
-# Auto-posting configuration (optional, has defaults)
+**Optional configuration:**
+
+```bash
+# Auto-posting configuration (has defaults)
 AUTO_POST_MAX_PER_RUN=10          # Max posts per cron run (default: 10)
 AUTO_POST_DELAY_SECONDS=10        # Delay between posts in seconds (default: 10)
 APP_BASE_URL=https://glotnexus.jp # Base URL for article links in tweets (default: https://glotnexus.jp)
 
-# Upstash Redis (for serverless caching)
-UPSTASH_REDIS_REST_URL=
-UPSTASH_REDIS_REST_TOKEN=
+# Upstash Redis (production only - automatically disabled in NODE_ENV=development)
+UPSTASH_REDIS_REST_URL=           # Not needed for local development
+UPSTASH_REDIS_REST_TOKEN=         # Not needed for local development
 
-# Cron job authentication
+# Cron job authentication (production only)
 CRON_SECRET=
 ```
+
+**Note**: Local development uses in-memory cache automatically. Redis setup is only required for production deployment.
 
 ## Auto-Posting Implementation Notes
 

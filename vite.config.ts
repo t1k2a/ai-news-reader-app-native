@@ -62,6 +62,14 @@ export default defineConfig({
     exclude: ["react-refresh"],
   },
   server: {
+    watch: {
+      // scriptsディレクトリやdistディレクトリを監視対象から除外
+      ignored: ['**/scripts/**', '**/dist/**', '**/node_modules/**', '**/.git/**'],
+    },
+    fs: {
+      // プロジェクトルート全体へのアクセスを許可（lib/, server/などへのアクセスが必要）
+      allow: ['..'],
+    },
     hmr: {
       overlay: false, // エラーオーバーレイを無効化してメモリ節約
     },

@@ -2,21 +2,105 @@
 import axios from "axios";
 
 /**
- * テキストを英語から日本語に翻訳する
- * Googleの非公式APIを使用（低負荷用途のみ）
+ * AI専門用語の翻訳辞書
+ * Google Translateの誤訳を修正するために使用
+ */
+const AI_TERMINOLOGY_DICTIONARY: Record<string, string> = {
+  // AI モデル名
+  "ChatGPT": "ChatGPT",
+  "GPT-4": "GPT-4",
+  "GPT-3.5": "GPT-3.5",
+  "Gemini": "Gemini",
+  "Claude": "Claude",
+  "DALL-E": "DALL-E",
+  "Stable Diffusion": "Stable Diffusion",
+  "Midjourney": "Midjourney",
+  "LLaMA": "LLaMA",
+  "PaLM": "PaLM",
+
+  // AI技術用語
+  "Large Language Model": "大規模言語モデル",
+  "LLM": "LLM",
+  "Transformer": "Transformer",
+  "Neural Network": "ニューラルネットワーク",
+  "Deep Learning": "ディープラーニング",
+  "Machine Learning": "機械学習",
+  "Reinforcement Learning": "強化学習",
+  "Fine-tuning": "ファインチューニング",
+  "Prompt Engineering": "プロンプトエンジニアリング",
+  "Multimodal": "マルチモーダル",
+  "Token": "トークン",
+  "Embedding": "埋め込み",
+  "RAG": "RAG",
+  "Retrieval-Augmented Generation": "検索拡張生成",
+
+  // 一般的な技術用語
+  "AI": "AI",
+  "Artificial Intelligence": "人工知能",
+  "API": "API",
+  "Cloud": "クラウド",
+  "Edge Computing": "エッジコンピューティング",
+  "GPU": "GPU",
+  "TPU": "TPU",
+  "Open Source": "オープンソース",
+  "Beta": "ベータ版",
+  "Release": "リリース",
+};
+
+/**
+ * 翻訳テキストをポストプロセスする
+ * AI専門用語の修正、不自然な表現の改善
+ */
+function postProcessTranslation(text: string): string {
+  if (!text) return text;
+
+  let processed = text;
+
+  // 専門用語辞書を適用
+  for (const [en, ja] of Object.entries(AI_TERMINOLOGY_DICTIONARY)) {
+    const regex = new RegExp(en, "gi");
+    processed = processed.replace(regex, ja);
+  }
+
+  // 不自然な翻訳パターンを修正
+  processed = processed
+    .replace(/(\d+)\s*億/g, "$1億") // 「10 億」→「10億」
+    .replace(/(\d+)\s*万/g, "$1万") // 「100 万」→「100万」
+    .replace(/\s+([、。！？）」])/g, "$1") // 句読点の前のスペース削除
+    .replace(/([（「])\s+/g, "$1") // 括弧の後のスペース削除
+    .replace(/([A-Za-z0-9]+)\s+([A-Za-z0-9]+)/g, "$1$2") // 英数字間の不要なスペース削除（一部）
+    .trim();
+
+  return processed;
+}
+
+/**
+ * テキストを英語から日本語に翻訳する（強化版）
+ * Googleの非公式APIを使用し、専門用語辞書でポストプロセス
  * @param text 翻訳するテキスト
+ * @param maxLength 最大文字数（省略可、デフォルトは制限なし）
  * @returns 翻訳されたテキスト、またはエラーの場合は元のテキスト
  */
-export async function translateToJapanese(text: string): Promise<string> {
+export async function translateToJapanese(
+  text: string,
+  maxLength?: number
+): Promise<string> {
   if (!text) return "";
 
   try {
+    // 長すぎるテキストは先に切り詰める（API制限対策）
+    let textToTranslate = text;
+    if (maxLength && text.length > maxLength * 2) {
+      // 英語は日本語より短いことが多いので、2倍の余裕を持たせる
+      textToTranslate = text.slice(0, maxLength * 2);
+    }
+
     // 非公式APIを使用（低負荷用）
     const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=${encodeURIComponent(
-      text
+      textToTranslate
     )}`;
 
-    const { data } = await axios.get(url);
+    const { data } = await axios.get(url, { timeout: 5000 }); // 5秒タイムアウト
 
     // レスポンスから翻訳テキストを抽出
     let translatedText = "";
@@ -28,10 +112,27 @@ export async function translateToJapanese(text: string): Promise<string> {
       }
     }
 
-    return translatedText || text;
+    if (!translatedText) {
+      console.warn("翻訳結果が空です。元のテキストを返します。");
+      return text;
+    }
+
+    // ポストプロセス（専門用語修正、不自然な表現の改善）
+    let processed = postProcessTranslation(translatedText);
+
+    // 最大文字数制限がある場合は切り詰め
+    if (maxLength && processed.length > maxLength) {
+      processed = processed.slice(0, maxLength - 3) + "...";
+    }
+
+    return processed;
   } catch (error) {
     console.error("翻訳エラー:", error);
-    return text; // エラーの場合は元のテキストを返す
+    // エラーの場合は元のテキストを返す（ただし最大文字数で切り詰め）
+    if (maxLength && text.length > maxLength) {
+      return text.slice(0, maxLength - 3) + "...";
+    }
+    return text;
   }
 }
 
@@ -172,25 +273,20 @@ export function extractFirstParagraph(html: string): string {
 }
 
 /**
- * テキストを指定した長さ（約300文字）に要約する
+ * テキストを指定した長さに要約する（強化版）
  * @param text 要約するテキスト
- * @param maxLength 最大文字数（デフォルト300）
+ * @param maxLength 最大文字数（デフォルト80、ツイート用）
  * @returns 要約されたテキスト
  */
-export function summarizeText(text: string, maxLength: number = 300): string {
+export function summarizeText(text: string, maxLength: number = 80): string {
   if (!text) return "";
 
   // まずHTMLタグを除去
   const plainText = stripHtmlTags(text);
 
-  // デバッグ用ログ
-  console.log(
-    `要約前テキスト長: ${plainText.length} 文字, 制限: ${maxLength} 文字`
-  );
-
   if (plainText.length <= maxLength) return plainText;
 
-  // 文章を句点で分割
+  // 文章を句点で分割（日本語と英語両対応）
   const sentences = plainText
     .split(/。|！|？|\.|!|\?/)
     .filter((s) => s.trim().length > 0);
@@ -199,18 +295,42 @@ export function summarizeText(text: string, maxLength: number = 300): string {
   let currentLength = 0;
 
   for (const sentence of sentences) {
-    const sentenceWithPeriod = sentence + "。";
+    const trimmedSentence = sentence.trim();
+
+    // 最初の文は必ず追加（ただし長すぎる場合は切り詰め）
+    if (summary === "") {
+      if (trimmedSentence.length > maxLength) {
+        // 最初の文が長すぎる場合は切り詰める
+        return trimmedSentence.slice(0, maxLength - 3) + "...";
+      }
+      summary = trimmedSentence;
+      currentLength = summary.length;
+      continue;
+    }
+
+    const sentenceWithPeriod = trimmedSentence + "。";
     if (currentLength + sentenceWithPeriod.length <= maxLength) {
       summary += sentenceWithPeriod;
       currentLength += sentenceWithPeriod.length;
     } else {
-      // 途中で切らず、直前までに追加した文で終了（句点で終了）
+      // 直前までの文で終了
       break;
     }
   }
 
-  // デバッグ用ログ
-  console.log(`要約後テキスト長: ${summary.length} 文字`);
+  // 句点で終わっていない場合は追加
+  if (summary && !summary.match(/[。！？]$/)) {
+    summary += "。";
+  }
 
   return summary;
+}
+
+/**
+ * ツイート用の要約を生成（80文字以内）
+ * @param text 要約するテキスト
+ * @returns ツイート用要約（80文字以内）
+ */
+export function summarizeForTweet(text: string): string {
+  return summarizeText(text, 80);
 }
