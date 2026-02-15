@@ -10,10 +10,6 @@
     "api/**/*.ts": {
       "includeFiles": "lib/**",
       "maxDuration": 300
-    },
-    "api/cron/**/*.ts": {
-      "includeFiles": "lib/**",
-      "maxDuration": 300
     }
   },
   "crons": [
