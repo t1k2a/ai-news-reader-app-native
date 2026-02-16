@@ -176,12 +176,12 @@ export function formatTweetText(
 /**
  * 単一記事を X に投稿（日本語翻訳対応）
  *
- * @returns {tweetId, variant}
+ * @returns {tweetId, variant, isDuplicate}
  */
 async function postToX(
   client: TwitterApi,
   item: AINewsItem
-): Promise<{ tweetId: string; variant: "simple" | "enhanced" } | null> {
+): Promise<{ tweetId: string; variant: "simple" | "enhanced"; isDuplicate: false } | { isDuplicate: true } | null> {
   try {
     // 非同期版を使用（日本語翻訳対応）
     const { text, variant } = await formatTweetTextAsync(item);
@@ -189,12 +189,25 @@ async function postToX(
     console.log(
       `Posted to X: ${result.data.id} - ${item.title} [variant: ${variant}]`
     );
-    return { tweetId: result.data.id, variant };
+    return { tweetId: result.data.id, variant, isDuplicate: false };
   } catch (error: unknown) {
-    const err = error as { data?: unknown; message?: string };
+    const err = error as { data?: unknown; message?: string; code?: number };
+
+    // X API エラーの詳細を取得
+    const errorData = err.data as { detail?: string; status?: number } | undefined;
+    const statusCode = errorData?.status;
+    const errorDetail = errorData?.detail || "";
+
     if (err.data) {
       console.error(`X API error:`, err.data);
     }
+
+    // 重複コンテンツエラー（403 Forbidden + duplicate content message）の場合
+    if (statusCode === 403 && errorDetail.toLowerCase().includes("duplicate")) {
+      console.log(`⚠️ Duplicate content detected, marking as posted to skip in future`);
+      return { isDuplicate: true };
+    }
+
     console.error(`Failed to post: ${err.message || String(error)}`);
     return null;
   }
@@ -250,7 +263,7 @@ export async function autoPostArticles(
     try {
       const result = await postToX(client, article);
 
-      if (result) {
+      if (result && !result.isDuplicate) {
         // 投稿成功 - IDを記録
         await addPostedArticleId(article.id);
         results.push({
@@ -263,6 +276,16 @@ export async function autoPostArticles(
         console.log(
           `✅ Success: Tweet ID ${result.tweetId} [variant: ${result.variant}]`
         );
+      } else if (result && result.isDuplicate) {
+        // 重複コンテンツ - IDを記録してスキップ（次回の投稿対象から除外）
+        await addPostedArticleId(article.id);
+        results.push({
+          success: false,
+          articleId: article.id,
+          articleTitle: article.title,
+          error: "Duplicate content (skipped)",
+        });
+        console.log(`⚠️ Skipped: Duplicate content detected`);
       } else {
         // 投稿失敗
         results.push({
