@@ -105,6 +105,42 @@ export const AI_RSS_FEEDS: FeedInfo[] = [
     language: "en",
     defaultCategories: [AI_CATEGORIES.CV, AI_CATEGORIES.ML],
   },
+  {
+    url: "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
+    name: "The Verge AI",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.GENERAL, AI_CATEGORIES.BUSINESS],
+  },
+  {
+    url: "https://spectrum.ieee.org/feeds/topic/artificial-intelligence.rss",
+    name: "IEEE Spectrum AI",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.ML],
+  },
+  {
+    url: "https://www.technologyreview.com/topic/artificial-intelligence/feed/",
+    name: "MIT Technology Review AI",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.BUSINESS],
+  },
+  {
+    url: "https://aws.amazon.com/blogs/machine-learning/feed/",
+    name: "AWS Machine Learning Blog",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.ML, AI_CATEGORIES.BUSINESS],
+  },
+  {
+    url: "https://thegradient.pub/rss/",
+    name: "The Gradient",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.ML],
+  },
+  {
+    url: "https://blog.langchain.com/rss/",
+    name: "LangChain Blog",
+    language: "en",
+    defaultCategories: [AI_CATEGORIES.ML, AI_CATEGORIES.NLP],
+  },
 ];
 
 // Re-export types
