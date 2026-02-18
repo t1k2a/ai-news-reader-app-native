@@ -1,3 +1,8 @@
+/**
+ * @deprecated このファイルは Vercel Cron 専用エンドポイントです。
+ * 手動実行・テストには scripts/auto-post/rss-auto-post.ts を使用してください。
+ * 共通ロジックは lib/auto-post.ts にあります。
+ */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { fetchAllFeeds } from "../../lib/rss-feed.js";
 import { autoPostArticles } from "../../lib/auto-post.js";

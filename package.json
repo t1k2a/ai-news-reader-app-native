@@ -11,7 +11,8 @@
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "auto-post": "npx tsx scripts/auto-post/index.ts",
-    "auto-post:rss": "npx tsx scripts/auto-post/rss-auto-post.ts"
+    "auto-post:rss": "npx tsx scripts/auto-post/rss-auto-post.ts",
+    "check-status": "npx tsx scripts/auto-post/check-status.ts"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.5",

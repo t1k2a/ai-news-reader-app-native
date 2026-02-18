@@ -23,6 +23,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const APP_BASE_URL = process.env.APP_BASE_URL || "https://glotnexus.jp";
 
+// コマンドライン引数を解析
+const isDryRun = process.argv.includes("--dry-run");
+
 // .env ファイルを読み込み
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
@@ -202,17 +205,24 @@ async function postToX(
 async function main(): Promise<void> {
   console.log("\n========================================");
   console.log("  RSS フィード自動投稿スクリプト");
+  if (isDryRun) {
+    console.log("  [DRY RUN モード] X API への投稿はスキップされます");
+  }
   console.log("========================================\n");
 
   try {
-    // 1. 設定のバリデーション
-    validateConfig();
+    // 1. 設定のバリデーション（dry-run 時はスキップ）
+    if (!isDryRun) {
+      validateConfig();
+    }
 
-    // 2. X API クライアントを初期化
-    const client = createXClient();
-
-    // 3. 認証情報を確認
-    await verifyCredentials(client);
+    // 2. X API クライアントを初期化（dry-run 時はスキップ）
+    let client: ReturnType<typeof createXClient> | null = null;
+    if (!isDryRun) {
+      client = createXClient();
+      // 3. 認証情報を確認
+      await verifyCredentials(client);
+    }
 
     // 4. RSS フィードから記事を取得
     log("INFO", "RSS フィードから記事を取得中...");
@@ -240,27 +250,45 @@ async function main(): Promise<void> {
 
     log("INFO", `${unpostedArticles.length} 件の新着記事を投稿します`);
 
-    // 7. 記事を投稿
+    // 7. 記事を投稿（または dry-run 時はテキストを出力）
     let successCount = 0;
     const localIds = loadLocalPostedIds();
 
     for (const article of unpostedArticles) {
-      const tweetId = await postToX(client, article);
-
-      if (tweetId) {
-        await savePostedId(article.id, localIds);
+      if (isDryRun) {
+        // dry-run: ツイートテキストを生成してコンソールに出力
+        const { text, variant } = await formatTweetTextAsync(article);
+        console.log("\n--- [DRY RUN] 生成されたツイート ---");
+        console.log(`タイトル: ${article.title}`);
+        console.log(`バリアント: ${variant}`);
+        console.log(`テキスト (${text.length} 文字):\n${text}`);
+        console.log("-----------------------------------");
         successCount++;
-      }
+      } else {
+        const tweetId = await postToX(client!, article);
 
-      // レート制限対策: 投稿間に少し待機
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+        if (tweetId) {
+          await savePostedId(article.id, localIds);
+          successCount++;
+        }
+
+        // レート制限対策: 投稿間に少し待機
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
     }
 
     console.log("\n========================================");
-    log(
-      "SUCCESS",
-      `処理が完了しました: ${successCount}/${unpostedArticles.length} 件投稿成功`
-    );
+    if (isDryRun) {
+      log(
+        "SUCCESS",
+        `[DRY RUN] ${successCount}/${unpostedArticles.length} 件のツイートテキストを生成しました`
+      );
+    } else {
+      log(
+        "SUCCESS",
+        `処理が完了しました: ${successCount}/${unpostedArticles.length} 件投稿成功`
+      );
+    }
     console.log("========================================\n");
   } catch (error) {
     console.log("\n========================================");

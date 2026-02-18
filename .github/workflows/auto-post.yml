@@ -41,3 +41,26 @@ jobs:
           AUTO_POST_MAX_PER_RUN: ${{ vars.AUTO_POST_MAX_PER_RUN }}
           AUTO_POST_DELAY_SECONDS: ${{ vars.AUTO_POST_DELAY_SECONDS }}
         run: npm run auto-post:rss
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          # ラベルが存在しない場合は作成（--force で既存ラベルも更新可）
+          gh label create "auto-post-failure" \
+            --color "d73a4a" \
+            --description "Auto-post workflow failure" \
+            --force 2>/dev/null || true
+          gh issue create \
+            --title "Auto-post failed: $(date -u +%Y-%m-%d)" \
+            --body "## Auto-post failure
+
+          The scheduled auto-post workflow failed.
+
+          **Details:**
+          - Date: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          - Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          Please check the workflow logs for details." \
+            --label "auto-post-failure"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
