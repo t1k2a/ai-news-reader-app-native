@@ -40,7 +40,7 @@ export const AI_CATEGORIES = {
 export const AI_RSS_FEEDS: FeedInfo[] = [
   // 英語のRSSフィード
   {
-    url: "https://venturebeat.com/category/ai/feed/",
+    url: "https://venturebeat.com/category/ai/feed",
     name: "VentureBeat AI",
     language: "en",
     defaultCategories: [AI_CATEGORIES.BUSINESS, AI_CATEGORIES.GENERAL],
@@ -52,7 +52,7 @@ export const AI_RSS_FEEDS: FeedInfo[] = [
     defaultCategories: [AI_CATEGORIES.GENERAL],
   },
   {
-    url: "https://blog.google/technology/ai/rss/",
+    url: "https://blog.google/innovation-and-ai/technology/ai/rss/",
     name: "Google AI Blog",
     language: "en",
     defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.BUSINESS],
@@ -64,46 +64,28 @@ export const AI_RSS_FEEDS: FeedInfo[] = [
     defaultCategories: [AI_CATEGORIES.BUSINESS, AI_CATEGORIES.GENERAL],
   },
   {
-    url: "https://openai.com/blog/rss.xml",
+    url: "https://openai.com/news/rss.xml",
     name: "OpenAI Blog",
     language: "en",
     defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.ML],
   },
   {
-    url: "https://huggingface.co/blog/rss.xml",
+    url: "https://huggingface.co/blog/feed.xml",
     name: "Hugging Face Blog",
     language: "en",
     defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.ML],
   },
   {
-    url: "http://export.arxiv.org/rss/cs.AI",
+    url: "https://export.arxiv.org/rss/cs.AI",
     name: "arXiv cs.AI",
     language: "en",
     defaultCategories: [AI_CATEGORIES.RESEARCH],
   },
   {
-    url: "http://export.arxiv.org/rss/cs.LG",
+    url: "https://export.arxiv.org/rss/cs.LG",
     name: "arXiv cs.LG",
     language: "en",
     defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.ML],
-  },
-  {
-    url: "https://paperswithcode.com/rss",
-    name: "Papers with Code",
-    language: "en",
-    defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.ML],
-  },
-  {
-    url: "https://www.anthropic.com/rss.xml",
-    name: "Anthropic News",
-    language: "en",
-    defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.NLP],
-  },
-  {
-    url: "https://ai.meta.com/blog/rss/",
-    name: "Meta AI Blog",
-    language: "en",
-    defaultCategories: [AI_CATEGORIES.RESEARCH, AI_CATEGORIES.CV],
   },
   {
     url: "https://deepmind.google/blog/rss.xml",
@@ -122,36 +104,6 @@ export const AI_RSS_FEEDS: FeedInfo[] = [
     name: "NVIDIA Technical Blog",
     language: "en",
     defaultCategories: [AI_CATEGORIES.CV, AI_CATEGORIES.ML],
-  },
-  {
-    url: "https://stability.ai/blog/rss.xml",
-    name: "Stability AI Blog",
-    language: "en",
-    defaultCategories: [AI_CATEGORIES.CV, AI_CATEGORIES.ML],
-  },
-  {
-    url: "https://mistral.ai/news/rss.xml",
-    name: "Mistral AI News",
-    language: "en",
-    defaultCategories: [AI_CATEGORIES.NLP, AI_CATEGORIES.ML],
-  },
-  {
-    url: "https://x.ai/blog/rss.xml",
-    name: "xAI Blog",
-    language: "en",
-    defaultCategories: [AI_CATEGORIES.NLP, AI_CATEGORIES.ML],
-  },
-  {
-    url: "https://www.databricks.com/blog/feed",
-    name: "Databricks Blog",
-    language: "en",
-    defaultCategories: [AI_CATEGORIES.BUSINESS, AI_CATEGORIES.ML],
-  },
-  {
-    url: "https://cohere.com/blog/rss.xml",
-    name: "Cohere Blog",
-    language: "en",
-    defaultCategories: [AI_CATEGORIES.NLP, AI_CATEGORIES.ML],
   },
 ];
 
