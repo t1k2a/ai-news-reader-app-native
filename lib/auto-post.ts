@@ -10,6 +10,7 @@ import {
   formatTweetTextEnhancedAsync,
   formatTweetWithReplyAsync,
 } from "./auto-post-enhanced.js";
+import { generateBrandCard } from "./brand-card.js";
 import type { AINewsItem } from "./types.js";
 
 // X の文字数制限
@@ -137,6 +138,11 @@ const TWEET_FORMAT_VARIANT = (process.env.TWEET_FORMAT_VARIANT || "enhanced") as
 // true: メインツイート + リプライ（URLなし → リプライでURL提供）
 // false: 従来の1ツイート形式（デフォルト）
 const USE_THREAD_FORMAT = process.env.USE_THREAD_FORMAT === "true";
+
+// ブランドカード画像の有効化
+// true: ツイートに自動生成したブランドカード画像を添付
+// false: テキストのみの投稿（デフォルト）
+const USE_BRAND_CARD = process.env.USE_BRAND_CARD === "true";
 
 /**
  * 投稿結果の型定義
@@ -309,13 +315,30 @@ async function postToX(
   item: AINewsItem
 ): Promise<{ tweetId: string; variant: "simple" | "enhanced"; isDuplicate: false } | { isDuplicate: true } | null> {
   try {
+    // ブランドカード画像を生成・アップロード
+    let mediaId: string | undefined;
+    if (USE_BRAND_CARD) {
+      try {
+        const imageBuffer = await generateBrandCard(item);
+        mediaId = await client.v2.uploadMedia(imageBuffer, {
+          media_type: "image/png",
+          media_category: "tweet_image",
+        });
+        console.log(`Brand card uploaded: ${mediaId} (${imageBuffer.length} bytes)`);
+      } catch (imgError) {
+        console.error(`Brand card generation/upload failed, posting without image:`, imgError);
+      }
+    }
+
+    const mediaPayload = mediaId ? { media: { media_ids: [mediaId] as [string] } } : {};
+
     if (USE_THREAD_FORMAT) {
       // スレッド形式: メインツイート + リプライ
       const { main, reply } = await formatTweetWithReplyAsync(item);
-      const mainResult = await client.v2.tweet(main);
+      const mainResult = await client.v2.tweet(main, mediaPayload);
       const mainTweetId = mainResult.data.id;
       console.log(
-        `Posted main tweet: ${mainTweetId} - ${item.title} [thread format]`
+        `Posted main tweet: ${mainTweetId} - ${item.title} [thread format${mediaId ? ", with image" : ""}]`
       );
 
       // リプライを投稿
@@ -330,9 +353,9 @@ async function postToX(
     } else {
       // 従来形式: 1ツイート
       const { text, variant } = await formatTweetTextAsync(item);
-      const result = await client.v2.tweet(text);
+      const result = await client.v2.tweet(text, mediaPayload);
       console.log(
-        `Posted to X: ${result.data.id} - ${item.title} [variant: ${variant}]`
+        `Posted to X: ${result.data.id} - ${item.title} [variant: ${variant}${mediaId ? ", with image" : ""}]`
       );
       return { tweetId: result.data.id, variant, isDuplicate: false };
     }

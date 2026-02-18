@@ -17,6 +17,7 @@ import {
 } from "../../lib/cache.js";
 import { formatTweetTextAsync } from "../../lib/auto-post.js";
 import { formatTweetWithReplyAsync } from "../../lib/auto-post-enhanced.js";
+import { generateBrandCard, saveBrandCardToFile } from "../../lib/brand-card.js";
 import type { AINewsItem } from "../../lib/types.js";
 
 // ES Module で __dirname を取得
@@ -44,6 +45,9 @@ const MAX_POSTS_PER_RUN = 3;
 
 // スレッド形式（URL-in-Reply）の有効化
 const USE_THREAD_FORMAT = process.env.USE_THREAD_FORMAT === "true";
+
+// ブランドカード画像の有効化
+const USE_BRAND_CARD = process.env.USE_BRAND_CARD === "true";
 
 // ローカルの投稿済みIDファイル（Redis が使えない場合のフォールバック）
 const LOCAL_POSTED_IDS_FILE = path.resolve(__dirname, "posted_ids.json");
@@ -185,10 +189,28 @@ async function postToX(
   log("INFO", `X に投稿中: ${item.title}`);
 
   try {
+    // ブランドカード画像を生成・アップロード
+    let mediaId: string | undefined;
+    if (USE_BRAND_CARD) {
+      try {
+        const imageBuffer = await generateBrandCard(item);
+        mediaId = await client.v2.uploadMedia(imageBuffer, {
+          media_type: "image/png",
+          media_category: "tweet_image",
+        });
+        log("SUCCESS", `ブランドカードアップロード成功: ${mediaId} (${imageBuffer.length} bytes)`);
+      } catch (imgError) {
+        log("WARN", `ブランドカード生成/アップロード失敗、テキストのみで投稿`);
+        console.error(imgError);
+      }
+    }
+
+    const mediaPayload = mediaId ? { media: { media_ids: [mediaId] as [string] } } : {};
+
     if (USE_THREAD_FORMAT) {
       // スレッド形式: メインツイート + リプライ
       const { main, reply } = await formatTweetWithReplyAsync(item);
-      const mainResult = await client.v2.tweet(main);
+      const mainResult = await client.v2.tweet(main, mediaPayload);
       const mainTweetId = mainResult.data.id;
 
       log("SUCCESS", `メイン投稿成功! Tweet ID: ${mainTweetId} [スレッド形式]`);
@@ -207,7 +229,7 @@ async function postToX(
     } else {
       // 従来形式: 1ツイート
       const { text, variant } = await formatTweetTextAsync(item);
-      const result = await client.v2.tweet(text);
+      const result = await client.v2.tweet(text, mediaPayload);
       const tweetId = result.data.id;
 
       log("SUCCESS", `投稿成功! Tweet ID: ${tweetId} [variant: ${variant}]`);
@@ -283,6 +305,23 @@ async function main(): Promise<void> {
     for (const article of unpostedArticles) {
       if (isDryRun) {
         // dry-run: ツイートテキストを生成してコンソールに出力
+        // ブランドカード画像も生成してローカルに保存
+        if (USE_BRAND_CARD) {
+          try {
+            const outputDir = path.resolve(__dirname, "../../tmp");
+            const fs = await import("fs");
+            if (!fs.existsSync(outputDir)) {
+              fs.mkdirSync(outputDir, { recursive: true });
+            }
+            const safeTitle = article.title.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 30);
+            const outputPath = path.resolve(outputDir, `brand_card_${safeTitle}.png`);
+            await saveBrandCardToFile(article, outputPath);
+            console.log(`  🖼️ ブランドカード保存: ${outputPath}`);
+          } catch (imgError) {
+            console.log(`  ⚠️ ブランドカード生成失敗: ${imgError}`);
+          }
+        }
+
         if (USE_THREAD_FORMAT) {
           const { main, reply } = await formatTweetWithReplyAsync(article);
           console.log("\n--- [DRY RUN] スレッド形式ツイート ---");
