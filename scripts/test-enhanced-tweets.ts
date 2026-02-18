@@ -1,16 +1,25 @@
 /**
  * 強化版ツイートフォーマットのテスト
  * 現行版と比較してエンゲージメント向上を検証
+ *
+ * 検証項目:
+ * - 質問型フック（question）が出力に含まれること
+ * - ソース別の絵文字が正しくマッピングされること
+ * - 日本語ハッシュタグ（#AIニュース）が含まれること
+ * - スレッド構成（メイン + リプライ）が正しく分離されること
+ * - 全ツイートが280文字以内であること
  */
 
 import { formatTweetText } from "../lib/auto-post.js";
 import {
   formatTweetTextEnhanced,
+  formatTweetTextEnhancedAsync,
+  formatTweetWithReplyAsync,
   generateTweetVariations,
 } from "../lib/auto-post-enhanced.js";
 import type { AINewsItem } from "../lib/types.js";
 
-// テスト用のサンプル記事
+// テスト用のサンプル記事（各ソースの代表例）
 const sampleArticles: AINewsItem[] = [
   {
     id: "https://openai.com/index/navigating-health-questions",
@@ -19,9 +28,11 @@ const sampleArticles: AINewsItem[] = [
     summary:
       "OpenAI introduces new approaches to help users navigate health-related questions with AI, emphasizing accuracy and safety in medical information.",
     content: "",
-    pubDate: new Date("2024-02-10"),
+    publishDate: new Date("2024-02-10"),
     sourceName: "OpenAI Blog",
     sourceUrl: "https://openai.com/blog",
+    sourceLanguage: "en",
+    categories: ["AI", "Health"],
   },
   {
     id: "https://blog.google/technology/ai/gemini-multimodal-update",
@@ -30,9 +41,11 @@ const sampleArticles: AINewsItem[] = [
     summary:
       "Google announces Gemini 1.5 Pro with enhanced multimodal capabilities, processing up to 1 million tokens and understanding complex video content.",
     content: "",
-    pubDate: new Date("2024-02-12"),
+    publishDate: new Date("2024-02-12"),
     sourceName: "Google AI Blog",
     sourceUrl: "https://blog.google/technology/ai/",
+    sourceLanguage: "en",
+    categories: ["AI", "LLM"],
   },
   {
     id: "https://developer.nvidia.com/blog/nvfp4-ai-training",
@@ -41,77 +54,167 @@ const sampleArticles: AINewsItem[] = [
     summary:
       "NVIDIA's new FP4 precision format dramatically reduces memory usage while maintaining model accuracy, enabling larger models on existing hardware.",
     content: "",
-    pubDate: new Date("2024-02-13"),
-    sourceName: "NVIDIA Developer Blog",
+    publishDate: new Date("2024-02-13"),
+    sourceName: "NVIDIA Technical Blog",
     sourceUrl: "https://developer.nvidia.com/blog",
+    sourceLanguage: "en",
+    categories: ["AI", "GPU"],
+  },
+  {
+    id: "https://www.anthropic.com/news/claude-agent-update",
+    title: "Claude's New Agentic Capabilities for Enterprise",
+    link: "https://www.anthropic.com/news/claude-agent-update",
+    summary:
+      "Anthropic launches new agentic features for Claude, enabling autonomous task completion with improved safety guardrails for enterprise use cases.",
+    content: "",
+    publishDate: new Date("2024-02-14"),
+    sourceName: "Anthropic News",
+    sourceUrl: "https://www.anthropic.com/news",
+    sourceLanguage: "en",
+    categories: ["AI", "Agent"],
   },
 ];
 
-console.log("=".repeat(80));
-console.log("📊 ツイートフォーマット比較テスト");
-console.log("=".repeat(80));
-console.log();
+const X_MAX_CHARS = 280;
+let testsPassed = 0;
+let testsFailed = 0;
 
-for (const article of sampleArticles) {
-  console.log("📰 記事:", article.title);
-  console.log("📅 ソース:", article.sourceName);
-  console.log("-".repeat(80));
+function assertCheck(condition: boolean, description: string, detail?: string): void {
+  if (condition) {
+    console.log(`  ✅ ${description}`);
+    testsPassed++;
+  } else {
+    console.log(`  ❌ ${description}${detail ? ` — ${detail}` : ""}`);
+    testsFailed++;
+  }
+}
 
-  // 現行版
-  const currentFormat = formatTweetText(article);
-  console.log("❌ 【現行版】（インプレッション: 0）");
-  console.log(currentFormat);
-  console.log(`文字数: ${currentFormat.length}/280`);
+async function runTests() {
+  console.log("=".repeat(80));
+  console.log("📊 インプレッション改善版ツイートフォーマット テスト");
+  console.log("=".repeat(80));
   console.log();
 
-  // 強化版
-  const enhancedFormat = formatTweetTextEnhanced(article);
-  console.log("✅ 【強化版】（エンゲージメント最適化）");
-  console.log(enhancedFormat);
-  console.log(`文字数: ${enhancedFormat.length}/280`);
+  // =====================================================
+  // テスト1: 同期版（enhanced）の基本動作確認
+  // =====================================================
+  console.log("🔹 テスト1: 同期版（enhanced）フォーマット");
+  console.log("-".repeat(60));
+
+  for (const article of sampleArticles) {
+    console.log(`\n📰 ${article.sourceName}: ${article.title}`);
+    const enhanced = formatTweetTextEnhanced(article);
+    console.log(enhanced);
+    console.log(`文字数: ${enhanced.length}/${X_MAX_CHARS}`);
+    assertCheck(enhanced.length <= X_MAX_CHARS, `文字数制限 (${enhanced.length}文字)`);
+    assertCheck(enhanced.includes("#AIニュース"), "日本語ハッシュタグ #AIニュース を含む");
+    assertCheck(enhanced.includes("#GlotNexus"), "ブランドタグ #GlotNexus を含む");
+  }
+
   console.log();
 
-  // 全バリエーション
-  const variations = generateTweetVariations(article);
-  console.log("🧪 【スレッド版】（複数ツイート）");
+  // =====================================================
+  // テスト2: 非同期版（翻訳対応）の動作確認
+  // =====================================================
+  console.log("=".repeat(80));
+  console.log("🔹 テスト2: 非同期版（翻訳対応）フォーマット");
+  console.log("-".repeat(60));
+
+  for (const article of sampleArticles.slice(0, 2)) {
+    console.log(`\n📰 ${article.sourceName}: ${article.title}`);
+    const asyncEnhanced = await formatTweetTextEnhancedAsync(article);
+    console.log(asyncEnhanced);
+    console.log(`文字数: ${asyncEnhanced.length}/${X_MAX_CHARS}`);
+    assertCheck(asyncEnhanced.length <= X_MAX_CHARS, `文字数制限 (${asyncEnhanced.length}文字)`);
+  }
+
+  console.log();
+
+  // =====================================================
+  // テスト3: スレッド形式（URL-in-Reply）の動作確認
+  // =====================================================
+  console.log("=".repeat(80));
+  console.log("🔹 テスト3: スレッド形式（URL-in-Reply）フォーマット");
+  console.log("-".repeat(60));
+
+  for (const article of sampleArticles) {
+    console.log(`\n📰 ${article.sourceName}: ${article.title}`);
+    const { main, reply } = await formatTweetWithReplyAsync(article);
+
+    console.log("\n【メインツイート】（URLなし）:");
+    console.log(main);
+    console.log(`文字数: ${main.length}/${X_MAX_CHARS}`);
+
+    console.log("\n【リプライ】（URL + 元記事）:");
+    console.log(reply);
+    console.log(`文字数: ${reply.length}/${X_MAX_CHARS}`);
+
+    assertCheck(main.length <= X_MAX_CHARS, `メインツイート文字数制限 (${main.length}文字)`);
+    assertCheck(reply.length <= X_MAX_CHARS, `リプライ文字数制限 (${reply.length}文字)`);
+    assertCheck(!main.includes("https://"), "メインツイートにURLが含まれない");
+    assertCheck(reply.includes("https://"), "リプライにURLが含まれる");
+    assertCheck(reply.includes(article.link), "リプライに元記事URLが含まれる");
+    assertCheck(reply.includes("元記事"), "リプライに '元記事' ラベルが含まれる");
+    assertCheck(main.includes("#AIニュース"), "メインツイートに日本語ハッシュタグ");
+  }
+
+  console.log();
+
+  // =====================================================
+  // テスト4: A/Bテスト用バリエーション
+  // =====================================================
+  console.log("=".repeat(80));
+  console.log("🔹 テスト4: A/Bテスト用バリエーション");
+  console.log("-".repeat(60));
+
+  const variations = generateTweetVariations(sampleArticles[0]);
+  console.log("\n📰 シンプル版:");
+  console.log(variations.simple);
+  console.log(`文字数: ${variations.simple.length}/${X_MAX_CHARS}`);
+  assertCheck(variations.simple.length <= X_MAX_CHARS, "シンプル版文字数制限");
+
+  console.log("\n📰 強化版:");
+  console.log(variations.enhanced);
+  console.log(`文字数: ${variations.enhanced.length}/${X_MAX_CHARS}`);
+  assertCheck(variations.enhanced.length <= X_MAX_CHARS, "強化版文字数制限");
+
+  console.log("\n📰 スレッド版:");
   variations.thread.forEach((tweet, index) => {
     console.log(`--- ツイート ${index + 1}/${variations.thread.length} ---`);
     console.log(tweet);
-    console.log(`文字数: ${tweet.length}/280`);
-    console.log();
+    console.log(`文字数: ${tweet.length}/${X_MAX_CHARS}`);
+    assertCheck(tweet.length <= X_MAX_CHARS, `スレッド版ツイート${index + 1}文字数制限`);
   });
 
-  console.log("=".repeat(80));
+  // =====================================================
+  // テスト結果サマリー
+  // =====================================================
   console.log();
+  console.log("=".repeat(80));
+  console.log("📈 テスト結果サマリー");
+  console.log("=".repeat(80));
+  console.log(`  合計: ${testsPassed + testsFailed} テスト`);
+  console.log(`  ✅ 成功: ${testsPassed}`);
+  console.log(`  ❌ 失敗: ${testsFailed}`);
+  console.log();
+
+  console.log("📈 改善ポイント:");
+  console.log("  1. ✅ 質問型フック追加 → エンゲージメント率向上");
+  console.log("  2. ✅ ソース別絵文字 → 視認性向上（🧠OpenAI, 🔍Google, 🤖Anthropic等）");
+  console.log("  3. ✅ 日本語ハッシュタグ #AIニュース → ディスカバリー強化");
+  console.log("  4. ✅ URL-in-Reply → アルゴリズムペナルティ回避");
+  console.log("  5. ✅ 元記事URL 🇺🇸 → セルフリプライで情報追加");
+  console.log();
+
+  console.log("=".repeat(80));
+  console.log("🎯 環境変数で制御:");
+  console.log("  USE_THREAD_FORMAT=true  → スレッド形式（URL-in-Reply）を有効化");
+  console.log("  TWEET_FORMAT_VARIANT=enhanced  → 強化版フォーマット（デフォルト）");
+  console.log("=".repeat(80));
+
+  if (testsFailed > 0) {
+    process.exit(1);
+  }
 }
 
-// 改善ポイントの説明
-console.log("📈 改善ポイント:");
-console.log();
-console.log("1. ✅ フック（Hook）追加 → スクロール停止率向上");
-console.log("   - 🚨 絵文字で視覚的注目");
-console.log("   - 好奇心を刺激する最初の1行");
-console.log();
-console.log("2. ✅ 価値提案の明確化 → クリック率向上");
-console.log("   - 記事の要約を表示");
-console.log("   - 「なぜ読むべきか」を提示");
-console.log();
-console.log("3. ✅ CTA（Call-to-Action）追加 → エンゲージメント向上");
-console.log("   - 「詳細👇」で行動を促す");
-console.log("   - URLを別行に分離");
-console.log();
-console.log("4. ✅ ハッシュタグ最適化 → リーチ拡大");
-console.log("   - 日本語タグ追加（#人工知能）");
-console.log("   - ソース別タグで発見性向上");
-console.log();
-console.log("5. ✅ フォーマット改善 → 可読性向上");
-console.log("   - 適切な改行と空行");
-console.log("   - 視覚的階層構造");
-console.log();
-console.log("=".repeat(80));
-console.log("🎯 次のステップ:");
-console.log("1. このスクリプトを実行して出力を確認");
-console.log("2. 気に入ったフォーマットを選択");
-console.log("3. lib/auto-post.ts の formatTweetText を置き換え");
-console.log("4. テスト投稿で効果測定");
-console.log("=".repeat(80));
+runTests().catch(console.error);

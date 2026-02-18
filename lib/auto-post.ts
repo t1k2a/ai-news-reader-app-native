@@ -8,6 +8,7 @@ import { getPostedArticleIds, addPostedArticleId } from "./cache.js";
 import {
   formatTweetTextEnhanced,
   formatTweetTextEnhancedAsync,
+  formatTweetWithReplyAsync,
 } from "./auto-post-enhanced.js";
 import type { AINewsItem } from "./types.js";
 
@@ -131,6 +132,11 @@ const TWEET_FORMAT_VARIANT = (process.env.TWEET_FORMAT_VARIANT || "enhanced") as
   | "simple"
   | "enhanced"
   | "random";
+
+// スレッド形式（URL-in-Reply）の有効化
+// true: メインツイート + リプライ（URLなし → リプライでURL提供）
+// false: 従来の1ツイート形式（デフォルト）
+const USE_THREAD_FORMAT = process.env.USE_THREAD_FORMAT === "true";
 
 /**
  * 投稿結果の型定義
@@ -290,7 +296,11 @@ export function formatTweetText(
 }
 
 /**
- * 単一記事を X に投稿（日本語翻訳対応）
+ * 単一記事を X に投稿（日本語翻訳対応、スレッド形式対応）
+ *
+ * USE_THREAD_FORMAT=true の場合:
+ *   1. メインツイート（フック + 要約 + ハッシュタグ、URLなし）
+ *   2. リプライ（URL + 元記事リンク）
  *
  * @returns {tweetId, variant, isDuplicate}
  */
@@ -299,13 +309,33 @@ async function postToX(
   item: AINewsItem
 ): Promise<{ tweetId: string; variant: "simple" | "enhanced"; isDuplicate: false } | { isDuplicate: true } | null> {
   try {
-    // 非同期版を使用（日本語翻訳対応）
-    const { text, variant } = await formatTweetTextAsync(item);
-    const result = await client.v2.tweet(text);
-    console.log(
-      `Posted to X: ${result.data.id} - ${item.title} [variant: ${variant}]`
-    );
-    return { tweetId: result.data.id, variant, isDuplicate: false };
+    if (USE_THREAD_FORMAT) {
+      // スレッド形式: メインツイート + リプライ
+      const { main, reply } = await formatTweetWithReplyAsync(item);
+      const mainResult = await client.v2.tweet(main);
+      const mainTweetId = mainResult.data.id;
+      console.log(
+        `Posted main tweet: ${mainTweetId} - ${item.title} [thread format]`
+      );
+
+      // リプライを投稿
+      try {
+        const replyResult = await client.v2.reply(reply, mainTweetId);
+        console.log(`Posted reply: ${replyResult.data.id} (with URLs)`);
+      } catch (replyError) {
+        console.error(`Failed to post reply (main tweet still posted):`, replyError);
+      }
+
+      return { tweetId: mainTweetId, variant: "enhanced", isDuplicate: false };
+    } else {
+      // 従来形式: 1ツイート
+      const { text, variant } = await formatTweetTextAsync(item);
+      const result = await client.v2.tweet(text);
+      console.log(
+        `Posted to X: ${result.data.id} - ${item.title} [variant: ${variant}]`
+      );
+      return { tweetId: result.data.id, variant, isDuplicate: false };
+    }
   } catch (error: unknown) {
     const err = error as { data?: unknown; message?: string; code?: number };
 

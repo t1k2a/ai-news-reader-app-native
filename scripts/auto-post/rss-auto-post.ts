@@ -16,6 +16,7 @@ import {
   addPostedArticleId,
 } from "../../lib/cache.js";
 import { formatTweetTextAsync } from "../../lib/auto-post.js";
+import { formatTweetWithReplyAsync } from "../../lib/auto-post-enhanced.js";
 import type { AINewsItem } from "../../lib/types.js";
 
 // ES Module で __dirname を取得
@@ -40,6 +41,9 @@ const X_MAX_CHARS = 280;
 
 // 1回の実行で投稿する最大件数
 const MAX_POSTS_PER_RUN = 3;
+
+// スレッド形式（URL-in-Reply）の有効化
+const USE_THREAD_FORMAT = process.env.USE_THREAD_FORMAT === "true";
 
 // ローカルの投稿済みIDファイル（Redis が使えない場合のフォールバック）
 const LOCAL_POSTED_IDS_FILE = path.resolve(__dirname, "posted_ids.json");
@@ -172,7 +176,7 @@ async function savePostedId(articleId: string, localIds: Set<string>): Promise<v
 // （formatTweetTextAsync をインポート済み）
 
 /**
- * X に投稿（共通ロジックを使用）
+ * X に投稿（スレッド形式対応）
  */
 async function postToX(
   client: TwitterApi,
@@ -181,14 +185,36 @@ async function postToX(
   log("INFO", `X に投稿中: ${item.title}`);
 
   try {
-    const { text, variant } = await formatTweetTextAsync(item);
-    const result = await client.v2.tweet(text);
-    const tweetId = result.data.id;
+    if (USE_THREAD_FORMAT) {
+      // スレッド形式: メインツイート + リプライ
+      const { main, reply } = await formatTweetWithReplyAsync(item);
+      const mainResult = await client.v2.tweet(main);
+      const mainTweetId = mainResult.data.id;
 
-    log("SUCCESS", `投稿成功! Tweet ID: ${tweetId} [variant: ${variant}]`);
-    log("INFO", `投稿URL: https://x.com/i/status/${tweetId}`);
+      log("SUCCESS", `メイン投稿成功! Tweet ID: ${mainTweetId} [スレッド形式]`);
 
-    return tweetId;
+      // リプライを投稿
+      try {
+        const replyResult = await client.v2.reply(reply, mainTweetId);
+        log("SUCCESS", `リプライ投稿成功! Tweet ID: ${replyResult.data.id}`);
+      } catch (replyError) {
+        log("WARN", `リプライ投稿失敗（メインツイートは投稿済み）`);
+        console.error(replyError);
+      }
+
+      log("INFO", `投稿URL: https://x.com/i/status/${mainTweetId}`);
+      return mainTweetId;
+    } else {
+      // 従来形式: 1ツイート
+      const { text, variant } = await formatTweetTextAsync(item);
+      const result = await client.v2.tweet(text);
+      const tweetId = result.data.id;
+
+      log("SUCCESS", `投稿成功! Tweet ID: ${tweetId} [variant: ${variant}]`);
+      log("INFO", `投稿URL: https://x.com/i/status/${tweetId}`);
+
+      return tweetId;
+    }
   } catch (error: unknown) {
     const err = error as { data?: unknown; message?: string };
     if (err.data) {
@@ -257,12 +283,23 @@ async function main(): Promise<void> {
     for (const article of unpostedArticles) {
       if (isDryRun) {
         // dry-run: ツイートテキストを生成してコンソールに出力
-        const { text, variant } = await formatTweetTextAsync(article);
-        console.log("\n--- [DRY RUN] 生成されたツイート ---");
-        console.log(`タイトル: ${article.title}`);
-        console.log(`バリアント: ${variant}`);
-        console.log(`テキスト (${text.length} 文字):\n${text}`);
-        console.log("-----------------------------------");
+        if (USE_THREAD_FORMAT) {
+          const { main, reply } = await formatTweetWithReplyAsync(article);
+          console.log("\n--- [DRY RUN] スレッド形式ツイート ---");
+          console.log(`タイトル: ${article.title}`);
+          console.log(`\n【メインツイート】 (${main.length} 文字):`);
+          console.log(main);
+          console.log(`\n【リプライ】 (${reply.length} 文字):`);
+          console.log(reply);
+          console.log("-----------------------------------");
+        } else {
+          const { text, variant } = await formatTweetTextAsync(article);
+          console.log("\n--- [DRY RUN] 生成されたツイート ---");
+          console.log(`タイトル: ${article.title}`);
+          console.log(`バリアント: ${variant}`);
+          console.log(`テキスト (${text.length} 文字):\n${text}`);
+          console.log("-----------------------------------");
+        }
         successCount++;
       } else {
         const tweetId = await postToX(client!, article);

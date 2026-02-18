@@ -15,7 +15,7 @@ const APP_BASE_URL = process.env.APP_BASE_URL || "https://glotnexus.jp";
  */
 const HOOK_TEMPLATES = {
   curiosity: [
-    "🚨 {topic}が変わった理由",
+    "{emoji} {topic}が変わった理由",
     "【速報】{source}、{topic}で新展開",
     "知らないとマズい：{topic}の最新動向",
   ],
@@ -32,6 +32,38 @@ const HOOK_TEMPLATES = {
     "みんな気づいてない：{topic}の真実",
     "【意外】{topic}、実は...",
   ],
+  question: [
+    "🤔 {topic}、あなたはどう思う？",
+    "知ってた？{topic}が今アツい理由",
+    "{topic}の影響、もう感じてる？",
+    "{emoji} {source}の{topic}、次に来るのは？",
+  ],
+};
+
+/**
+ * ソース名から絵文字を取得するマッピング
+ * フック冒頭の絵文字をソースに応じて動的に変更し、視認性を向上
+ */
+const SOURCE_EMOJI_MAP: Record<string, string> = {
+  "OpenAI Blog": "🧠",
+  "Google AI Blog": "🔍",
+  "Google DeepMind Blog": "🔬",
+  "Anthropic News": "🤖",
+  "NVIDIA Technical Blog": "💚",
+  "Meta AI Blog": "🌐",
+  "Microsoft Research Blog": "💻",
+  "Hugging Face Blog": "🤗",
+  "Mistral AI News": "🌬️",
+  "xAI Blog": "⚡",
+  "Stability AI Blog": "🎨",
+  "VentureBeat AI": "📰",
+  "TechCrunch AI": "📱",
+  "AI News": "🗞️",
+  "arXiv cs.AI": "📄",
+  "arXiv cs.LG": "📄",
+  "Papers with Code": "📊",
+  "Databricks Blog": "⚙️",
+  "Cohere Blog": "💬",
 };
 
 /**
@@ -125,9 +157,12 @@ function generateHashtags(item: AINewsItem): string[] {
     }
   }
 
-  // 3. AI関連のベースタグ（必ず含める）
+  // 3. AI関連のベースタグ（日本語タグを含める）
   if (!tags.includes("AI")) {
     tags.push("AI");
+  }
+  if (!tags.includes("AIニュース")) {
+    tags.push("AIニュース");
   }
 
   // 4. ブランドタグ
@@ -150,6 +185,13 @@ function extractTopic(title: string): string {
 }
 
 /**
+ * ソース名から絵文字を取得
+ */
+function getSourceEmoji(sourceName: string): string {
+  return SOURCE_EMOJI_MAP[sourceName] || "🚨";
+}
+
+/**
  * ランダムなフックテンプレートを選択
  */
 function selectRandomHook(): string {
@@ -157,6 +199,7 @@ function selectRandomHook(): string {
     ...HOOK_TEMPLATES.curiosity,
     ...HOOK_TEMPLATES.value,
     ...HOOK_TEMPLATES.story,
+    ...HOOK_TEMPLATES.question,
   ];
   return allHooks[Math.floor(Math.random() * allHooks.length)];
 }
@@ -195,9 +238,11 @@ export async function formatTweetTextEnhancedAsync(
   const topic = extractTopic(item.title);
   const source = item.sourceName.replace(" Blog", "").replace(" News", "");
 
+  const emoji = getSourceEmoji(item.sourceName);
   const hook = hookTemplate
     .replace("{topic}", topic)
-    .replace("{source}", source);
+    .replace("{source}", source)
+    .replace("{emoji}", emoji);
 
   // 価値提案（記事の要約があれば翻訳して使う、なければタイトル）
   let valueProposition: string;
@@ -266,9 +311,11 @@ export function formatTweetTextEnhanced(item: AINewsItem): string {
   const topic = extractTopic(item.title);
   const source = item.sourceName.replace(" Blog", "").replace(" News", "");
 
+  const emoji = getSourceEmoji(item.sourceName);
   const hook = hookTemplate
     .replace("{topic}", topic)
-    .replace("{source}", source);
+    .replace("{source}", source)
+    .replace("{emoji}", emoji);
 
   // 価値提案（記事の要約があれば使う、なければタイトル）
   // 注意: この同期版では翻訳は行われません
@@ -327,6 +374,88 @@ export function formatTweetThread(item: AINewsItem): string[] {
   }
 
   return tweets;
+}
+
+/**
+ * URL-in-Reply 構成のツイートを生成（非同期版）
+ *
+ * Xのアルゴリズムは外部リンクを含む投稿のリーチを下げる傾向があるため、
+ * メインツイートにはURLを含めず、リプライでURLを提供する2ポスト構成。
+ *
+ * メインツイート:
+ * ```
+ * {hook}
+ *
+ * {value_proposition}
+ *
+ * #{tags}
+ * ```
+ *
+ * リプライ:
+ * ```
+ * 📖 詳細はこちら👇
+ * {app_url}
+ *
+ * 🇺🇸 元記事:
+ * {original_url}
+ * ```
+ */
+export async function formatTweetWithReplyAsync(
+  item: AINewsItem
+): Promise<{ main: string; reply: string }> {
+  const hashtags = generateHashtags(item)
+    .map((tag) => `#${tag}`)
+    .join(" ");
+
+  // フックテンプレートを選択
+  const hookTemplate = selectRandomHook();
+  const topic = extractTopic(item.title);
+  const source = item.sourceName.replace(" Blog", "").replace(" News", "");
+  const emoji = getSourceEmoji(item.sourceName);
+
+  const hook = hookTemplate
+    .replace("{topic}", topic)
+    .replace("{source}", source)
+    .replace("{emoji}", emoji);
+
+  // 価値提案（記事の要約を翻訳）
+  let valueProposition: string;
+  if (item.summary) {
+    try {
+      valueProposition = await translateToJapanese(item.summary, 100);
+      if (valueProposition.length > 100) {
+        valueProposition = summarizeForTweet(valueProposition);
+      }
+    } catch (error) {
+      console.error("翻訳エラー:", error);
+      valueProposition = summarizeForTweet(item.summary);
+    }
+  } else {
+    valueProposition = item.title.length > 100 ? item.title.slice(0, 97) + "..." : item.title;
+  }
+
+  // メインツイート（URLなし）
+  const mainParts = [hook, "", valueProposition, "", hashtags];
+  let mainText = mainParts.join("\n");
+
+  // 文字数チェック
+  if (mainText.length > X_MAX_CHARS) {
+    const overhead = hook.length + hashtags.length + 6; // 改行分
+    const availableForValue = X_MAX_CHARS - overhead;
+    const shortValue = availableForValue > 30
+      ? valueProposition.slice(0, availableForValue - 3) + "..."
+      : "";
+    mainText = [hook, "", shortValue, "", hashtags].join("\n");
+  }
+
+  // リプライツイート（URL + 元記事リンク）
+  const encodedId = encodeURIComponent(item.id);
+  const appUrl = `${APP_BASE_URL}/?article=${encodedId}`;
+  const originalUrl = item.link;
+
+  const replyText = `📖 詳細はこちら👇\n${appUrl}\n\n🇺🇸 元記事:\n${originalUrl}`;
+
+  return { main: mainText, reply: replyText };
 }
 
 /**
