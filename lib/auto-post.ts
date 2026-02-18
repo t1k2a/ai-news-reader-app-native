@@ -14,8 +14,8 @@ import type { AINewsItem } from "./types.js";
 // X の文字数制限
 const X_MAX_CHARS = 280;
 
-// 環境変数から設定を取得
-const MAX_POSTS_PER_RUN = parseInt(
+// 環境変数から設定を取得（時間帯別の動的調整で上書きされる場合あり）
+const DEFAULT_MAX_POSTS_PER_RUN = parseInt(
   process.env.AUTO_POST_MAX_PER_RUN || "10",
   10
 );
@@ -24,6 +24,104 @@ const DELAY_SECONDS = parseInt(
   10
 );
 const APP_BASE_URL = process.env.APP_BASE_URL || "https://glotnexus.jp";
+
+// ソースの優先度（高い値 = 高い優先度）
+const SOURCE_PRIORITY: Record<string, number> = {
+  "OpenAI Blog": 10,
+  "Anthropic News": 10,
+  "Google AI Blog": 9,
+  "Google DeepMind Blog": 9,
+  "Meta AI Blog": 8,
+  "Microsoft Research Blog": 8,
+  "NVIDIA Technical Blog": 7,
+  "Hugging Face Blog": 7,
+  "Mistral AI News": 7,
+  "xAI Blog": 7,
+  "VentureBeat AI": 6,
+  "TechCrunch AI": 6,
+  "Stability AI Blog": 5,
+  "Databricks Blog": 5,
+  "Cohere Blog": 5,
+  "AI News": 4,
+  "arXiv cs.AI": 3,
+  "arXiv cs.LG": 3,
+  "Papers with Code": 3,
+};
+
+/**
+ * JST（日本標準時）での現在時刻を取得
+ */
+function getJSTHour(): number {
+  const now = new Date();
+  // UTC + 9 = JST
+  const jstOffset = 9 * 60; // 分単位
+  const jstTime = new Date(now.getTime() + jstOffset * 60 * 1000);
+  return jstTime.getUTCHours();
+}
+
+/**
+ * 時間帯に基づいて最大投稿数を動的に決定
+ *
+ * ピークタイム（エンゲージメントが高い時間帯）ではより多く投稿し、
+ * オフピーク時間帯では投稿数を抑える
+ *
+ * JST ピークタイム:
+ *   - 朝 7:00-9:00（通勤時間帯）
+ *   - 昼 12:00-13:00（昼休み）
+ *   - 夜 18:00-21:00（帰宅〜夜のリラックスタイム）
+ */
+function getMaxPostsForCurrentTime(): number {
+  // 環境変数で明示的に指定されている場合はそれを尊重
+  if (process.env.AUTO_POST_MAX_PER_RUN) {
+    return DEFAULT_MAX_POSTS_PER_RUN;
+  }
+
+  const jstHour = getJSTHour();
+
+  // ピークタイム: 多めに投稿（5件）
+  if (
+    (jstHour >= 7 && jstHour < 9) ||   // 朝の通勤時間帯
+    (jstHour >= 12 && jstHour < 13) ||  // 昼休み
+    (jstHour >= 18 && jstHour < 21)     // 夕方〜夜
+  ) {
+    return 5;
+  }
+
+  // 準ピークタイム: 中程度（3件）
+  if (
+    (jstHour >= 9 && jstHour < 12) ||   // 午前中
+    (jstHour >= 21 && jstHour < 23)     // 夜遅め
+  ) {
+    return 3;
+  }
+
+  // オフピーク: 少なめ（2件）
+  return 2;
+}
+
+/**
+ * 記事を優先度順にソート
+ *
+ * ソート基準:
+ * 1. ソースの優先度（主要AIラボ > メディア > アカデミック）
+ * 2. 公開日時（新しい記事を優先）
+ */
+function prioritizeArticles(articles: AINewsItem[]): AINewsItem[] {
+  return [...articles].sort((a, b) => {
+    // ソース優先度で比較（高い方が先）
+    const priorityA = SOURCE_PRIORITY[a.sourceName] || 1;
+    const priorityB = SOURCE_PRIORITY[b.sourceName] || 1;
+
+    if (priorityA !== priorityB) {
+      return priorityB - priorityA;
+    }
+
+    // 同じ優先度なら公開日時で比較（新しい方が先）
+    const dateA = new Date(a.publishDate).getTime();
+    const dateB = new Date(b.publishDate).getTime();
+    return dateB - dateA;
+  });
+}
 
 // A/Bテスト用のバリアント設定
 // "simple" = シンプル版（旧フォーマット）
@@ -69,23 +167,41 @@ export function createXClient(): TwitterApi | null {
 }
 
 /**
+ * ソース名からハッシュタグを取得するマッピング
+ * auto-post-enhanced.ts の SOURCE_HASHTAG_MAP と同じ定義を使用
+ */
+const SOURCE_HASHTAG_MAP: Record<string, string> = {
+  "VentureBeat AI": "VentureBeat",
+  "AI News": "AINews",
+  "Google AI Blog": "GoogleAI",
+  "TechCrunch AI": "TechCrunch",
+  "OpenAI Blog": "OpenAI",
+  "Hugging Face Blog": "HuggingFace",
+  "arXiv cs.AI": "arXiv",
+  "arXiv cs.LG": "arXiv",
+  "Papers with Code": "PapersWithCode",
+  "Anthropic News": "Anthropic",
+  "Meta AI Blog": "MetaAI",
+  "Google DeepMind Blog": "DeepMind",
+  "Microsoft Research Blog": "Microsoft",
+  "NVIDIA Technical Blog": "NVIDIA",
+  "Stability AI Blog": "StabilityAI",
+  "Mistral AI News": "MistralAI",
+  "xAI Blog": "xAI",
+  "Databricks Blog": "Databricks",
+  "Cohere Blog": "Cohere",
+};
+
+/**
  * シンプル版のツイートテキストを生成（旧フォーマット）
  */
 function formatTweetTextSimple(item: AINewsItem): string {
-  const tags = ["AI", "GlotNexus"];
+  const tags: string[] = ["AI", "GlotNexus"];
 
-  // ソース名からタグを生成
-  const sourceMap: Record<string, string> = {
-    "OpenAI Blog": "OpenAI",
-    "Google AI Blog": "Google",
-    "Anthropic News": "Anthropic",
-    "Hugging Face Blog": "HuggingFace",
-    "Meta AI Blog": "Meta",
-    "Microsoft Research": "Microsoft",
-  };
-
-  if (sourceMap[item.sourceName]) {
-    tags.push(sourceMap[item.sourceName]);
+  // ソース名からタグを生成（全ソース対応）
+  const sourceTag = SOURCE_HASHTAG_MAP[item.sourceName];
+  if (sourceTag) {
+    tags.push(sourceTag);
   }
 
   const hashtags = tags.map((tag) => `#${tag}`).join(" ");
@@ -216,17 +332,21 @@ async function postToX(
 /**
  * 複数記事を自動投稿
  *
+ * 記事はソース優先度と公開日時でソートされ、
+ * 時間帯に基づいて投稿数が動的に調整される
+ *
  * @param articles - 投稿対象の記事一覧
- * @param maxPosts - 最大投稿件数（デフォルト: 環境変数から取得、なければ10）
+ * @param maxPosts - 最大投稿件数（デフォルト: 時間帯に基づく動的値）
  * @param delaySeconds - 投稿間隔（秒）（デフォルト: 環境変数から取得、なければ10）
  * @returns 投稿結果の配列
  */
 export async function autoPostArticles(
   articles: AINewsItem[],
-  maxPosts: number = MAX_POSTS_PER_RUN,
+  maxPosts: number = getMaxPostsForCurrentTime(),
   delaySeconds: number = DELAY_SECONDS
 ): Promise<PostResult[]> {
-  console.log(`Starting auto-post: ${articles.length} articles, max ${maxPosts} posts`);
+  const jstHour = getJSTHour();
+  console.log(`Starting auto-post: ${articles.length} articles, max ${maxPosts} posts (JST hour: ${jstHour})`);
 
   // X API クライアントを初期化
   const client = createXClient();
@@ -239,10 +359,10 @@ export async function autoPostArticles(
   const postedIds = await getPostedArticleIds();
   console.log(`Found ${postedIds.size} previously posted articles`);
 
-  // 未投稿の記事をフィルタリング
-  const unpostedArticles = articles
-    .filter((article) => !postedIds.has(article.id))
-    .slice(0, maxPosts);
+  // 未投稿の記事をフィルタリングし、優先度順にソート
+  const unpostedArticles = prioritizeArticles(
+    articles.filter((article) => !postedIds.has(article.id))
+  ).slice(0, maxPosts);
 
   if (unpostedArticles.length === 0) {
     console.log("No new articles to post");

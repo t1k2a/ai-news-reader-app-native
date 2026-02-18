@@ -35,31 +35,102 @@ const HOOK_TEMPLATES = {
 };
 
 /**
+ * ソース名からハッシュタグを取得するマッピング
+ * 全19 RSSフィードソースに対応
+ */
+const SOURCE_HASHTAG_MAP: Record<string, string> = {
+  "VentureBeat AI": "VentureBeat",
+  "AI News": "AINews",
+  "Google AI Blog": "GoogleAI",
+  "TechCrunch AI": "TechCrunch",
+  "OpenAI Blog": "OpenAI",
+  "Hugging Face Blog": "HuggingFace",
+  "arXiv cs.AI": "arXiv",
+  "arXiv cs.LG": "arXiv",
+  "Papers with Code": "PapersWithCode",
+  "Anthropic News": "Anthropic",
+  "Meta AI Blog": "MetaAI",
+  "Google DeepMind Blog": "DeepMind",
+  "Microsoft Research Blog": "Microsoft",
+  "NVIDIA Technical Blog": "NVIDIA",
+  "Stability AI Blog": "StabilityAI",
+  "Mistral AI News": "MistralAI",
+  "xAI Blog": "xAI",
+  "Databricks Blog": "Databricks",
+  "Cohere Blog": "Cohere",
+};
+
+/**
+ * コンテンツベースのトピックハッシュタグ検出ルール
+ * タイトルとサマリーからAIトピックを検出してタグを付与
+ */
+const TOPIC_HASHTAG_RULES: { keywords: string[]; tag: string }[] = [
+  { keywords: ["llm", "large language model", "言語モデル", "大規模言語"], tag: "LLM" },
+  { keywords: ["gpt", "chatgpt", "gpt-4", "gpt-5"], tag: "GPT" },
+  { keywords: ["claude", "anthropic claude"], tag: "Claude" },
+  { keywords: ["gemini", "bard"], tag: "Gemini" },
+  { keywords: ["diffusion", "stable diffusion", "画像生成", "image generation", "text-to-image", "dall-e", "midjourney"], tag: "生成AI" },
+  { keywords: ["computer vision", "コンピュータビジョン", "画像認識", "object detection", "物体検出"], tag: "ComputerVision" },
+  { keywords: ["robot", "ロボット", "robotics", "ロボティクス"], tag: "ロボティクス" },
+  { keywords: ["autonomous", "自動運転", "self-driving", "自律"], tag: "自動運転" },
+  { keywords: ["nlp", "natural language processing", "自然言語処理"], tag: "NLP" },
+  { keywords: ["rag", "retrieval augmented", "検索拡張"], tag: "RAG" },
+  { keywords: ["agent", "エージェント", "ai agent", "agentic"], tag: "AIエージェント" },
+  { keywords: ["open source", "オープンソース", "oss"], tag: "オープンソース" },
+  { keywords: ["fine-tuning", "fine tuning", "ファインチューニング"], tag: "FineTuning" },
+  { keywords: ["multimodal", "マルチモーダル", "vision-language"], tag: "マルチモーダル" },
+  { keywords: ["transformer", "attention mechanism"], tag: "Transformer" },
+  { keywords: ["ethics", "倫理", "bias", "バイアス", "safety", "alignment", "安全性"], tag: "AI安全性" },
+  { keywords: ["reinforcement learning", "強化学習", "rlhf", "rl"], tag: "強化学習" },
+  { keywords: ["speech", "音声", "voice", "tts", "text-to-speech", "whisper"], tag: "音声AI" },
+];
+
+/**
+ * コンテンツからトピックハッシュタグを検出
+ */
+function detectTopicHashtags(title: string, summary: string): string[] {
+  const text = `${title} ${summary}`.toLowerCase();
+  const detected: string[] = [];
+
+  for (const rule of TOPIC_HASHTAG_RULES) {
+    if (rule.keywords.some((kw) => text.includes(kw))) {
+      detected.push(rule.tag);
+    }
+  }
+
+  return detected;
+}
+
+/**
  * カテゴリからハッシュタグを生成（改善版）
+ * ソース名 + コンテンツベースのトピック検出 + ブランドタグ
  */
 function generateHashtags(item: AINewsItem): string[] {
   const tags: string[] = [];
 
-  // ソース名から主要タグを生成
-  const sourceMap: Record<string, string> = {
-    "OpenAI Blog": "OpenAI",
-    "Google AI Blog": "GoogleAI",
-    "Anthropic News": "Anthropic",
-    "Hugging Face Blog": "HuggingFace",
-    "Meta AI Blog": "MetaAI",
-    "Microsoft Research": "Microsoft",
-    "NVIDIA Developer Blog": "NVIDIA",
-  };
-
-  if (sourceMap[item.sourceName]) {
-    tags.push(sourceMap[item.sourceName]);
+  // 1. ソース名から主要タグを生成
+  const sourceTag = SOURCE_HASHTAG_MAP[item.sourceName];
+  if (sourceTag) {
+    tags.push(sourceTag);
   }
 
-  // AI関連のジェネリックタグ
-  tags.push("AI");
-  tags.push("人工知能");
+  // 2. コンテンツベースのトピックタグを検出（タイトル + サマリーを使用）
+  const searchTitle = item.originalTitle || item.title;
+  const searchSummary = item.originalSummary || item.summary;
+  const topicTags = detectTopicHashtags(searchTitle, searchSummary);
+  // トピックタグは最大2個まで（スパム防止）
+  for (const tag of topicTags.slice(0, 2)) {
+    if (!tags.includes(tag)) {
+      tags.push(tag);
+    }
+  }
 
-  // ブランドタグ
+  // 3. AI関連のベースタグ（必ず含める）
+  if (!tags.includes("AI")) {
+    tags.push("AI");
+  }
+
+  // 4. ブランドタグ
   tags.push("GlotNexus");
 
   // 最大5個まで

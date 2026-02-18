@@ -15,6 +15,7 @@ import {
   getPostedArticleIds,
   addPostedArticleId,
 } from "../../lib/cache.js";
+import { formatTweetTextAsync } from "../../lib/auto-post.js";
 import type { AINewsItem } from "../../lib/types.js";
 
 // ES Module で __dirname を取得
@@ -164,63 +165,11 @@ async function savePostedId(articleId: string, localIds: Set<string>): Promise<v
   saveLocalPostedIds(localIds);
 }
 
-/**
- * カテゴリからハッシュタグを生成
- */
-function generateHashtags(item: AINewsItem): string[] {
-  const tags: string[] = ["AI", "GlotNexus"];
-
-  // ソース名からタグを生成
-  const sourceMap: Record<string, string> = {
-    "OpenAI Blog": "OpenAI",
-    "Google AI Blog": "Google",
-    "Anthropic News": "Anthropic",
-    "Hugging Face Blog": "HuggingFace",
-    "Meta AI Blog": "Meta",
-    "Microsoft Research": "Microsoft",
-    "VentureBeat AI": "VentureBeat",
-    "TechCrunch AI": "TechCrunch",
-  };
-
-  if (sourceMap[item.sourceName]) {
-    tags.push(sourceMap[item.sourceName]);
-  }
-
-  // カテゴリからタグを追加
-  if (item.categories.includes("機械学習")) tags.push("MachineLearning");
-  if (item.categories.includes("自然言語処理")) tags.push("NLP");
-  if (item.categories.includes("コンピュータビジョン")) tags.push("ComputerVision");
-
-  return tags;
-}
+// ハッシュタグ生成・ツイートフォーマットは lib/auto-post.ts の共通ロジックを使用
+// （formatTweetTextAsync をインポート済み）
 
 /**
- * ツイート用のテキストを生成（文字数制限対応）
- */
-function formatTweetText(item: AINewsItem): string {
-  const hashtags = generateHashtags(item)
-    .map((tag) => `#${tag}`)
-    .join(" ");
-  const url = `${APP_BASE_URL}/?article=${item.id}`;
-
-  // URL の長さ（X では t.co 短縮で 23 文字固定）
-  const urlLength = 23;
-  const separator = "\n\n";
-  const availableChars =
-    X_MAX_CHARS - urlLength - hashtags.length - separator.length * 2;
-
-  // タイトルを切り詰め
-  let title = item.title;
-  if (title.length > availableChars) {
-    title = title.slice(0, availableChars - 3) + "...";
-    log("WARN", `タイトルが長いため切り詰めました: ${title.length}文字`);
-  }
-
-  return `${title}${separator}${url}${separator}${hashtags}`;
-}
-
-/**
- * X に投稿
+ * X に投稿（共通ロジックを使用）
  */
 async function postToX(
   client: TwitterApi,
@@ -229,11 +178,11 @@ async function postToX(
   log("INFO", `X に投稿中: ${item.title}`);
 
   try {
-    const tweetText = formatTweetText(item);
-    const result = await client.v2.tweet(tweetText);
+    const { text, variant } = await formatTweetTextAsync(item);
+    const result = await client.v2.tweet(text);
     const tweetId = result.data.id;
 
-    log("SUCCESS", `投稿成功! Tweet ID: ${tweetId}`);
+    log("SUCCESS", `投稿成功! Tweet ID: ${tweetId} [variant: ${variant}]`);
     log("INFO", `投稿URL: https://x.com/i/status/${tweetId}`);
 
     return tweetId;

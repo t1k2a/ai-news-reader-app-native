@@ -6,33 +6,106 @@ import axios from "axios";
  * Google Translateの誤訳を修正するために使用
  */
 const AI_TERMINOLOGY_DICTIONARY: Record<string, string> = {
-  // AI モデル名
+  // AI モデル名（長い名前を先にマッチさせるため順序に注意）
   "ChatGPT": "ChatGPT",
+  "GPT-4o": "GPT-4o",
   "GPT-4": "GPT-4",
   "GPT-3.5": "GPT-3.5",
+  "Gemini Ultra": "Gemini Ultra",
+  "Gemini Pro": "Gemini Pro",
   "Gemini": "Gemini",
   "Claude": "Claude",
+  "DALL-E 3": "DALL-E 3",
   "DALL-E": "DALL-E",
   "Stable Diffusion": "Stable Diffusion",
   "Midjourney": "Midjourney",
   "LLaMA": "LLaMA",
+  "Llama 3": "Llama 3",
+  "Llama": "Llama",
   "PaLM": "PaLM",
+  "Mistral": "Mistral",
+  "Mixtral": "Mixtral",
+  "Sora": "Sora",
+  "Copilot": "Copilot",
+  "Grok": "Grok",
+  "Phi-3": "Phi-3",
+  "Command R": "Command R",
+  "Cohere": "Cohere",
 
-  // AI技術用語
-  "Large Language Model": "大規模言語モデル",
-  "LLM": "LLM",
-  "Transformer": "Transformer",
-  "Neural Network": "ニューラルネットワーク",
+  // AI技術用語（長いフレーズを先に）
+  "Artificial General Intelligence": "汎用人工知能（AGI）",
+  "Large Language Model": "大規模言語モデル（LLM）",
+  "Small Language Model": "小規模言語モデル（SLM）",
+  "Vision Language Model": "視覚言語モデル（VLM）",
+  "Retrieval-Augmented Generation": "検索拡張生成（RAG）",
+  "Reinforcement Learning from Human Feedback": "人間のフィードバックによる強化学習（RLHF）",
+  "Direct Preference Optimization": "直接選好最適化（DPO）",
+  "Chain of Thought": "思考の連鎖（CoT）",
+  "Mixture of Experts": "混合エキスパート（MoE）",
+  "Prompt Engineering": "プロンプトエンジニアリング",
+  "Reinforcement Learning": "強化学習",
+  "Transfer Learning": "転移学習",
+  "Federated Learning": "連合学習",
+  "Continual Learning": "継続学習",
   "Deep Learning": "ディープラーニング",
   "Machine Learning": "機械学習",
-  "Reinforcement Learning": "強化学習",
+  "Neural Network": "ニューラルネットワーク",
   "Fine-tuning": "ファインチューニング",
-  "Prompt Engineering": "プロンプトエンジニアリング",
   "Multimodal": "マルチモーダル",
-  "Token": "トークン",
+  "Transformer": "Transformer",
   "Embedding": "埋め込み",
+  "Tokenizer": "トークナイザー",
+  "Token": "トークン",
+  "LLM": "LLM",
+  "AGI": "AGI",
   "RAG": "RAG",
-  "Retrieval-Augmented Generation": "検索拡張生成",
+  "RLHF": "RLHF",
+  "DPO": "DPO",
+  "LoRA": "LoRA",
+  "QLoRA": "QLoRA",
+  "MoE": "MoE",
+  "CoT": "CoT",
+  "GGUF": "GGUF",
+  "ONNX": "ONNX",
+
+  // AI安全性・倫理用語
+  "AI Safety": "AI安全性",
+  "AI Alignment": "AIアライメント",
+  "Hallucination": "ハルシネーション",
+  "Guardrails": "ガードレール",
+  "Red Teaming": "レッドチーミング",
+  "Jailbreak": "ジェイルブレイク",
+  "Bias": "バイアス",
+  "Benchmark": "ベンチマーク",
+
+  // AI応用分野
+  "Computer Vision": "コンピュータビジョン",
+  "Natural Language Processing": "自然言語処理（NLP）",
+  "Text-to-Image": "テキストから画像生成",
+  "Text-to-Video": "テキストから動画生成",
+  "Text-to-Speech": "テキスト読み上げ（TTS）",
+  "Speech-to-Text": "音声認識（STT）",
+  "Image Generation": "画像生成",
+  "Code Generation": "コード生成",
+  "Autonomous Agent": "自律型エージェント",
+  "AI Agent": "AIエージェント",
+  "Agentic AI": "エージェント型AI",
+  "Generative AI": "生成AI",
+  "GenAI": "生成AI",
+
+  // インフラ・技術用語
+  "Inference": "推論",
+  "Training": "学習",
+  "Pre-training": "事前学習",
+  "Quantization": "量子化",
+  "Distillation": "蒸留",
+  "Context Window": "コンテキストウィンドウ",
+  "Attention Mechanism": "アテンション機構",
+  "Diffusion Model": "拡散モデル",
+  "Foundation Model": "基盤モデル",
+  "Frontier Model": "フロンティアモデル",
+  "On-device AI": "オンデバイスAI",
+  "Edge AI": "エッジAI",
 
   // 一般的な技術用語
   "AI": "AI",
@@ -42,10 +115,20 @@ const AI_TERMINOLOGY_DICTIONARY: Record<string, string> = {
   "Edge Computing": "エッジコンピューティング",
   "GPU": "GPU",
   "TPU": "TPU",
+  "NPU": "NPU",
   "Open Source": "オープンソース",
+  "Open Weight": "オープンウェイト",
   "Beta": "ベータ版",
   "Release": "リリース",
+  "Startup": "スタートアップ",
+  "Scaling Law": "スケーリング則",
 };
+
+/**
+ * 専門用語辞書のエントリを長さ順にソート（長い用語を先にマッチさせるため）
+ */
+const SORTED_TERMINOLOGY_ENTRIES = Object.entries(AI_TERMINOLOGY_DICTIONARY)
+  .sort((a, b) => b[0].length - a[0].length);
 
 /**
  * 翻訳テキストをポストプロセスする
@@ -56,22 +139,67 @@ function postProcessTranslation(text: string): string {
 
   let processed = text;
 
-  // 専門用語辞書を適用
-  for (const [en, ja] of Object.entries(AI_TERMINOLOGY_DICTIONARY)) {
-    const regex = new RegExp(en, "gi");
+  // 専門用語辞書を適用（長い用語から順にマッチ）
+  for (const [en, ja] of SORTED_TERMINOLOGY_ENTRIES) {
+    // 単語境界を考慮した正規表現（部分一致を防ぐ）
+    const escaped = en.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`\\b${escaped}\\b`, "gi");
     processed = processed.replace(regex, ja);
   }
 
   // 不自然な翻訳パターンを修正
   processed = processed
-    .replace(/(\d+)\s*億/g, "$1億") // 「10 億」→「10億」
-    .replace(/(\d+)\s*万/g, "$1万") // 「100 万」→「100万」
-    .replace(/\s+([、。！？）」])/g, "$1") // 句読点の前のスペース削除
-    .replace(/([（「])\s+/g, "$1") // 括弧の後のスペース削除
-    .replace(/([A-Za-z0-9]+)\s+([A-Za-z0-9]+)/g, "$1$2") // 英数字間の不要なスペース削除（一部）
+    .replace(/(\d+)\s*億/g, "$1億")       // 「10 億」→「10億」
+    .replace(/(\d+)\s*万/g, "$1万")       // 「100 万」→「100万」
+    .replace(/(\d+)\s*兆/g, "$1兆")       // 「1 兆」→「1兆」
+    .replace(/\s+([、。！？）」])/g, "$1")  // 句読点の前のスペース削除
+    .replace(/([（「])\s+/g, "$1")         // 括弧の後のスペース削除
+    // 日本語文字と英数字の間の余分なスペースを削除（英単語同士のスペースは保持）
+    .replace(/([\u3000-\u9FFF\uF900-\uFAFF])\s+([A-Za-z0-9])/g, "$1$2")
+    .replace(/([A-Za-z0-9])\s+([\u3000-\u9FFF\uF900-\uFAFF])/g, "$1$2")
+    // Google翻訳が生成する不自然なパターンを修正
+    .replace(/の\s+の/g, "の")             // 「の の」→「の」
+    .replace(/を\s+を/g, "を")             // 重複助詞の修正
+    .replace(/が\s+が/g, "が")
+    .replace(/は\s+は/g, "は")
     .trim();
 
   return processed;
+}
+
+/**
+ * テキストを自然な位置で切り詰める
+ * 句読点や助詞の後、単語の区切りで切ることで自然な日本語を維持
+ * @param text 切り詰めるテキスト
+ * @param maxLength 最大文字数
+ * @returns 切り詰められたテキスト
+ */
+function truncateAtNaturalBreak(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+
+  const limit = maxLength - 3; // 「...」の分
+  const candidate = text.slice(0, limit);
+
+  // 句点（。）、読点（、）、または助詞の後で切れる最後の位置を探す
+  const breakPoints = [
+    candidate.lastIndexOf("。"),
+    candidate.lastIndexOf("、"),
+    candidate.lastIndexOf("！"),
+    candidate.lastIndexOf("？"),
+    candidate.lastIndexOf(" "),
+  ];
+
+  // 最大文字数の半分以降にある区切りを採用（短すぎる切り詰めを避ける）
+  const minBreak = Math.floor(limit * 0.5);
+  const bestBreak = breakPoints
+    .filter((pos) => pos >= minBreak)
+    .sort((a, b) => b - a)[0];
+
+  if (bestBreak !== undefined && bestBreak > 0) {
+    return text.slice(0, bestBreak + 1).trim() + "...";
+  }
+
+  return candidate + "...";
 }
 
 /**
@@ -120,9 +248,9 @@ export async function translateToJapanese(
     // ポストプロセス（専門用語修正、不自然な表現の改善）
     let processed = postProcessTranslation(translatedText);
 
-    // 最大文字数制限がある場合は切り詰め
+    // 最大文字数制限がある場合は自然な位置で切り詰め
     if (maxLength && processed.length > maxLength) {
-      processed = processed.slice(0, maxLength - 3) + "...";
+      processed = truncateAtNaturalBreak(processed, maxLength);
     }
 
     return processed;
@@ -130,7 +258,7 @@ export async function translateToJapanese(
     console.error("翻訳エラー:", error);
     // エラーの場合は元のテキストを返す（ただし最大文字数で切り詰め）
     if (maxLength && text.length > maxLength) {
-      return text.slice(0, maxLength - 3) + "...";
+      return truncateAtNaturalBreak(text, maxLength);
     }
     return text;
   }
