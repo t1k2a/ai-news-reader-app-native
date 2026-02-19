@@ -40,6 +40,8 @@ jobs:
           APP_BASE_URL: ${{ vars.APP_BASE_URL }}
           AUTO_POST_MAX_PER_RUN: ${{ vars.AUTO_POST_MAX_PER_RUN }}
           AUTO_POST_DELAY_SECONDS: ${{ vars.AUTO_POST_DELAY_SECONDS }}
+          USE_BRAND_CARD: 'true'
+          USE_THREAD_FORMAT: 'true'
         run: npm run auto-post:rss
 
       - name: Notify on failure
