@@ -208,7 +208,7 @@ const SOURCE_HASHTAG_MAP: Record<string, string> = {
  * シンプル版のツイートテキストを生成（旧フォーマット）
  */
 function formatTweetTextSimple(item: AINewsItem): string {
-  const tags: string[] = ["AI", "GlotNexus"];
+  const tags: string[] = ["AI", "海外のAIニュース", "GlotNexus"];
 
   // ソース名からタグを生成（全ソース対応）
   const sourceTag = SOURCE_HASHTAG_MAP[item.sourceName];

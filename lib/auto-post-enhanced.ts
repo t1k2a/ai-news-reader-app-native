@@ -161,8 +161,8 @@ function generateHashtags(item: AINewsItem): string[] {
   if (!tags.includes("AI")) {
     tags.push("AI");
   }
-  if (!tags.includes("AIニュース")) {
-    tags.push("AIニュース");
+  if (!tags.includes("海外のAIニュース")) {
+    tags.push("海外のAIニュース");
   }
 
   // 4. ブランドタグ

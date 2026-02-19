@@ -107,7 +107,7 @@ async function runTests() {
     console.log(enhanced);
     console.log(`文字数: ${enhanced.length}/${X_MAX_CHARS}`);
     assertCheck(enhanced.length <= X_MAX_CHARS, `文字数制限 (${enhanced.length}文字)`);
-    assertCheck(enhanced.includes("#AIニュース"), "日本語ハッシュタグ #AIニュース を含む");
+    assertCheck(enhanced.includes("#海外のAIニュース"), "日本語ハッシュタグ #海外のAIニュース を含む");
     assertCheck(enhanced.includes("#GlotNexus"), "ブランドタグ #GlotNexus を含む");
   }
 
@@ -155,7 +155,7 @@ async function runTests() {
     assertCheck(reply.includes("https://"), "リプライにURLが含まれる");
     assertCheck(reply.includes(article.link), "リプライに元記事URLが含まれる");
     assertCheck(reply.includes("元記事"), "リプライに '元記事' ラベルが含まれる");
-    assertCheck(main.includes("#AIニュース"), "メインツイートに日本語ハッシュタグ");
+    assertCheck(main.includes("#海外のAIニュース"), "メインツイートに日本語ハッシュタグ");
   }
 
   console.log();
