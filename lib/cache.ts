@@ -161,3 +161,37 @@ export async function addPostedArticleId(articleId: string): Promise<void> {
     console.error("Failed to add posted article ID:", error);
   }
 }
+
+// 週次まとめスレッドの投稿タイムスタンプ管理
+const WEEKLY_SUMMARY_KEY = "weekly_summary_last_posted";
+const WEEKLY_SUMMARY_TTL = 10 * 24 * 60 * 60; // 10日間保持
+
+export async function getWeeklySummaryLastPosted(): Promise<string | null> {
+  try {
+    const redis = await getRedisClient();
+    if (redis) {
+      const timestamp = (await redis.get(WEEKLY_SUMMARY_KEY)) as string | null;
+      return timestamp;
+    }
+    return null;
+  } catch (error) {
+    console.error("Failed to get weekly summary timestamp:", error);
+    return null;
+  }
+}
+
+export async function setWeeklySummaryLastPosted(
+  timestamp: string
+): Promise<void> {
+  try {
+    const redis = await getRedisClient();
+    if (redis) {
+      await redis.set(WEEKLY_SUMMARY_KEY, timestamp, {
+        ex: WEEKLY_SUMMARY_TTL,
+      });
+      console.log(`Weekly summary posted timestamp saved: ${timestamp}`);
+    }
+  } catch (error) {
+    console.error("Failed to set weekly summary timestamp:", error);
+  }
+}

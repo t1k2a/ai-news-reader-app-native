@@ -13,7 +13,9 @@
     "auto-post": "npx tsx scripts/auto-post/index.ts",
     "auto-post:rss": "npx tsx scripts/auto-post/rss-auto-post.ts",
     "check-status": "npx tsx scripts/auto-post/check-status.ts",
-    "generate:og-image": "npx tsx scripts/generate-og-image.ts"
+    "generate:og-image": "npx tsx scripts/generate-og-image.ts",
+    "weekly-summary": "npx tsx scripts/auto-post/weekly-summary.ts",
+    "weekly-summary:dry-run": "npx tsx scripts/auto-post/weekly-summary.ts --dry-run"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.5",

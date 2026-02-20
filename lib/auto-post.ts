@@ -28,7 +28,7 @@ const DELAY_SECONDS = parseInt(
 const APP_BASE_URL = process.env.APP_BASE_URL || "https://glotnexus.jp";
 
 // ソースの優先度（高い値 = 高い優先度）
-const SOURCE_PRIORITY: Record<string, number> = {
+export const SOURCE_PRIORITY: Record<string, number> = {
   "OpenAI Blog": 10,
   "Anthropic News": 10,
   "Google AI Blog": 9,
@@ -108,7 +108,7 @@ function getMaxPostsForCurrentTime(): number {
  * 1. ソースの優先度（主要AIラボ > メディア > アカデミック）
  * 2. 公開日時（新しい記事を優先）
  */
-function prioritizeArticles(articles: AINewsItem[]): AINewsItem[] {
+export function prioritizeArticles(articles: AINewsItem[]): AINewsItem[] {
   return [...articles].sort((a, b) => {
     // ソース優先度で比較（高い方が先）
     const priorityA = SOURCE_PRIORITY[a.sourceName] || 1;
