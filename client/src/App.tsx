@@ -2,6 +2,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "sonner";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { NewsTimeline } from "./components/NewsTimeline";
 import { NewsHeader } from "./components/NewsHeader";
 import { BookmarksPanel } from "./components/BookmarksPanel";
@@ -36,6 +38,8 @@ function App() {
           </footer>
           <BookmarksPanel />
           <Toaster position="top-right" />
+          <Analytics />
+          <SpeedInsights />
         </div>
       </Router>
     </QueryClientProvider>
