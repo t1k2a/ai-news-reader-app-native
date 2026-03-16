@@ -6,33 +6,67 @@ export interface BuildXShareTextOptions {
   url: string;
   categories?: string[];
   summary?: string;
+  sourceName?: string;
 }
 
-const sanitizeCategoryForHashtag = (category: string): string => {
-  return category
-    .normalize('NFKC')
-    .replace(/[\s\u3000]+/gu, '')
-    .replace(/[^0-9A-Za-z\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9faf\u3005\u303b]+/gu, '');
+/**
+ * フック（Hook）のテンプレート
+ * lib/auto-post-enhanced.ts と同等のロジック
+ */
+const HOOK_TEMPLATES = [
+  "{emoji} {topic}が変わった理由",
+  "【速報】{source}、{topic}で新展開",
+  "知らないとマズい：{topic}の最新動向",
+  "💡 {topic}で知っておくべき3つのこと",
+  "【保存版】{topic}の重要アップデート",
+  "今週のAIニュース：{topic}",
+  "また{source}がやってくれた。",
+  "これは見逃せない：{source}の{topic}",
+  "🤔 {topic}、あなたはどう思う？",
+  "知ってた？{topic}が今アツい理由",
+  "{topic}の影響、もう感じてる？",
+  "{emoji} {source}の{topic}、次に来るのは？",
+];
+
+/**
+ * ソース名から絵文字を取得するマッピング
+ */
+const SOURCE_EMOJI_MAP: Record<string, string> = {
+  "OpenAI Blog": "🧠",
+  "Google AI Blog": "🔍",
+  "Google DeepMind Blog": "🔬",
+  "Anthropic News": "🤖",
+  "NVIDIA Technical Blog": "💚",
+  "Meta AI Blog": "🌐",
+  "Microsoft Research Blog": "💻",
+  "Hugging Face Blog": "🤗",
+  "Mistral AI News": "🌬️",
+  "xAI Blog": "⚡",
+  "Stability AI Blog": "🎨",
+  "VentureBeat AI": "📰",
+  "TechCrunch AI": "📱",
+  "AI News": "🗞️",
+  "arXiv cs.AI": "📄",
+  "arXiv cs.LG": "📄",
+  "Papers with Code": "📊",
+  "Databricks Blog": "⚙️",
+  "Cohere Blog": "💬",
 };
 
-const createHashtags = (categories: string[] = []): string[] => {
-  const uniqueTags: string[] = [];
+const getSourceEmoji = (sourceName: string): string => {
+  return SOURCE_EMOJI_MAP[sourceName] || "🚨";
+};
 
-  for (const category of categories) {
-    const sanitized = sanitizeCategoryForHashtag(category);
-    if (!sanitized) continue;
-
-    const hashtag = `#${sanitized}`;
-    if (!uniqueTags.includes(hashtag)) {
-      uniqueTags.push(hashtag);
-    }
-
-    if (uniqueTags.length >= 3) {
-      break;
-    }
+const extractTopic = (title: string): string => {
+  const maxLength = 30;
+  if (Array.from(title).length <= maxLength) {
+    return title;
   }
+  return Array.from(title).slice(0, maxLength).join('') + "...";
+};
 
-  return uniqueTags;
+const selectRandomHook = (): string => {
+  return HOOK_TEMPLATES[Math.floor(Math.random() * HOOK_TEMPLATES.length)];
 };
 
 const truncateToLength = (text: string, maxLength: number): string => {
@@ -47,14 +81,6 @@ const truncateToLength = (text: string, maxLength: number): string => {
 
   const truncated = characters.slice(0, maxLength - 3).join('').trimEnd();
   return `${truncated}...`;
-};
-
-const sliceCharacters = (text: string, maxLength: number): string => {
-  if (maxLength < 0) {
-    return '';
-  }
-
-  return Array.from(text).slice(0, maxLength).join('');
 };
 
 /**
@@ -77,94 +103,80 @@ const getCharacterLength = (text: string): number => {
   return count;
 };
 
-const composeShareText = (
-  title: string,
-  url: string,
-  hashtags: string[],
-  summary?: string
-): string => {
-  const parts: string[] = [];
-  if (title.trim()) {
-    parts.push(title.trim());
-  }
-  if (summary && summary.trim()) {
-    parts.push(summary.trim());
-  }
-  if (url.trim()) {
-    parts.push(url.trim());
-  }
-  if (hashtags.length > 0) {
-    parts.push(hashtags.join(' '));
-  }
-  return parts.join('\n\n');
-};
-
+/**
+ * Enhanced版のXシェアテキスト生成
+ *
+ * フォーマット:
+ * ```
+ * {絵文字} {フック}
+ *
+ * {要約（80-100文字）}
+ *
+ * 詳細👇
+ * {URL}
+ *
+ * #AI #GlotNexus
+ * ```
+ */
 export function buildXShareText({
   title,
   url,
-  categories = [],
-  summary
+  summary,
+  sourceName = ''
 }: BuildXShareTextOptions): string {
-  const hashtags = createHashtags(categories);
-  const serviceName = "GlotNexus";
-  const tagline = "世界最先端のAIトレンド、日本語見出しで。";
-  const marketingLine = `${serviceName} - ${tagline}`;
-
-  const normalizedTitle = title.trim();
   const normalizedUrl = url.trim();
-  const normalizedMarketing = marketingLine.trim();
-  const hashtagsText = hashtags.length > 0 ? hashtags.join(" ") : "";
 
-  // 優先度: タイトル > URL > サービス名・キャッチコピー > ハッシュタグ
-  // 最低限タイトルとURLは確保する
-  const SEPARATOR = "\n\n";
-  const SEPARATOR_LENGTH = getCharacterLength(SEPARATOR);
-  const MIN_TITLE_LENGTH = 20; // タイトルの最低保証文字数
+  // フック生成
+  const emoji = getSourceEmoji(sourceName);
+  const topic = extractTopic(title.trim());
+  const source = sourceName.replace(" Blog", "").replace(" News", "");
+  const hookTemplate = selectRandomHook();
+  const hook = hookTemplate
+    .replace("{topic}", topic)
+    .replace("{source}", source || "AI企業")
+    .replace("{emoji}", emoji);
 
-  // レベル4: 全部入り（理想形）
-  let parts = [normalizedTitle, normalizedUrl, normalizedMarketing, hashtagsText].filter(Boolean);
-  let text = parts.join(SEPARATOR);
-  
-  if (getCharacterLength(text) <= MAX_X_POST_LENGTH) {
-    return text;
+  // 要約（80-100文字に切り詰め）
+  const valueProposition = (() => {
+    if (summary && summary.trim()) {
+      return truncateToLength(summary.trim(), 100);
+    }
+    return truncateToLength(title.trim(), 100);
+  })();
+
+  // 固定ハッシュタグ（2個）
+  const hashtags = "#AI #GlotNexus";
+
+  // CTA
+  const ctaLine = "詳細👇";
+
+  // 組み立て
+  const fullText = [hook, "", valueProposition, "", ctaLine, normalizedUrl, "", hashtags].join("\n");
+
+  // 文字数チェック（URLは t.co 短縮で23文字固定として計算）
+  const T_CO_LENGTH = 23;
+  const textWithoutUrl = fullText.replace(normalizedUrl, '');
+  const effectiveLength = getCharacterLength(textWithoutUrl) + T_CO_LENGTH;
+
+  if (effectiveLength <= MAX_X_POST_LENGTH) {
+    return fullText;
   }
 
-  // レベル3: ハッシュタグを削除
-  parts = [normalizedTitle, normalizedUrl, normalizedMarketing].filter(Boolean);
-  text = parts.join(SEPARATOR);
-  
-  if (getCharacterLength(text) <= MAX_X_POST_LENGTH) {
-    return text;
+  // 長すぎる場合は要約を短縮
+  // 固定部分の長さを計算（フック + CTA + URL(23) + ハッシュタグ + 改行）
+  const hookLength = getCharacterLength(hook);
+  const ctaLength = getCharacterLength(ctaLine);
+  const hashtagsLength = getCharacterLength(hashtags);
+  // 改行: hook\n\n + value\n\n + cta\n + url\n\n + hashtags = 8改行 = 4文字分
+  const newlineOverhead = 4;
+  const fixedLength = hookLength + ctaLength + T_CO_LENGTH + hashtagsLength + newlineOverhead;
+  const availableForValue = MAX_X_POST_LENGTH - fixedLength;
+
+  if (availableForValue > 10) {
+    const shortValue = truncateToLength(valueProposition, Math.floor(availableForValue));
+    return [hook, "", shortValue, "", ctaLine, normalizedUrl, "", hashtags].join("\n");
   }
 
-  // レベル2: サービス名・キャッチコピーも削除
-  parts = [normalizedTitle, normalizedUrl].filter(Boolean);
-  text = parts.join(SEPARATOR);
-  
-  if (getCharacterLength(text) <= MAX_X_POST_LENGTH) {
-    return text;
-  }
-
-  // レベル1: タイトルとURLを両方短縮
-  // タイトルに最低限の文字数を確保
-  const urlLength = getCharacterLength(normalizedUrl);
-  const availableSpace = MAX_X_POST_LENGTH - SEPARATOR_LENGTH;
-  
-  // タイトルに優先的にスペースを割り当て
-  let titleSpace = Math.max(MIN_TITLE_LENGTH, availableSpace - urlLength);
-  let urlSpace = availableSpace - titleSpace;
-  
-  // URLが短すぎる場合は調整
-  if (urlSpace < 30 && urlLength > 30) {
-    urlSpace = 30;
-    titleSpace = availableSpace - urlSpace;
-  }
-  
-  const truncatedTitle = truncateToLength(normalizedTitle, titleSpace).trimEnd();
-  const truncatedUrl = urlSpace < urlLength 
-    ? sliceCharacters(normalizedUrl, urlSpace - 3) + "..."
-    : normalizedUrl;
-  
-  parts = [truncatedTitle, truncatedUrl].filter(Boolean);
-  return sliceCharacters(parts.join(SEPARATOR), MAX_X_POST_LENGTH);
+  // 極端に長い場合はフックとURL + ハッシュタグのみ
+  return [hook, "", ctaLine, normalizedUrl, "", hashtags].join("\n");
 }

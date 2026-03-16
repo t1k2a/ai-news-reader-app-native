@@ -3,6 +3,9 @@ import { stripHtmlTags } from '../lib/utils';
 import { BookmarkButton } from './BookmarkButton';
 import { TwitterShareWidget } from './TwitterShareWidget';
 import { buildXShareText } from '../lib/share';
+import { Meta } from './SEO/Meta';
+import { NewsArticleJsonLd, BreadcrumbJsonLd } from './SEO/JsonLd';
+import { APP_BASE_URL, APP_NAME } from '../lib/constants';
 
 interface AINewsItem {
   id: string;
@@ -49,7 +52,26 @@ export function ArticleDetailView({
   }, []);
   
   if (!article) return null;
-  
+
+  // SEO用の記事URL
+  const articleUrl = `${APP_BASE_URL}/?article=${encodeURIComponent(article.id)}`;
+  // SEO用の記事説明文（HTMLタグ除去、最大160文字）
+  const metaDescription = (() => {
+    const raw = stripHtmlTags(article.summary || article.firstParagraph || '');
+    const normalized = raw.replace(/\s+/gu, ' ').trim();
+    return Array.from(normalized).length > 160
+      ? Array.from(normalized).slice(0, 157).join('') + '...'
+      : normalized;
+  })();
+  // SEO用のタイトル
+  const metaTitle = `${article.title} | ${APP_NAME}`;
+  // SEO用のキーワード
+  const metaKeywords = [
+    ...article.categories,
+    article.sourceName,
+    'AI', 'ニュース', '海外AIニュース'
+  ].join(',');
+
   // 日付のフォーマット
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -116,8 +138,8 @@ export function ArticleDetailView({
   const widgetShareText = buildXShareText({
     title: displayTitle,
     url: detailUrl,
-    categories: article.categories,
-    summary: shareSnippet
+    summary: shareSnippet,
+    sourceName: article.sourceName
   });
   
   // 要約と最初の段落の長さをログに出力（デバッグ用）
@@ -129,6 +151,35 @@ export function ArticleDetailView({
   });
   
   return (
+    <>
+      {/* SEOメタデータ */}
+      <Meta
+        title={metaTitle}
+        description={metaDescription}
+        keywords={metaKeywords}
+        ogTitle={article.title}
+        ogDescription={metaDescription}
+        ogUrl={articleUrl}
+      />
+      {/* 構造化データ: NewsArticle */}
+      <NewsArticleJsonLd
+        headline={article.title}
+        description={metaDescription}
+        datePublished={article.publishDate}
+        author={article.sourceName}
+        publisher={APP_NAME}
+        url={articleUrl}
+      />
+      {/* 構造化データ: パンくずリスト */}
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'ホーム', url: APP_BASE_URL },
+          ...(article.categories.length > 0
+            ? [{ name: article.categories[0], url: `${APP_BASE_URL}/?category=${encodeURIComponent(article.categories[0])}` }]
+            : []),
+          { name: article.title, url: articleUrl }
+        ]}
+      />
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm" onClick={onClose}>
       <div
         ref={detailRef}
@@ -242,5 +293,6 @@ export function ArticleDetailView({
         </footer>
       </div>
     </div>
+    </>
   );
 }
