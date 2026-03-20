@@ -13,6 +13,7 @@ GlotNexusのAIニュースAPIを使って、朝または夕の定型ブリーフ
 
 2. WebFetchでニュースを取得する:
    `https://glotnexus.jp/api/news?limit=20`
+   APIが失敗した場合または空レスポンスの場合は、取得エラーをユーザーに伝え、[GlotNexus](https://glotnexus.jp) への直接アクセスを案内する。
 
 3. **朝モード（JSTで12:00前）** の場合、以下のフォーマットで出力する:
 
