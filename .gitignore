@@ -17,3 +17,4 @@ amplifyconfiguration*
 
 # Development reports
 daily-report-*.md
+.worktrees/
