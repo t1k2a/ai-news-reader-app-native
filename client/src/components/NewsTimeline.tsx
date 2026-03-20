@@ -9,6 +9,7 @@ import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { AI_CATEGORIES } from '../lib/constants';
 import { getCachedData, setCachedData } from '../lib/utils';
 import { ArticleDetailView } from './ArticleDetailView';
+import { Skeleton } from './ui/skeleton';
 
 interface AINewsItem {
   id: string;
@@ -30,11 +31,11 @@ interface NewsTimelineProps {
 }
 
 // カテゴリボタンコンポーネント
-function CategoryButton({ 
-  category, 
-  isSelected, 
-  onClick 
-}: { 
+function CategoryButton({
+  category,
+  isSelected,
+  onClick
+}: {
   category: string | null;
   isSelected: boolean;
   onClick: () => void;
@@ -50,6 +51,34 @@ function CategoryButton({
     >
       {category === null ? 'すべて' : category}
     </button>
+  );
+}
+
+// スケルトンUIコンポーネント
+function NewsItemSkeleton() {
+  return (
+    <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-4 space-y-3">
+      {/* ヘッダー部分 */}
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-4 w-24" />
+      </div>
+
+      {/* タイトル */}
+      <Skeleton className="h-6 w-full" />
+      <Skeleton className="h-6 w-3/4" />
+
+      {/* 要約 */}
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-2/3" />
+
+      {/* カテゴリータグ */}
+      <div className="flex gap-2">
+        <Skeleton className="h-6 w-16 rounded-full" />
+        <Skeleton className="h-6 w-20 rounded-full" />
+      </div>
+    </div>
   );
 }
 
@@ -96,32 +125,37 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
       const url = selectedSource
         ? `${API_BASE_URL}/api/news/source/${encodeURIComponent(selectedSource)}`
         : `${API_BASE_URL}/api/news`;
-      
+
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         throw new Error('ニュースの取得に失敗しました');
       }
-      
+
       let data = await response.json();
-      
+
       // カテゴリでフィルタリング
       if (selectedCategory) {
-        data = data.filter((item: AINewsItem) => 
+        data = data.filter((item: AINewsItem) =>
           item.categories && item.categories.includes(selectedCategory)
         );
       }
-      
+
       return data;
     },
     staleTime: 60000, // 1分間はキャッシュを新鮮とみなす
     refetchOnWindowFocus: false, // ウィンドウフォーカス時に再取得しない
     initialData: () =>
-      getCachedData<AINewsItem[]>(cacheKey, 5 * 60 * 1000) ?? undefined,
-    onSuccess: data => {
-      setCachedData(cacheKey, data);
-    },
+      getCachedData<AINewsItem[]>(cacheKey, 10 * 60 * 1000) ?? undefined, // 10分に延長
+    placeholderData: (previousData) => previousData, // リフェッチ中も前回データを表示
   });
+
+  // React Query v5: onSuccess の代わりに useEffect でキャッシュ保存
+  useEffect(() => {
+    if (news && news.length > 0) {
+      setCachedData(cacheKey, news);
+    }
+  }, [news, cacheKey]);
 
   const selectedArticleFromList = useMemo(() => {
     if (!news || !selectedArticleId) {
@@ -222,8 +256,28 @@ export function NewsTimeline({ selectedSource }: NewsTimelineProps) {
   
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <LoadingSpinner size="lg" />
+      <div className="space-y-4 pb-8">
+        {/* ヘッダースケルトン */}
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-7 w-48" />
+          <Skeleton className="h-5 w-32" />
+        </div>
+
+        {/* カテゴリフィルタースケルトン */}
+        <div className="flex flex-wrap gap-2 pb-3 pt-1">
+          <Skeleton className="h-8 w-20 rounded-full" />
+          <Skeleton className="h-8 w-24 rounded-full" />
+          <Skeleton className="h-8 w-28 rounded-full" />
+          <Skeleton className="h-8 w-20 rounded-full" />
+          <Skeleton className="h-8 w-24 rounded-full" />
+        </div>
+
+        {/* 記事カードスケルトン（5枚） */}
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <NewsItemSkeleton key={i} />
+          ))}
+        </div>
       </div>
     );
   }

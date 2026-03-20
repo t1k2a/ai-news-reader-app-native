@@ -40,6 +40,8 @@ export default async function handler(
       const limited =
         typeof limit === "number" ? filteredNews.slice(0, limit) : filteredNews;
 
+      // CDN caching: 5 minutes fresh, 10 minutes stale-while-revalidate
+      res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
       return res.status(200).json(limited);
     }
 
@@ -60,6 +62,8 @@ export default async function handler(
         return res.status(404).json({ message: "記事が見つかりませんでした" });
       }
 
+      // CDN caching: 5 minutes fresh, 10 minutes stale-while-revalidate
+      res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
       return res.status(200).json(target);
     }
 

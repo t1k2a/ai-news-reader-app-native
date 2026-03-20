@@ -9,13 +9,15 @@ export async function registerRoutes(app: Express): Promise<void> {
       const category = req.query.category as string;
       const limitParam = req.query.limit as string | undefined;
       const limit = limitParam ? Math.max(1, Math.min(100, parseInt(limitParam, 10) || 0)) : undefined;
-      
+
       const newsItems = await fetchAllFeeds();
       const filteredNews = category
         ? newsItems.filter(item => item.categories.includes(category))
         : newsItems;
       const limited = typeof limit === 'number' ? filteredNews.slice(0, limit) : filteredNews;
-      
+
+      // CDN caching: 5 minutes fresh, 10 minutes stale-while-revalidate
+      res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
       res.json(limited);
     } catch (error) {
       console.error('ニュース取得エラー:', error);
@@ -39,6 +41,8 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(404).json({ message: '記事が見つかりませんでした' });
       }
 
+      // CDN caching: 5 minutes fresh, 10 minutes stale-while-revalidate
+      res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
       return res.json(target);
     } catch (error) {
       console.error('記事取得エラー:', error);
@@ -82,6 +86,53 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
   
+  // 動的 sitemap.xml
+  app.get('/sitemap.xml', async (_req: Request, res: Response) => {
+    try {
+      const APP_BASE_URL = process.env.APP_BASE_URL || "https://glotnexus.jp";
+      const newsItems = await fetchAllFeeds();
+
+      const escapeXml = (str: string) =>
+        str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+
+      const formatDate = (date: Date | string) => {
+        const d = date instanceof Date ? date : new Date(String(date));
+        return d.toISOString().split("T")[0];
+      };
+
+      const staticPages = [
+        { loc: `${APP_BASE_URL}/`, lastmod: formatDate(new Date()), changefreq: "hourly", priority: "1.0" },
+        { loc: `${APP_BASE_URL}/privacy`, lastmod: "2025-09-08", changefreq: "yearly", priority: "0.3" },
+      ];
+
+      const articlePages = newsItems.map(item => ({
+        loc: `${APP_BASE_URL}/?article=${encodeURIComponent(item.id)}`,
+        lastmod: formatDate(item.publishDate),
+        changefreq: "daily",
+        priority: "0.8",
+      }));
+
+      const allPages = [...staticPages, ...articlePages];
+
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${allPages.map(page => `  <url>
+    <loc>${escapeXml(page.loc)}</loc>
+    <lastmod>${page.lastmod}</lastmod>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
+  </url>`).join("\n")}
+</urlset>`;
+
+      res.setHeader("Content-Type", "application/xml; charset=utf-8");
+      res.setHeader("Cache-Control", "public, max-age=300");
+      res.send(xml);
+    } catch (error) {
+      console.error('Sitemap生成エラー:', error);
+      res.status(500).send('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
+    }
+  });
+
   // 翻訳API
   app.post('/api/translate', async (req: Request, res: Response) => {
     const { text } = req.body;

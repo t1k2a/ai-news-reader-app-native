@@ -293,8 +293,8 @@ function inferCategoriesFromContent(title: string, content: string): string[] {
 const translationCache: Record<string, string> = {};
 
 // サーバーレス環境用の設定
-const FEED_TIMEOUT = 3000; // タイムアウトを3秒に短縮
-const CONCURRENT_LIMIT = 5; // 同時取得数を5に制限
+const FEED_TIMEOUT = 15000; // タイムアウトを15秒に延長（cron経由での実行がメイン）
+const CONCURRENT_LIMIT = 9; // 同時取得数を9に増加（17フィード→2バッチ）
 
 /**
  * タイムアウト付きでフィードを取得する
@@ -376,45 +376,44 @@ export async function fetchFeed(feedInfo: FeedInfo): Promise<AINewsItem[]> {
       // 英語の場合は翻訳する
       if (feedInfo.language === "en") {
         try {
-          // タイトルの翻訳（キャッシュを利用）
+          // キャッシュキーを事前に準備
           const titleCacheKey = `title:${item.title}`;
-          if (translationCache[titleCacheKey]) {
-            translatedTitle = translationCache[titleCacheKey];
-            console.log(`タイトル翻訳（キャッシュ）: "${item.title}" -> "${translatedTitle}"`);
-          } else {
-            console.log(`タイトル翻訳中: "${item.title}"`);
-            translatedTitle = await translateToJapanese(item.title || "");
-            if (translatedTitle && translatedTitle !== item.title) {
-              translationCache[titleCacheKey] = translatedTitle;
-              console.log(`タイトル翻訳完了: "${item.title}" -> "${translatedTitle}"`);
-            } else {
-              console.warn(`タイトル翻訳失敗または変更なし: "${item.title}"`);
-              // 翻訳が失敗した場合でも、元のタイトルを使用
-            }
-          }
-
-          // 要約を翻訳（キャッシュを利用）
           const summaryCacheKey = `summary:${summary.substring(0, 100)}`;
-          if (translationCache[summaryCacheKey]) {
-            translatedSummary = translationCache[summaryCacheKey];
-          } else {
-            translatedSummary = await translateToJapanese(summary);
-            translationCache[summaryCacheKey] = translatedSummary;
-          }
+          const paragraphCacheKey = `paragraph:${firstParagraph.substring(0, 100)}`;
 
-          // 最初の段落も翻訳（キャッシュを利用）
-          const paragraphCacheKey = `paragraph:${firstParagraph.substring(
-            0,
-            100
-          )}`;
-          if (translationCache[paragraphCacheKey]) {
-            translatedFirstParagraph = translationCache[paragraphCacheKey];
-          } else {
-            translatedFirstParagraph = await translateToJapanese(
-              firstParagraph
-            );
-            translationCache[paragraphCacheKey] = translatedFirstParagraph;
-          }
+          // キャッシュチェック
+          const cachedTitle = translationCache[titleCacheKey];
+          const cachedSummary = translationCache[summaryCacheKey];
+          const cachedParagraph = translationCache[paragraphCacheKey];
+
+          // 3つの翻訳を並列実行（キャッシュがない場合のみ）
+          const [titleResult, summaryResult, paragraphResult] = await Promise.all([
+            cachedTitle
+              ? Promise.resolve(cachedTitle)
+              : translateToJapanese(item.title || "").then(result => {
+                  if (result && result !== item.title) {
+                    translationCache[titleCacheKey] = result;
+                    console.log(`タイトル翻訳完了: "${item.title}" -> "${result}"`);
+                  }
+                  return result;
+                }),
+            cachedSummary
+              ? Promise.resolve(cachedSummary)
+              : translateToJapanese(summary).then(result => {
+                  translationCache[summaryCacheKey] = result;
+                  return result;
+                }),
+            cachedParagraph
+              ? Promise.resolve(cachedParagraph)
+              : translateToJapanese(firstParagraph).then(result => {
+                  translationCache[paragraphCacheKey] = result;
+                  return result;
+                }),
+          ]);
+
+          translatedTitle = titleResult || item.title || "";
+          translatedSummary = summaryResult;
+          translatedFirstParagraph = paragraphResult;
 
           // 記事のカテゴリを取得または生成
           let categories = [...feedInfo.defaultCategories];

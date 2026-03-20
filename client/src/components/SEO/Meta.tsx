@@ -18,7 +18,7 @@ export function Meta({
   ogTitle,
   ogDescription,
   ogImage = '/og-image.png', // デフォルトのOGP画像
-  ogUrl = 'https://ai-news-reader.replit.app',
+  ogUrl = 'https://glotnexus.jp',
   twitterCard = 'summary_large_image'
 }: MetaProps) {
   return (

@@ -1,7 +1,7 @@
 {
-  "short_name": "SynapseFeed",
-  "name": "SynapseFeed",
-  "description": "最新のAI関連ニュースを自動収集し、日本語に翻訳して表示するアプリ",
+  "short_name": "GlotNexus",
+  "name": "GlotNexus - 海外AIメディアを翻訳・要約",
+  "description": "海外AIメディアを翻訳・要約。見出しで掴む世界の最先端",
   "icons": [
     {
       "src": "/pwa-icons/icon.svg",

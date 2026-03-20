@@ -4,7 +4,7 @@
 import type { AINewsItem } from "./types.js";
 
 const CACHE_KEY = "news_cache";
-const CACHE_TTL = 5 * 60; // 5分（秒単位）
+const CACHE_TTL = 10 * 60; // 10分（秒単位）- 5分ごとのcron更新でバッファあり
 
 // インメモリキャッシュ（フォールバック用）
 let memoryCache: AINewsItem[] = [];

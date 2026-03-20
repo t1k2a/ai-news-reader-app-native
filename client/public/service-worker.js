@@ -55,7 +55,29 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 以下のリクエストはキャッシュしない
+  // APIリクエストは stale-while-revalidate でキャッシュ（GETのみ）
+  if (event.request.url.includes("/api/news") && event.request.method === "GET") {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(CACHE_NAME);
+        const cachedResponse = await cache.match(event.request);
+
+        // キャッシュがあれば即座に返し、バックグラウンドで更新
+        const fetchPromise = fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            cache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        }).catch(() => cachedResponse); // ネットワークエラー時はキャッシュを返す
+
+        // キャッシュがあれば即座に返す
+        return cachedResponse || fetchPromise;
+      })()
+    );
+    return;
+  }
+
+  // その他のAPIリクエストや拡張機能はキャッシュしない
   if (
     event.request.url.includes("/api/") ||
     event.request.url.startsWith("chrome-extension://") ||

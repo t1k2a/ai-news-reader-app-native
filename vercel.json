@@ -2,13 +2,38 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
+  "regions": ["hnd1"],
   "rewrites": [
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "functions": {
-    "api/**/*.ts": {
-      "includeFiles": "lib/**"
+    "api/index.ts": {
+      "includeFiles": "lib/**",
+      "maxDuration": 60
+    },
+    "api/sitemap.ts": {
+      "includeFiles": "lib/**",
+      "maxDuration": 60
+    },
+    "api/cron/auto-post.ts": {
+      "includeFiles": "lib/**",
+      "maxDuration": 300
+    },
+    "api/cron/warm-cache.ts": {
+      "includeFiles": "lib/**",
+      "maxDuration": 120
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/warm-cache",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/auto-post",
+      "schedule": "0 * * * *"
+    }
+  ]
 }
