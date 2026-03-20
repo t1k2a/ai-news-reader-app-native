@@ -435,29 +435,33 @@ export async function autoPostArticles(
     );
 
     // brand card 用に日本語翻訳（未翻訳の場合のみ）
+    // article を直接変更せず、翻訳済みのコピーを別変数で保持する
+    let articleForPost = article;
     if (USE_BRAND_CARD) {
       const isAlreadyJapanese = /[\u3040-\u9fff]/.test(article.title);
       if (!isAlreadyJapanese) {
         try {
           const originalTitle = article.title;
           const originalSummary = article.summary;
-          // 先に original を退避してから上書き
-          article.originalTitle = article.originalTitle ?? originalTitle;
-          article.originalSummary = article.originalSummary ?? originalSummary;
-          article.title = await translateToJapanese(originalTitle, 100);
-          if (originalSummary) {
-            article.summary = await translateToJapanese(originalSummary, 200);
-          }
-          console.log(`Translated title: ${article.title}`);
+          articleForPost = {
+            ...article,
+            originalTitle: article.originalTitle ?? originalTitle,
+            originalSummary: article.originalSummary ?? originalSummary,
+            title: await translateToJapanese(originalTitle, 100),
+            summary: originalSummary
+              ? await translateToJapanese(originalSummary, 200)
+              : originalSummary,
+          };
+          console.log(`Translated title: ${articleForPost.title}`);
         } catch (translateError) {
           console.warn("Translation failed, using original:", translateError);
-          // 翻訳失敗は非致命的 — 元のテキストのままで続行
+          // 翻訳失敗は非致命的 — articleForPost は元の article のまま
         }
       }
     }
 
     try {
-      const result = await postToX(client, article);
+      const result = await postToX(client, articleForPost);
 
       if (result && !result.isDuplicate) {
         // 投稿成功 - IDを記録

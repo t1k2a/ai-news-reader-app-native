@@ -157,14 +157,16 @@ async function publishMediaContainer(
 
 /**
  * 単一記事を Instagram に投稿
+ *
+ * Blob の削除は呼び出し元（autoPostToInstagram）が担当する。
+ * Meta API がコンテナ作成後も非同期で画像 URL をクロールする可能性があるため、
+ * 投稿 ID の記録が完了してから削除する。
  */
 async function postToInstagram(
   article: AINewsItem,
   igUserId: string,
   accessToken: string
-): Promise<{ postId: string } | null> {
-  let blobUrl: string | null = null;
-
+): Promise<{ postId: string; blobUrl: string } | null> {
   try {
     // 1. 日本語翻訳
     const translatedArticle = await ensureJapanese(article);
@@ -177,7 +179,6 @@ async function postToInstagram(
       imageBuffer,
       article.id
     );
-    blobUrl = uploadedBlobUrl;
 
     // 4. キャプション生成
     const caption = formatCaption(translatedArticle);
@@ -194,19 +195,10 @@ async function postToInstagram(
     const postId = await publishMediaContainer(igUserId, accessToken, creationId);
 
     console.log(`Instagram posted: ${postId} - ${translatedArticle.title}`);
-    return { postId };
+    return { postId, blobUrl: uploadedBlobUrl };
   } catch (error) {
     console.error(`Instagram post failed for ${article.id}:`, error);
     return null;
-  } finally {
-    // Blob を削除（一時的な公開 URL なので投稿後は不要）
-    if (blobUrl) {
-      try {
-        await del(blobUrl);
-      } catch (e) {
-        console.warn("Failed to delete blob (non-fatal):", e);
-      }
-    }
   }
 }
 
@@ -252,6 +244,12 @@ export async function autoPostToInstagram(
 
     if (result) {
       await addInstagramPostedId(article.id);
+      // Blob を削除（投稿 ID 記録完了後。Meta が非同期クロールを終えた後に削除）
+      try {
+        await del(result.blobUrl);
+      } catch (e) {
+        console.warn("Failed to delete blob (non-fatal):", e);
+      }
       results.push({
         success: true,
         articleId: article.id,
@@ -259,6 +257,7 @@ export async function autoPostToInstagram(
         instagramPostId: result.postId,
       });
     } else {
+      // 投稿失敗時は Blob 削除をスキップ（孤立 Blob は許容）
       results.push({
         success: false,
         articleId: article.id,
