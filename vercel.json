@@ -10,7 +10,7 @@
   ],
   "functions": {
     "api/index.ts": {
-      "includeFiles": "lib/**",
+      "includeFiles": "lib/**,assets/fonts/**",
       "maxDuration": 60
     },
     "api/sitemap.ts": {
@@ -18,12 +18,16 @@
       "maxDuration": 60
     },
     "api/cron/auto-post.ts": {
-      "includeFiles": "lib/**",
+      "includeFiles": "lib/**,assets/fonts/**",
       "maxDuration": 300
     },
     "api/cron/warm-cache.ts": {
       "includeFiles": "lib/**",
       "maxDuration": 120
+    },
+    "api/cron/instagram-post.ts": {
+      "includeFiles": "lib/**,assets/fonts/**",
+      "maxDuration": 300
     }
   },
   "crons": [
@@ -34,6 +38,10 @@
     {
       "path": "/api/cron/auto-post",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/instagram-post",
+      "schedule": "30 * * * *"
     }
   ]
 }
