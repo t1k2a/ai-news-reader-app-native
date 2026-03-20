@@ -17,6 +17,7 @@ GlotNexusは、AI業界の最新情報を日本語でキャッチアップでき
 - ✅ **X (Twitter) 自動投稿**: Vercel Cron で1日3回自動投稿
 - ✅ **Webアプリ**: React + Vite のモダンなフロントエンド
 - ✅ **ハイブリッド構成**: Express サーバー + Vercel Serverless Functions
+- ✅ **Claude Code スキル**: Superpowers互換スキルを提供。Claude Code上でAIニュースを直接取得可能
 
 ---
 
@@ -221,6 +222,21 @@ npm run auto-post:rss    # RSSベース投稿（最新記事を投稿）
 - The Verge AI
 - TechCrunch AI
 - その他6+フィード
+
+---
+
+## 🤖 Claude Code スキル
+
+Claude Code + Superpowers ユーザー向けに、GlotNexusのAIニュースをClaude Code上で直接取得できるスキルを提供しています。
+
+```bash
+# インストール
+mkdir -p ~/.claude/skills
+curl -o ~/.claude/skills/glotnexus-news.md \
+  https://raw.githubusercontent.com/t1k2a/ai-news-reader-app-native/main/skills/glotnexus-news.md
+```
+
+詳細は [`skills/README.md`](./skills/README.md) を参照してください。
 
 ---
 
