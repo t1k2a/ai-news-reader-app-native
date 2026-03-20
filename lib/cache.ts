@@ -195,3 +195,37 @@ export async function setWeeklySummaryLastPosted(
     console.error("Failed to set weekly summary timestamp:", error);
   }
 }
+
+// Instagram 投稿済み記事IDの管理
+const IG_POSTED_IDS_KEY = "ig:posted_article_ids";
+
+export async function getInstagramPostedIds(): Promise<Set<string>> {
+  try {
+    const redis = await getRedisClient();
+    if (redis) {
+      const ids = await redis.get(IG_POSTED_IDS_KEY) as string[] | null;
+      if (ids) {
+        return new Set(ids);
+      }
+    }
+    return new Set();
+  } catch (error) {
+    console.error("Failed to get Instagram posted article IDs:", error);
+    return new Set();
+  }
+}
+
+export async function addInstagramPostedId(articleId: string): Promise<void> {
+  try {
+    const redis = await getRedisClient();
+    if (redis) {
+      const existingIds = await getInstagramPostedIds();
+      existingIds.add(articleId);
+      const idsArray = Array.from(existingIds).slice(-1000);
+      await redis.set(IG_POSTED_IDS_KEY, idsArray, { ex: POSTED_IDS_TTL });
+      console.log(`Added Instagram posted article ID: ${articleId}`);
+    }
+  } catch (error) {
+    console.error("Failed to add Instagram posted article ID:", error);
+  }
+}
