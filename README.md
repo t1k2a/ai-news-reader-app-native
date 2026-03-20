@@ -232,8 +232,10 @@ Claude Code + Superpowers ユーザー向けに、GlotNexusのAIニュースをC
 ```bash
 # インストール
 mkdir -p ~/.claude/skills
-curl -o ~/.claude/skills/glotnexus-news.md \
+curl --fail -o ~/.claude/skills/glotnexus-news.md \
   https://raw.githubusercontent.com/t1k2a/ai-news-reader-app-native/main/skills/glotnexus-news.md
+curl --fail -o ~/.claude/skills/ai-news-briefing.md \
+  https://raw.githubusercontent.com/t1k2a/ai-news-reader-app-native/main/skills/ai-news-briefing.md
 ```
 
 詳細は [`skills/README.md`](./skills/README.md) を参照してください。
