@@ -6,6 +6,23 @@
 
 ---
 
+## 前提知識
+
+**Superpowers** は Claude Code 用のプラグインシステムで、`~/.claude/skills/` ディレクトリに置いたMarkdownファイルをスキルとして認識する。スキルファイルは以下のfrontmatter形式で定義する：
+
+```markdown
+---
+name: skill-name
+description: このスキルが何をするかの1行説明（スキル選択時に使われる）
+---
+
+スキルの本文（Claudeへの指示内容）
+```
+
+スキルはユーザーが `/skill-name` と入力するか、descriptionにマッチする自然言語で発動する。
+
+---
+
 ## 概要
 
 GlotNexusのAIニュース収集・日本語翻訳機能をSuperpowers互換スキルとして外部公開する。Claude Codeユーザーがスキルをインストールすることで、日本語AIニュースの取得・ブリーフィングをClaude Code上で行えるようになる。
@@ -38,6 +55,22 @@ GET https://glotnexus.jp/api/news
 - 5分キャッシュ（Upstash Redis）
 - レスポンス: 日本語翻訳済みAIニュース一覧（JSON）
 
+**レスポンス例（1件分）:**
+```json
+{
+  "id": "abc123",
+  "title": "OpenAIが新モデルを発表",
+  "link": "https://openai.com/blog/...",
+  "summary": "OpenAIは本日...",
+  "publishDate": "2026-03-20T09:00:00.000Z",
+  "sourceName": "OpenAI Blog",
+  "sourceLanguage": "en",
+  "categories": ["AI研究", "機械学習"]
+}
+```
+
+スキル内での記事リンク生成: `https://glotnexus.jp/?article={id}`
+
 ---
 
 ## 成果物
@@ -67,8 +100,11 @@ skills/
 
 **動作**:
 1. ユーザーの発言からカテゴリ・件数の意図を読み取る
+   - デフォルト件数: `limit=10`（ユーザーが指定しない場合）
+   - カテゴリ指定なし: `category` パラメーターを省略（全カテゴリ取得）
 2. `WebFetch https://glotnexus.jp/api/news?limit=10[&category=X]` を呼ぶ
 3. 各記事をタイトル・要約・ソース・リンクで整形して返す
+   - 記事リンク: `https://glotnexus.jp/?article={id}` 形式（`id` フィールドを使用）
 4. 末尾に `詳細は glotnexus.jp で` の導線を入れる
 
 **利用可能カテゴリ**:
@@ -91,7 +127,8 @@ skills/
 | 夕モード | 午後 | 今日の主要ニュースまとめ + 明日ウォッチすべきトピック |
 
 **動作**:
-1. 現在時刻から朝/夕モードを自動判定（12時前 → 朝、12時以降 → 夕）
+1. 現在時刻からJST（日本標準時）で朝/夕モードを自動判定（JST 12:00前 → 朝、12:00以降 → 夕）
+   - 対象ユーザーが日本語圏のため、タイムゾーンは常にJSTを基準とする
 2. `WebFetch https://glotnexus.jp/api/news?limit=20` で最新20件取得
 3. モードに応じたフォーマットで整形・分析して出力
 4. 末尾に `powered by GlotNexus (glotnexus.jp)` を添える
@@ -112,6 +149,8 @@ skills/
 
 ### インストール手順（ユーザー向け）
 
+**前提**: GitHubリポジトリ `t1k2a/ai-news-reader-app-native` はパブリックリポジトリとして公開される。
+
 ```bash
 # glotnexus-news スキルをインストール
 curl -o ~/.claude/skills/glotnexus-news.md \
@@ -123,6 +162,12 @@ curl -o ~/.claude/skills/ai-news-briefing.md \
 ```
 
 または `skills/` ディレクトリのファイルを手動で `~/.claude/skills/` にコピー。
+
+`skills/README.md` に記載する内容:
+- Superpowersの前提条件（Claude Code + Superpowersプラグイン）
+- curlによるインストール手順（日本語・英語）
+- 各スキルのトリガー例
+- glotnexus.jp へのリンク
 
 ### 告知チャネル（実装後）
 
