@@ -134,42 +134,12 @@ function detectTopicHashtags(title: string, summary: string): string[] {
 }
 
 /**
- * カテゴリからハッシュタグを生成（改善版）
- * ソース名 + コンテンツベースのトピック検出 + ブランドタグ
+ * カテゴリからハッシュタグを生成
+ * ハッシュタグ3個以上でエンゲージメント -17% のため、2個固定に削減
+ * Issue #19: #AI #GlotNexus の2個のみ
  */
-function generateHashtags(item: AINewsItem): string[] {
-  const tags: string[] = [];
-
-  // 1. ソース名から主要タグを生成
-  const sourceTag = SOURCE_HASHTAG_MAP[item.sourceName];
-  if (sourceTag) {
-    tags.push(sourceTag);
-  }
-
-  // 2. コンテンツベースのトピックタグを検出（タイトル + サマリーを使用）
-  const searchTitle = item.originalTitle || item.title;
-  const searchSummary = item.originalSummary || item.summary;
-  const topicTags = detectTopicHashtags(searchTitle, searchSummary);
-  // トピックタグは最大2個まで（スパム防止）
-  for (const tag of topicTags.slice(0, 2)) {
-    if (!tags.includes(tag)) {
-      tags.push(tag);
-    }
-  }
-
-  // 3. AI関連のベースタグ（日本語タグを含める）
-  if (!tags.includes("AI")) {
-    tags.push("AI");
-  }
-  if (!tags.includes("海外のAIニュース")) {
-    tags.push("海外のAIニュース");
-  }
-
-  // 4. ブランドタグ
-  tags.push("GlotNexus");
-
-  // 最大5個まで
-  return tags.slice(0, 5);
+function generateHashtags(_item: AINewsItem): string[] {
+  return ["AI", "GlotNexus"];
 }
 
 /**
