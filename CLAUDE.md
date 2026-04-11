@@ -137,6 +137,19 @@ AUTO_POST_MAX_PER_RUN=10          # Max posts per cron run (default: 10)
 AUTO_POST_DELAY_SECONDS=10        # Delay between posts in seconds (default: 10)
 APP_BASE_URL=https://glotnexus.jp # Base URL for article links in tweets (default: https://glotnexus.jp)
 
+# Tweet format A/B test variant (default: enhanced)
+# "simple" | "enhanced" | "random"
+TWEET_FORMAT_VARIANT=enhanced
+
+# Thread format (URL-in-Reply) - set true to enable (Issue #17)
+# Avoids X algorithm penalty for external links; posts URL as reply instead
+USE_THREAD_FORMAT=false
+
+# Brand card image attachment (Issue #18)
+# Set true to attach auto-generated 1200x675px brand card to each tweet
+# Requires canvas package; increases impressions 2-3x
+USE_BRAND_CARD=false
+
 # Upstash Redis (production only - automatically disabled in NODE_ENV=development)
 UPSTASH_REDIS_REST_URL=           # Not needed for local development
 UPSTASH_REDIS_REST_TOKEN=         # Not needed for local development
