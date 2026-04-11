@@ -8,6 +8,7 @@ amplify_outputs*
 amplifyconfiguration*
 
 .env
+.env.*
 .vercel
 
 # Claude Code
