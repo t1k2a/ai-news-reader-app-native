@@ -12,6 +12,21 @@
 
 import { createCanvas, registerFont, type CanvasRenderingContext2D } from "canvas";
 import type { AINewsItem } from "./types.js";
+import path from "path";
+
+// 日本語フォントを登録（Vercel 環境での文字化けを防ぐ）
+try {
+  registerFont(
+    path.join(process.cwd(), "assets/fonts/NotoSansJP-Bold.ttf"),
+    { family: "NotoSansJP", weight: "bold" }
+  );
+  registerFont(
+    path.join(process.cwd(), "assets/fonts/NotoSansJP-Regular.ttf"),
+    { family: "NotoSansJP" }
+  );
+} catch (e) {
+  console.warn("NotoSansJP font registration failed (non-fatal):", e);
+}
 
 // 画像サイズ（Twitter推奨のsummary_large_image向け）
 const CARD_WIDTH = 1200;
@@ -233,9 +248,8 @@ export async function generateBrandCard(item: AINewsItem): Promise<Buffer> {
   // 1. 背景グラデーション
   // ============================
   const gradient = ctx.createLinearGradient(0, 0, CARD_WIDTH, CARD_HEIGHT);
-  gradient.addColorStop(0, "#0f0f23");
-  gradient.addColorStop(0.5, "#1a1a3e");
-  gradient.addColorStop(1, "#0f0f23");
+  gradient.addColorStop(0, "#ffffff");
+  gradient.addColorStop(1, "#f0f4ff");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
 
@@ -243,7 +257,7 @@ export async function generateBrandCard(item: AINewsItem): Promise<Buffer> {
   // 2. 装飾的な円（グロー効果）
   // ============================
   ctx.save();
-  ctx.globalAlpha = 0.08;
+  ctx.globalAlpha = 0.04;
   ctx.fillStyle = theme.primary;
   ctx.beginPath();
   ctx.arc(CARD_WIDTH * 0.85, CARD_HEIGHT * 0.2, 250, 0, Math.PI * 2);
@@ -268,7 +282,7 @@ export async function generateBrandCard(item: AINewsItem): Promise<Buffer> {
   // 4. ソース名バッジ（左上）
   // ============================
   const sourceName = item.sourceName;
-  ctx.font = 'bold 24px "IPAGothic", "Noto Sans CJK JP", "Hiragino Sans", sans-serif';
+  ctx.font = 'bold 24px "NotoSansJP"';
   const sourceText = `${emoji}  ${sourceName}`;
   const sourceMetrics = ctx.measureText(sourceText);
   const badgePadX = 20;
@@ -303,8 +317,8 @@ export async function generateBrandCard(item: AINewsItem): Promise<Buffer> {
   // 5. 記事タイトル（メインコンテンツ）
   // ============================
   const titleFontSize = 42;
-  ctx.font = `bold ${titleFontSize}px "IPAGothic", "Noto Sans CJK JP", "Hiragino Sans", sans-serif`;
-  ctx.fillStyle = "#ffffff";
+  ctx.font = `bold ${titleFontSize}px "NotoSansJP"`;
+  ctx.fillStyle = "#1a1a2e";
 
   const titleMaxWidth = CARD_WIDTH - 120;
   const title = item.title;
@@ -322,8 +336,8 @@ export async function generateBrandCard(item: AINewsItem): Promise<Buffer> {
   // ============================
   if (item.summary) {
     const summaryFontSize = 22;
-    ctx.font = `${summaryFontSize}px "IPAGothic", "Noto Sans CJK JP", "Hiragino Sans", sans-serif`;
-    ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+    ctx.font = `${summaryFontSize}px "NotoSansJP"`;
+    ctx.fillStyle = "rgba(30, 30, 50, 0.75)";
 
     const summaryMaxWidth = CARD_WIDTH - 120;
     const summaryText = item.summary.length > 120
@@ -345,7 +359,7 @@ export async function generateBrandCard(item: AINewsItem): Promise<Buffer> {
   const footerY = CARD_HEIGHT - 60;
 
   // 区切り線
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+  ctx.strokeStyle = "rgba(30, 30, 50, 0.12)";
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(60, footerY - 20);
@@ -353,14 +367,14 @@ export async function generateBrandCard(item: AINewsItem): Promise<Buffer> {
   ctx.stroke();
 
   // GlotNexus ロゴテキスト
-  ctx.font = 'bold 22px "IPAGothic", "Noto Sans CJK JP", sans-serif';
-  ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+  ctx.font = 'bold 22px "NotoSansJP"';
+  ctx.fillStyle = "rgba(30, 30, 50, 0.8)";
   ctx.fillText("🌐 GlotNexus", 60, footerY);
 
   // キャッチフレーズ
-  ctx.font = '18px "IPAGothic", "Noto Sans CJK JP", sans-serif';
-  ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-  ctx.fillText("最新AIニュースを日本語で", 220, footerY);
+  ctx.font = '18px "NotoSansJP"';
+  ctx.fillStyle = "rgba(30, 30, 50, 0.5)";
+  ctx.fillText("海外AIニュースを日本語で", 230, footerY);
 
   // 日付
   const dateStr = new Date(item.publishDate).toLocaleDateString("ja-JP", {
@@ -368,8 +382,8 @@ export async function generateBrandCard(item: AINewsItem): Promise<Buffer> {
     month: "long",
     day: "numeric",
   });
-  ctx.font = '16px "IPAGothic", "Noto Sans CJK JP", sans-serif';
-  ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+  ctx.font = '16px "NotoSansJP"';
+  ctx.fillStyle = "rgba(30, 30, 50, 0.4)";
   const dateMetrics = ctx.measureText(dateStr);
   ctx.fillText(dateStr, CARD_WIDTH - 60 - dateMetrics.width, footerY);
 

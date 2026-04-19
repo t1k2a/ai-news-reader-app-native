@@ -11,6 +11,7 @@ import {
   formatTweetWithReplyAsync,
 } from "./auto-post-enhanced.js";
 import { generateBrandCard } from "./brand-card.js";
+import { translateToJapanese } from "./translation-api.js";
 import type { AINewsItem } from "./types.js";
 
 // X の文字数制限
@@ -433,8 +434,34 @@ export async function autoPostArticles(
       `[${i + 1}/${unpostedArticles.length}] Posting: ${article.title}`
     );
 
+    // brand card 用に日本語翻訳（未翻訳の場合のみ）
+    // article を直接変更せず、翻訳済みのコピーを別変数で保持する
+    let articleForPost = article;
+    if (USE_BRAND_CARD) {
+      const isAlreadyJapanese = /[\u3040-\u9fff]/.test(article.title);
+      if (!isAlreadyJapanese) {
+        try {
+          const originalTitle = article.title;
+          const originalSummary = article.summary;
+          articleForPost = {
+            ...article,
+            originalTitle: article.originalTitle ?? originalTitle,
+            originalSummary: article.originalSummary ?? originalSummary,
+            title: await translateToJapanese(originalTitle, 100),
+            summary: originalSummary
+              ? await translateToJapanese(originalSummary, 200)
+              : originalSummary,
+          };
+          console.log(`Translated title: ${articleForPost.title}`);
+        } catch (translateError) {
+          console.warn("Translation failed, using original:", translateError);
+          // 翻訳失敗は非致命的 — articleForPost は元の article のまま
+        }
+      }
+    }
+
     try {
-      const result = await postToX(client, article);
+      const result = await postToX(client, articleForPost);
 
       if (result && !result.isDuplicate) {
         // 投稿成功 - IDを記録
